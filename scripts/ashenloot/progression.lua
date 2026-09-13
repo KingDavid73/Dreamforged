@@ -1103,7 +1103,11 @@ function M.ground(item, actor, dropIndex)
     -- Keep the horizontal fan and let the short-lived local drop helper probe
     -- the active cell's height map/world collision for uneven terrain.
     item:teleport(actor.cell,dropPosition)
-    local loose={grace=core.getSimulationTime()+30,item=item}
+    -- Generated rewards remain reserved for the player while they are loose.
+    -- The director removes this entry as soon as the player picks the item up;
+    -- if the player later drops it, it is no longer protected and civilians
+    -- may scavenge it like any ordinary player-dropped object.
+    local loose={grace=0,protected=true,item=item}
     state.director.loose[item.id]=loose
     if C.groundGlow then
         local meta=state.records[item.recordId]
@@ -1124,14 +1128,20 @@ end
 function M.scavenge(event)
     local actor,item=event.actor,event.item
     if not C.enabled or not C.scavenge or not valid(actor) or not item or not item:isValid() then return end
-    if item.parentContainer or actor.cell~=item.cell or (actor.position-item.position):length()>160 then return end
+    if item.parentContainer or actor.cell~=item.cell or (actor.position-item.position):length()>240 then return end
     if not types.Weapon.objectIsInstance(item) and not types.Armor.objectIsInstance(item) then return end
-    local rec=item.type.record(item)
-    if rec.mwscript or item.owner.recordId or item.owner.factionId then return end
+    local ok,rec=pcall(function() return item.type.record(item) end)
+    if not ok or not rec then return end
+    local owner= item.owner
+    if rec.mwscript or (owner and (owner.recordId or owner.factionId)) then return end
     local loose=state.director.loose[item.id]
+    if type(loose)=='table' and loose.protected then return end
     local grace=type(loose)=='table' and loose.grace or loose
     if (grace or 0)>core.getSimulationTime() then return end
-    item:moveInto(types.Actor.inventory(actor))
+    -- OpenMW may update parentContainer one frame after moveInto succeeds;
+    -- do not reject a successful transfer on that transient representation.
+    local okMove=pcall(function() item:moveInto(types.Actor.inventory(actor)) end)
+    if not okMove or not item:isValid() then return end
     actor:sendEvent('AshenLoot_Pickup',item)
 end
 local function rerunDungeon(cell,cellState,force)

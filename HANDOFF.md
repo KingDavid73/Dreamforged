@@ -1,6 +1,14 @@
-# Morrowind: Dreamforged handoff — 0.10.1 installed
+# Morrowind: Dreamforged handoff — 0.10.2 installed
 
-**Current installed release: 0.10.1.**
+**Current installed release: 0.10.2.**
+
+0.10.2 reserves fresh procedural ground rewards for the player while they are
+loose. The reservation is removed once the player picks the item up, so a later
+player drop is ordinary unowned gear that NPC scavengers may collect. Existing
+player-dropped gear remains eligible immediately. Dead World Boss target cards
+now keep the saved boss name, lore, modifiers, and an explicit `WORLD BOSS`
+label instead of reverting to the base creature name. Natural Relic rarity rolls
+are reachable, and Legendary/Relic family selection is equalized.
 
 0.10.1 keeps the 0.10.0 loot/family and mage-tome changes and adds a local
 physics ground probe for dropped rewards. Items still spread toward the player,

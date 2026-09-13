@@ -15,7 +15,9 @@ local function first()
     local distribution = {0, 0, 0, 0, 0, 0}
     local random = R.rng('distribution')
     for _ = 1, 10000 do local t = R.rarity(random); distribution[t] = distribution[t] + 1 end
-    for tier = 1, 5 do check(distribution[tier] > 0, 'Unreachable rarity') end
+    for tier = 1, 6 do check(distribution[tier] > 0, 'Unreachable rarity') end
+    check(R.rarity(function() return 99 end, 1, 0)==6, 'Relic rarity is unreachable')
+    check(R.rarity(function() return 70 end, 1, 30)>=5, 'Rarity bonus does not improve rolls')
     for n = 1, 1000 do
         local elite = R.elite(tostring(n), 'Test')
         check(elite.modifiers[1] ~= elite.modifiers[2], 'Duplicate enemy modifiers')

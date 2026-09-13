@@ -1,12 +1,15 @@
 -- Pure Lua rules, shared by the engine scripts and deterministic tests.
 local M = {}
 M.rarities = {
-    { name = 'Common', color = {0.82, 0.82, 0.82}, weight = 45 },
+    -- Keep the two chase tiers equally likely.  The previous table had a
+    -- zero-weight Relic entry, which made natural Relic rolls unreachable
+    -- (only forced World Boss rewards could create one).
+    { name = 'Common', color = {0.82, 0.82, 0.82}, weight = 43 },
     { name = 'Uncommon', color = {0.35, 0.90, 0.42}, weight = 32 },
     { name = 'Rare', color = {0.40, 0.64, 1.00}, weight = 15 },
     { name = 'Epic', color = {0.78, 0.43, 1.00}, weight = 6 },
     { name = 'Legendary', color = {1.00, 0.49, 0.15}, weight = 2 },
-    { name = 'Relic', color = {1.00, 0.92, 0.55}, weight = 0 },
+    { name = 'Relic', color = {1.00, 0.92, 0.55}, weight = 2 },
 }
 M.worldBossNames = {
     beast={'the Ashen Colossus','the Elder Fang','the Unclean','Blight-Touched','Red Mountain Hunger',
@@ -196,12 +199,16 @@ function M.rng(seed)
     end
 end
 function M.rarity(random, minimum, bonus)
-    local roll, sum = math.max(1,random(100)-(bonus or 0)), 0
+    -- Rarity bonuses improve a roll.  The old subtraction inverted the
+    -- promotion ladder, making higher-level and promoted enemies more likely
+    -- to produce Common gear.  Clamp at 100 so the six weights remain a
+    -- complete, deterministic percentile table.
+    local roll, sum = math.min(100,math.max(1,random(100)+(bonus or 0))), 0
     for i, r in ipairs(M.rarities) do
         sum = sum + r.weight
         if roll <= sum then return math.max(i, minimum or 1) end
     end
-    return 5
+    return #M.rarities
 end
 M.prefixes = {
     { name = 'Dagonfire', defensiveName = 'Fireshrouded', effect = 'firedamage', guard = 'fireshield', duration = 2 },

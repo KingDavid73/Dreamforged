@@ -1,5 +1,16 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.2 - player-reserved ground loot and rarity polish
+
+- Reserved fresh procedural ground rewards for the player until pickup. Once a
+  player picks one up, its reservation is removed; a later player drop is normal
+  unowned gear and may be scavenged by eligible NPCs. Ordinary player-dropped
+  equipment remains eligible immediately.
+- Kept World Boss corpse cards alive after death, including their saved name,
+  biography, modifiers, and an explicit `WORLD BOSS` label.
+- Restored natural Relic rolls and made Legendary/Relic family selection equal,
+  preventing the small high-tier armor pool from dominating those rewards.
+
 ## 0.10.1 - terrain-aware ground placement
 
 - Added a local physics probe for generated ground rewards. Forward-spread

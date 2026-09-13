@@ -54,8 +54,8 @@ local function update(dt)
     if active and active.type=='Combat' then stopTravel();return end
     if target then
         timeout=timeout+2
-        if not target:isValid() or target.parentContainer or target.cell~=self.cell or timeout>12 then stopTravel();return end
-        if (target.position-self.position):length()<140 then
+        if not target:isValid() or target.parentContainer or target.cell~=self.cell or timeout>20 then stopTravel();return end
+        if (target.position-self.position):length()<220 then
             core.sendGlobalEvent('AshenLoot_Scavenge',{actor=self,item=target})
             stopTravel()
         end
@@ -86,10 +86,12 @@ local function update(dt)
         if scanCursor>#items then scanCursor=1 end
         local item=items[scanCursor]
         scanCursor=scanCursor+1
-        if item.enabled and item.cell==self.cell and (item.position-self.position):length()<1400 then
+        if item.enabled and item.cell==self.cell and (item.position-self.position):length()<1600 then
             local s=slot(item)
-            local r=item.type.record(item)
-            if s and not r.mwscript and not item.owner.recordId and not item.owner.factionId and score(item)>score(eq[s])*1.02 then
+            local ok,r=pcall(function() return item.type.record(item) end)
+            local owner=item.owner
+            if ok and r and s and not r.mwscript and not (owner and (owner.recordId or owner.factionId))
+                and score(item)>score(eq[s])*1.02 then
                 target,timeout,travelPos=item,0,item.position
                 I.AI.startPackage {type='Travel',destPosition=travelPos,cancelOther=false}
                 return

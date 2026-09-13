@@ -429,7 +429,7 @@ local function lootProfile()
     end
     return {key = 'stealth', ranged = 55, melee = 30, staff = 15}
 end
-local function chooseLootEntry(candidates, random, profile, forcedFamily)
+local function chooseLootEntry(candidates, random, profile, forcedFamily, equalFamilies)
     if #candidates == 0 then return end
     if #candidates==1 then return candidates[1] end
     if not candidates[1].category then return candidates[random(#candidates)] end
@@ -443,7 +443,10 @@ local function chooseLootEntry(candidates, random, profile, forcedFamily)
     end
     local family=forcedFamily
     if not family or #families[family]==0 then
-        local familyOrder={{'weapon',50},{'armor',40},{'clothing',5},{'accessory',5}};local total=0
+        local familyOrder=equalFamilies
+            and {{'weapon',25},{'armor',25},{'clothing',25},{'accessory',25}}
+            or {{'weapon',50},{'armor',40},{'clothing',5},{'accessory',5}}
+        local total=0
         for _,e in ipairs(familyOrder) do if #families[e[1]]>0 then total=total+e[2] end end
         local roll=random()*total
         for _,e in ipairs(familyOrder) do if #families[e[1]]>0 then roll=roll-e[2];if roll<=0 then family=e[1];break end end end
@@ -504,7 +507,11 @@ local function giveLoot(actor, seed, minimum, forcedBase, forcedTier, trophy, de
     end
     assert(#candidates > 0, 'Ashen Loot: base item is not in the supported loot pool')
     local profile = player and lootProfile()
-    local entry = chooseLootEntry(candidates, baseRandom, profile,forcedFamily)
+    -- Legendary and Relic rewards should not be quietly skewed by the broad
+    -- everyday weapon/armor family gradient.  Their family roll is equal;
+    -- class archetype weighting still applies inside the weapon branch.
+    local entry = chooseLootEntry(candidates, baseRandom, profile,
+        spec.tier>=5 and nil or forcedFamily, spec.tier>=5)
     spec.baseQualityTier=entry.qualityTier or desiredQuality
     local key = table.concat({'v8', profile and profile.key or 'none', entry.id, spec.baseQualityTier, spec.tier, spec.prefix, spec.suffix, spec.power, spec.roll, spec.style, spec.dropLevel}, ':')
     local id = state.cache[key]

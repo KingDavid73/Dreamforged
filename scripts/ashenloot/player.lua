@@ -301,7 +301,13 @@ local function frame(dt)
     if not item or not item:isValid() then clearTarget(); return end
     local elite = elites[item.id]
     local meta = metadata(item)
-    if elite and elite.worldBoss then clearTarget();return end
+    -- Living World Bosses use the dedicated bottom HUD bar.  Once dead, let
+    -- the ordinary target path render the saved full corpse biography and
+    -- modifier list instead of reverting to a generic defeated card.
+    if elite and elite.worldBoss
+        and not (types.Actor.objectIsInstance(item) and types.Actor.isDead(item)) then
+        clearTarget();return
+    end
     local lines, key
     if types.Actor.objectIsInstance(item) and (elite or types.Actor.stats.ai.fight(item).base>=80) then
         local hp=types.Actor.stats.dynamic.health(item)
@@ -333,7 +339,14 @@ local function frame(dt)
             local mod = (elite.rulesVersion == 3 and R.elites or R.legacyElites)[index]
             descriptions[#descriptions + 1] = mod.name .. ': ' .. mod.description
         end
-        lines = {text((elite.rank and ({'CHAMPION  ','ELITE  ','UNIQUE  '})[elite.rank] or (elite.tier == 2 and 'CHAMPION  ' or 'ELITE  ')) .. elite.name, tier),
+        local rankLabel
+        if elite.worldBoss then
+            rankLabel = 'WORLD BOSS  '
+        else
+            rankLabel = elite.rank and ({'CHAMPION  ','ELITE  ','UNIQUE  '})[elite.rank]
+                or (elite.tier == 2 and 'CHAMPION  ' or 'ELITE  ')
+        end
+        lines = {text(rankLabel .. elite.name, tier),
             text(elite.baseName .. ' | ' .. current .. ' health | x' .. elite.healthScale .. ' base health'),
             }
         if elite.biography then wrapped(lines,elite.biography) end

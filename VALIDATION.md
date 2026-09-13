@@ -1,5 +1,20 @@
 ﻿# Ashen Loot validation
 
+## 0.10.2 player handoff and rarity polish (2026-09-13)
+
+- The clean isolated OpenMW regression passed all settings, generated item and
+  spell-tome records, promotions, inventory/container remix, ground rewards,
+  UI, and save/reload checks after adding player-reserved ground rewards and
+  World Boss corpse-card labeling. No Dreamforged `FAIL`, Lua callback error,
+  or `onUpdate` failure was emitted.
+- Fresh procedural rewards remain protected while loose; ordinary player-dropped
+  gear remains eligible for NPC scavenging. The authoritative unowned-item
+  transfer path remains covered by the world regression.
+- Natural Relic rarity rolls and equal Legendary/Relic family weighting are
+  covered by deterministic rules checks.
+- Logs: `tests/v4-profile/openmw.log` (clean run at 00:13:26) and
+  `tests/v4-world-profile/openmw.log` (clean run at 00:24:43).
+
 ## 0.10.1 terrain-aware ground placement (2026-09-12)
 
 - The full isolated OpenMW regression passed all settings, generated item and

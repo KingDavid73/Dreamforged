@@ -1,6 +1,19 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.1 - layered, class-aware enemy loot with terrain-aware drops.**
+**Current release: 0.10.2 - player-reserved ground loot, reliable rarity rolls, and complete boss corpse cards.**
+
+## 0.10.2 player handoff and rarity polish
+
+Fresh procedural equipment dropped by Dreamforged is reserved for the player
+while it remains on the ground, so nearby civilians cannot carry off the reward
+before it is seen. Once the player picks it up, the reservation is cleared; if
+the player later drops that item, it behaves like ordinary unowned equipment and
+NPC scavengers may collect it. Player-dropped non-Dreamforged gear is eligible
+immediately. World Boss corpses retain their saved name, lore, and modifiers and
+now identify themselves as `WORLD BOSS` instead of falling back to the base
+creature name. Natural Relic rolls are reachable, and Legendary/Relic rewards
+use equal family weighting so the small armor pool cannot crowd out high-tier
+weapons.
 
 ## 0.10.1 terrain-aware ground drops
 
@@ -67,7 +80,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/AshenLoot-0.10.1"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.2"
 content=AshenLoot.omwscripts
 ```
 
@@ -461,7 +474,7 @@ Quest/scripted/essential actors, service providers and follow/escort companions 
 
 ## NPC interaction
 
-Idle nonquest NPCs can notice unowned weapons/armor within 1,400 units, walk toward an upgrade, collect it and equip it. Weapon scoring considers their weapon skill. Existing travel/follow/escort/combat/activation jobs are left alone; there is a timeout on scavenging trips. Fresh Ashen Loot ground rewards have a 30-second grace period. Player-dropped ordinary gear can be collected immediately. Other schedule/animation mods still need playtesting together.
+Idle nonquest NPCs can notice unowned weapons/armor within 1,400 units, walk toward an upgrade, collect it and equip it. Weapon scoring considers their weapon skill. Existing travel/follow/escort/combat/activation jobs are left alone; there is a timeout on scavenging trips. Fresh procedural ground rewards are reserved for the player until they are picked up; after the player drops one, it is ordinary unowned gear and can be collected immediately. Other schedule/animation mods still need playtesting together.
 
 Civilians attacked at close range by a creature can initiate defense if above 20% health. This is a simple self-defense behavior, not geometric detection of being cornered or a complete tactical AI. It never initiates attacks on the player. Low-health fleeing remains native behavior.
 
