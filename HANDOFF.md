@@ -1,6 +1,11 @@
-# Morrowind: Dreamforged handoff — 0.10.3 installed
+# Morrowind: Dreamforged handoff — 0.10.4 installed
 
-**Current installed release: 0.10.3.**
+**Current installed release: 0.10.4.**
+
+0.10.4 removes the forced World Boss Relic. Bosses now use six ordinary reward
+attempts with rank/gear rarity bonuses; the widened Relic chance is about 12%
+per successful default World Boss attempt, while Mythic remains a separate 10%
+base roll. The curated Relic fallback is gone.
 
 0.10.3 makes ground-drop lights reuse the salvage/target-card rarity palette.
 It also fixes rarity-bonus overflow: promoted rolls are capped below the small

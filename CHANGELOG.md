@@ -1,5 +1,14 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.4 - natural World Boss rewards
+
+- Removed the forced World Boss Relic/curated-artifact fallback. World Bosses
+  now use their normal six reward attempts and the shared Common-to-Relic
+  ladder; rank and gear bonuses widen the Relic chance without percentile
+  overflow.
+- Kept Mythic artifacts as a separate 10% base World Boss roll, increasing with
+  gear overage.
+
 ## 0.10.3 - rarity color and weighting fix
 
 - Ground-drop lights now read the canonical rarity palette used by salvage and

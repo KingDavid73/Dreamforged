@@ -1,6 +1,15 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.3 - rarity-colored ground glows and overflow-safe rarity rolls.**
+**Current release: 0.10.4 - natural World Boss loot and Mythic chase tuning.**
+
+## 0.10.4 natural World Boss rewards
+
+World Bosses no longer receive a forced Relic or duplicate equipment reward.
+They use the normal six-attempt promoted-enemy ladder, with rank and gear
+bonuses widening the Relic slice without overflowing into it. At the default
+World Boss bonus this is roughly a 12% Relic chance per successful attempt
+(about 54% for at least one across six attempts); Mythic artifacts remain a
+separate 10% base World Boss roll, increasing with gear overage.
 
 ## 0.10.3 rarity color and weighting fix
 
@@ -424,11 +433,14 @@ bosses can reach roughly 2x scale. While it is alive and within the configured
 5,000-unit range, its name and long red health bar remain above the bottom HUD.
 Settings expose enablement, chance, minimum level, and tracking range.
 
-Every world boss guarantees one Relic. Relics use a curated copy of an iconic
-vanilla, Tribunal, or Bloodmoon weapon/armor record, keep its recognizable name,
-model, and native enchantment, then add six Ashen effects and enhanced physical
-stats. The original artifact and its quest remain untouched. Relics do not enter
-ordinary, elite, container, or NPC-randomization drop pools.
+World Boss attempts can produce Relics through the same rarity ladder as other
+promoted enemies, with rank and gear bonuses increasing that chance. Relics use
+a curated copy of an iconic vanilla, Tribunal, or Bloodmoon weapon/armor
+record, keep its recognizable name, model, and native enchantment, then add six
+Ashen effects and enhanced physical stats. The original artifact and its quest
+remain untouched. Relics do not enter ordinary, elite, container, or
+NPC-randomization drop pools. A separate 10% base roll can instead produce a
+Mythic artifact.
 Ashen Conjurers start with Summon Ancestral Ghost, Bound Dagger, Chameleon,
 Detect Creature, and Water Walking. Existing racial spells are preserved and
 duplicates are not added.

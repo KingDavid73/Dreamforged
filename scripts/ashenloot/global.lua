@@ -13,7 +13,6 @@ local script = 'scripts/ashenloot/actor.lua'
 local state = {version = 23, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
-local relicPool
 local mythicDefinitions={
  {id='wabbajack',name='Wabbajack',base='wooden staff',description='Safe creatures become a different level-scaled creature.'},
  {id='corruption',name='Skull of Corruption',base='staff_magnus_unique',description='Creates an evil duplicate that fights its original.'},
@@ -546,11 +545,6 @@ local function giveLoot(actor, seed, minimum, forcedBase, forcedTier, trophy, de
     if player then player:sendEvent('AshenLoot_Record', {id = id, metadata = state.records[id]}) end
     return id
 end
-local relicCandidates={'umbra sword','claymore_chrysamere_unique','katana_goldbrand_unique',
-    'daedric_crescent_unique','spear_mercy_unique','staff_magnus_unique','warhammer_crusher_unique',
-    'cuirass_savior_unique','cuirass_dragonbone_unique','ebon_plate_cuirass_unique','helm_oreyn_unique',
-    'bloodworm_helm_unique','darksun_shield_unique','katana_bluebrand_unique','we_shimsil',
-    'glass claymore_magebane','daedric warhammer_ttgd'}
 local function gearOverage()
     local player=world.players[1]
     if not player then return 0 end
@@ -559,33 +553,22 @@ end
 local function mythicChance()
     return math.min(40,10+math.floor(gearOverage()*1.5+0.5))
 end
-local function giveRelic(actor)
-    if not relicPool then
-        relicPool={}
-        for _,id in ipairs(relicCandidates) do
-            local rec
-            for _,kind in ipairs({types.Weapon,types.Armor}) do
-                local ok,candidate=pcall(function() return kind.record(id) end)
-                if ok and candidate then rec=candidate;break end
-            end
-            if rec and (C.unsafeContent or not rec.mwscript) then relicPool[#relicPool+1]=id end
-        end
-    end
+-- Mythic artifacts remain an independent, rare World Boss roll. Ordinary
+-- World Boss attempts now use the same Common-to-Relic rarity ladder as every
+-- other promoted enemy, so no equipment drop is guaranteed.
+local function giveMythic(actor)
     local rng=R.rng(actor.id..':relic')
-    if rng(100)<=mythicChance() then
-        local def=mythicDefinitions[rng(#mythicDefinitions)]
-        local kind=def.kind=='armor' and types.Armor or (def.kind=='clothing' and types.Clothing or types.Weapon)
-        local base=kind.record(def.base) or (kind==types.Weapon and kind.record('wooden staff'))
-        if base then
-            local id,meta=Records.makeMythic(base,kind,def);meta.dropLevel=Progress.actorLevel(actor);meta.level=meta.dropLevel
-            state.records[id]=meta;local item=world.createObject(id,1)
-            if not Progress.ground(item,actor) then item:moveInto(types.Actor.inventory(actor)) end
-            local player=world.players[1];if player then player:sendEvent('AshenLoot_Record',{id=id,metadata=meta}) end
-            return id
-        end
+    if rng(100)>mythicChance() then return end
+    local def=mythicDefinitions[rng(#mythicDefinitions)]
+    local kind=def.kind=='armor' and types.Armor or (def.kind=='clothing' and types.Clothing or types.Weapon)
+    local base=kind.record(def.base) or (kind==types.Weapon and kind.record('wooden staff'))
+    if base then
+        local id,meta=Records.makeMythic(base,kind,def);meta.dropLevel=Progress.actorLevel(actor);meta.level=meta.dropLevel
+        state.records[id]=meta;local item=world.createObject(id,1)
+        if not Progress.ground(item,actor) then item:moveInto(types.Actor.inventory(actor)) end
+        local player=world.players[1];if player then player:sendEvent('AshenLoot_Record',{id=id,metadata=meta}) end
+        return id
     end
-    local base=#relicPool>0 and relicPool[rng(#relicPool)] or nil
-    return giveLoot(actor,actor.id..':relic',6,base,6)
 end
 local function safeMythicActor(actor,allowDead)
     if not actor or not actor:isValid() or types.Player.objectIsInstance(actor) then return false end
@@ -890,10 +873,7 @@ local function death(actor)
     state.rewards[actor.id] = true
     Progress.supplies(actor)
     local elite = state.elites[actor.id]
-    if elite and elite.worldBoss then
-        giveRelic(actor)
-        Progress.supplies(actor)
-    end
+    if elite and elite.worldBoss then giveMythic(actor) end
     local rank=elite and (elite.worldBoss and 4 or (elite.rank or 1)) or 0
     local attempts=({[0]=1,[1]=2,[2]=3,[3]=4,[4]=6})[rank]
     local chance=math.min(100,C.normalDropChance*100+({[0]=0,[1]=20,[2]=35,[3]=50,[4]=100})[rank])
@@ -1079,7 +1059,7 @@ return {
             startingKit = startingKit,reconcileAdvancement=reconcileAdvancement,useAdvancement=useAdvancement,
             mythicImpact=mythicImpact,mythicDefinitions=mythicDefinitions,getPool=getPool,mythicChance=mythicChance,
             ensureSpellTomes=ensureSpellTomes,tomeDefinitions=tomeDefinitions,learnSpellTome=learnSpellTome,
-            refreshContentPools=function() pool=nil;relicPool=nil;Progress.refreshPools() end}},
+            refreshContentPools=function() pool=nil;Progress.refreshPools() end}},
     engineHandlers = {
         onInit = function()
             assert(supported(), 'Ashen Loot requires OpenMW 0.51 or newer')
@@ -1126,12 +1106,12 @@ return {
                 .. tostring(C.unsafeContent)
             if coverage == lastCoverage then return end
             lastCoverage = coverage
-            pool=nil;relicPool=nil;Progress.refreshPools()
+            pool=nil;Progress.refreshPools()
             for _, actor in ipairs(world.activeActors) do attach(actor) end
         end,
         onSave = function() return state end,
         onLoad = function(data)
-            state = data or state; pool = nil;relicPool=nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0
+            state = data or state; pool = nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0
             local oldVersion=state.version or 1
             state.procs, state.cooldowns = state.procs or {}, state.cooldowns or {}
             state.itemSpells,state.itemCooldowns,state.itemProcRoll=state.itemSpells or {},state.itemCooldowns or {},state.itemProcRoll or 0

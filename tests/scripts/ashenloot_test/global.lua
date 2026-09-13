@@ -19,6 +19,7 @@ local function first()
     check(R.rarity(function() return 99 end, 1, 0)==6, 'Relic rarity is unreachable')
     check(R.rarity(function() return 70 end, 1, 30)>=5, 'Rarity bonus does not improve rolls')
     check(R.rarity(function() return 59 end, 1, 40)==5, 'Rarity overflow must not collapse into Relic')
+    check(R.rarity(function() return 89 end, 1, 40)==6, 'Promotion bonus does not widen Relic chance')
     for n = 1, 1000 do
         local elite = R.elite(tostring(n), 'Test')
         check(elite.modifiers[1] ~= elite.modifiers[2], 'Duplicate enemy modifiers')

@@ -1,5 +1,14 @@
 ﻿# Ashen Loot validation
 
+## 0.10.4 natural World Boss rewards (2026-09-13)
+
+- Rules coverage confirms the World Boss rarity bonus widens the Relic slice
+  without clamping overflow into Relic; normal six-attempt rewards remain
+  independent of the separate Mythic roll.
+- The isolated OpenMW regression should be rerun before packaging. Existing
+  0.10.3 suites passed settings, generated records, promotions, loot, UI, and
+  save/reload.
+
 ## 0.10.3 rarity color and weighting fix (2026-09-13)
 
 - Deterministic rules coverage confirms rarity bonuses cannot collapse into a

@@ -202,20 +202,26 @@ function M.rarity(random, minimum, bonus)
     -- Rarity bonuses improve a roll, but never collapse the overflow into the
     -- final percentile.  Capping `random(100) + bonus` at 100 made every roll
     -- above the cap a Relic, which was especially visible on promoted packs.
-    -- Keep the native top two-percent Relic slice intact and cap promoted
-    -- rolls just below it; World Bosses still receive their explicit Relic
-    -- reward from the boss table. This preserves a small natural Relic chance
-    -- without turning it into the common result for every high-tier drop.
+    -- Keep a small natural Relic slice, then let promotion/gear bonus widen it
+    -- gradually (0.25 percentage points per bonus point, capped at 20%). The
+    -- bonus is decided as an expanded top slice rather than by clamping an
+    -- overflowing roll to 100, so high-tier packs become more likely to see a
+    -- Relic without turning every overflowed result into one.
     local raw=math.floor(tonumber(random(100)) or 1)
     raw=math.max(1,math.min(100,raw))
     local amount=math.max(0,math.floor(tonumber(bonus) or 0))
     local relicWeight=M.rarities[#M.rarities] and M.rarities[#M.rarities].weight or 1
-    local relicStart=101-relicWeight
+    local relicChance=math.min(20,relicWeight+amount*0.25)
+    local relicStart=101-relicChance
     local roll
     if raw>=relicStart then
-        roll=raw
+        return math.max(#M.rarities, minimum or 1)
     else
-        roll=math.min(relicStart-1,raw+amount)
+        -- Keep the ordinary CDF's final percentile reserved for Relic. The
+        -- expanded Relic chance above is handled explicitly, so promoted
+        -- overflow can still reach Legendary without becoming Relic by
+        -- accident.
+        roll=math.min(98,raw+amount)
     end
     local sum = 0
     for i, r in ipairs(M.rarities) do
