@@ -13,6 +13,14 @@ end
 armorSlots[types.Armor.TYPE.Shield]=S.CarriedLeft
 local weaponSkills = {[0]='shortblade',[1]='longblade',[2]='longblade',[3]='bluntweapon',
     [4]='bluntweapon',[5]='bluntweapon',[6]='spear',[7]='axe',[8]='axe',[9]='marksman',[10]='marksman'}
+local function reservedForPlayer(item)
+    local api=I.AshenLoot
+    if not api or not api.getState then return false end
+    local ok,state=pcall(api.getState)
+    local loose=ok and state and state.director and state.director.loose
+        and state.director.loose[item.id]
+    return type(loose)=='table' and loose.protected==true
+end
 local function slot(item)
     if types.Weapon.objectIsInstance(item) then
         local r=item.type.record(item)
@@ -90,7 +98,8 @@ local function update(dt)
             local s=slot(item)
             local ok,r=pcall(function() return item.type.record(item) end)
             local owner=item.owner
-            if ok and r and s and not r.mwscript and not (owner and (owner.recordId or owner.factionId))
+            if ok and r and s and not reservedForPlayer(item) and not r.mwscript
+                and not (owner and (owner.recordId or owner.factionId))
                 and score(item)>score(eq[s])*1.02 then
                 target,timeout,travelPos=item,0,item.position
                 I.AI.startPackage {type='Travel',destPosition=travelPos,cancelOther=false}

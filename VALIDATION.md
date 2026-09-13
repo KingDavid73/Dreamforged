@@ -12,8 +12,8 @@
   transfer path remains covered by the world regression.
 - Natural Relic rarity rolls and equal Legendary/Relic family weighting are
   covered by deterministic rules checks.
-- Logs: `tests/v4-profile/openmw.log` (clean run at 00:13:26) and
-  `tests/v4-world-profile/openmw.log` (clean run at 00:24:43).
+- Logs: `tests/v4-profile/openmw.log` (clean run at 00:25:30) and
+  `tests/v4-world-profile/openmw.log` (clean run at 00:29:11).
 
 ## 0.10.1 terrain-aware ground placement (2026-09-12)
 
