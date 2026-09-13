@@ -1,0 +1,1285 @@
+-- Standalone 0.4 director. No third-party mod code or assets.
+local core, types, world = require('openmw.core'), require('openmw.types'), require('openmw.world')
+local util = require('openmw.util')
+local C, R = require('scripts.ashenloot.config'), require('scripts.ashenloot.rules')
+local Records = require('scripts.ashenloot.records')
+local M = {}
+local state, loot, promote, eligible
+local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
+local genericCreatureIds
+local timer, considered, lastPlayerCell = 0, {}, nil
+local glowColors = {{0.78,0.78,0.78},{0.25,0.90,0.35},{0.30,0.55,1.00},{0.72,0.28,1.00},{1.00,0.30,0.08},{1.00,0.92,0.55}}
+local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
+local function isGuard(actor)
+    if not actor or not types.NPC.objectIsInstance(actor) then return false end
+    local rec=actor.type.record(actor)
+    local text=((rec.id or '')..' '..(rec.name or '')):lower()
+    for _,word in ipairs({'guard','ordinator','her hand','hands of almalexia'}) do
+        if text:find(word,1,true) then return true end
+    end
+    return false
+end
+local function isAggressive(actor)
+    return actor and actor:isValid() and not types.Actor.isDead(actor)
+        and types.Actor.stats.ai.fight(actor).base>=80
+end
+local function worldBossScale(actor)
+    local rec=actor.type.record(actor)
+    local name=((rec.id or '')..' '..(rec.name or '')..' '..(rec.model or '')):lower()
+    local small=false
+    for _,word in ipairs({'scrib','rat','crab','forager','fish','spider','scamp','grub','beetle'}) do
+        if name:find(word,1,true) then small=true;break end
+    end
+    local large=false
+    for _,word in ipairs({'ogrim','daedroth','centurion','titan','giant','bear','mammoth','golem'}) do
+        if name:find(word,1,true) then large=true;break end
+    end
+    local exterior=actor.cell and actor.cell.isExterior or false
+    local factor
+    if exterior then factor=large and 2 or (small and 5 or 3)
+    else factor=large and 1.15 or (small and 3 or 1.7) end
+    return math.min(exterior and 6 or 3.25,actor.scale*factor),factor
+end
+local function activeWorldBosses(cell)
+    local count=0
+    for _,other in ipairs(world.activeActors) do
+        local elite=state.elites[other.id]
+        if other.cell==cell and elite and elite.worldBoss and not types.Actor.isDead(other) then count=count+1 end
+    end
+    return count
+end
+local function level() return math.max(1,types.Actor.stats.level(world.players[1]).current) end
+local function gearSlots(item)
+    local S=types.Actor.EQUIPMENT_SLOT
+    if types.Weapon.objectIsInstance(item) then
+        local rec=types.Weapon.record(item)
+        return rec and rec.type<=types.Weapon.TYPE.MarksmanCrossbow and {S.CarriedRight}
+    elseif types.Armor.objectIsInstance(item) then
+        local rec=types.Armor.record(item)
+        local armorSlots={
+            [types.Armor.TYPE.Helmet]=S.Helmet,[types.Armor.TYPE.Cuirass]=S.Cuirass,
+            [types.Armor.TYPE.Greaves]=S.Greaves,[types.Armor.TYPE.LPauldron]=S.LeftPauldron,
+            [types.Armor.TYPE.RPauldron]=S.RightPauldron,[types.Armor.TYPE.LGauntlet]=S.LeftGauntlet,
+            [types.Armor.TYPE.RGauntlet]=S.RightGauntlet,[types.Armor.TYPE.LBracer]=S.LeftGauntlet,
+            [types.Armor.TYPE.RBracer]=S.RightGauntlet,[types.Armor.TYPE.Shield]=S.CarriedLeft}
+        local slot=rec and armorSlots[rec.type]
+        return slot and {slot}
+    elseif types.Clothing.objectIsInstance(item) then
+        local rec=types.Clothing.record(item)
+        local slots={
+            [types.Clothing.TYPE.Amulet]={S.Amulet}, [types.Clothing.TYPE.Belt]={S.Belt},
+            [types.Clothing.TYPE.LGlove]={S.LeftGauntlet}, [types.Clothing.TYPE.Pants]={S.Pants},
+            [types.Clothing.TYPE.RGlove]={S.RightGauntlet}, [types.Clothing.TYPE.Ring]={'ring'},
+            [types.Clothing.TYPE.Robe]={S.Robe}, [types.Clothing.TYPE.Shirt]={S.Shirt},
+            [types.Clothing.TYPE.Shoes]={S.Boots}, [types.Clothing.TYPE.Skirt]={S.Skirt},
+        }
+        return rec and slots[rec.type]
+    end
+end
+local function gearLevel()
+    local player=world.players[1]
+    local playerLevel=level()
+    if not player or not state or not state.records then return playerLevel end
+    local best, rings, seen = {}, {}, {}
+    local inventory=types.Actor.inventory(player)
+    local function consider(item)
+        if not item or not item.recordId or seen[item.id] then return end
+        seen[item.id]=true
+        local meta=state.records[item.recordId]
+        if not meta or not (meta.level or meta.dropLevel) then return end
+        local itemLevel=tonumber(meta.level or meta.dropLevel) or playerLevel
+        -- Rarity represents multiplicative affix power that raw drop level does
+        -- not capture. Relics in particular can dominate a build many levels
+        -- before their nominal drop level would look threatening.
+        local rarityPremium=({[1]=0,[2]=4,[3]=10,[4]=18,[5]=28})[tonumber(meta.tier) or 1] or 0
+        local qualityPremium=math.max(0,(tonumber(meta.baseQualityTier) or 1)-1)*2
+        local score=itemLevel+rarityPremium+qualityPremium
+        for _,slot in ipairs(gearSlots(item) or {}) do
+            if slot=='ring' then rings[#rings+1]={id=item.id,score=score,count=math.max(1,item.count or 1)}
+            elseif not best[slot] or score>best[slot].score then best[slot]={id=item.id,score=score} end
+        end
+    end
+    for _,item in ipairs(inventory:getAll()) do consider(item) end
+    -- Equipped objects are normally part of Actor.inventory, but considering
+    -- them explicitly also covers engine versions that expose them separately.
+    for _,item in pairs(types.Actor.getEquipment(player)) do
+        consider(item)
+    end
+    table.sort(rings,function(a,b) return a.score>b.score end)
+    local ringSlots={}
+    for _,candidate in ipairs(rings) do
+        if candidate.count>0 and not ringSlots[1] then ringSlots[1]=candidate;break end
+    end
+    if ringSlots[1] then
+        for index=2,#rings do
+            if rings[index].id~=ringSlots[1].id or rings[index].count>1 then ringSlots[2]=rings[index];break end
+        end
+    end
+    if ringSlots[1] then best[types.Actor.EQUIPMENT_SLOT.LeftRing]=ringSlots[1] end
+    if ringSlots[2] then best[types.Actor.EQUIPMENT_SLOT.RightRing]=ringSlots[2] end
+    local total,count=0,0
+    for _,entry in pairs(best) do total=total+entry.score;count=count+1 end
+    if count==0 then return playerLevel end
+    local average=total/count
+    local influence=math.max(0,math.min(1,tonumber(C.gearLevelInfluence) or 0.5))
+    return math.max(playerLevel,math.floor(playerLevel+(average-playerLevel)*influence+0.5))
+end
+local function prestigeScale(effectiveLevel)
+    -- Preserve the established curve through level 100, then keep uncapped
+    -- leveling meaningful as a direct multiplier. Level 500 therefore means
+    -- 5x baseline health/strength before promotion and gear-pressure bonuses.
+    return math.max(1,effectiveLevel/100)
+end
+local function gearHealthScale(effectiveLevel,playerLevel)
+    -- Gear already raises the target level. Add a durability response as well,
+    -- because Morrowind weapon damage can outpace ordinary level-based health.
+    -- Damage is deliberately untouched: this is anti-trivialization, not a
+    -- blanket increase to enemy burst damage.
+    return math.min(3,1+math.max(0,effectiveLevel-playerLevel)*0.10)
+end
+local function cellKey(cell) return cell.id end
+local function dungeon(cell)
+    if cell.isExterior then return false end
+    local n = cell.name:lower()
+    for _, word in ipairs({'tomb','shrine','ruin','cavern','cave','grotto','daedric','crypt','stronghold','mine'}) do
+        if n:find(word,1,true) then return true end
+    end
+    -- Most vanilla caves have proper names rather than the word "cave".
+    for _,word in ipairs({'guild','temple','house','manor','shop','tavern','tradehouse','inn','canton','palace'}) do
+        if n:find(word,1,true) then return false end
+    end
+    for _,actor in ipairs(world.activeActors) do
+        if actor.cell==cell then
+            for _,offered in pairs(actor.type.record(actor).servicesOffered or {}) do if offered then return false end end
+        end
+    end
+    return true -- Called only after a protected/hostile eligibility check.
+end
+local function buildGenericCreatureIds()
+    if genericCreatureIds then return end
+    genericCreatureIds={}
+    local visiting={}
+    local function addList(list)
+        if not list or visiting[list.id] then return end
+        visiting[list.id]=true
+        for _,entry in ipairs(list.creatures or {}) do
+            if types.Creature.records[entry.id] then genericCreatureIds[entry.id:lower()]=true
+            else addList(types.LevelledCreature.records[entry.id]) end
+        end
+    end
+    for _,list in pairs(types.LevelledCreature.records) do addList(list) end
+end
+local function ordinaryCreatureRecord(rec)
+    if not rec or rec.isEssential then return false end
+    buildGenericCreatureIds()
+    local id=rec.id:lower()
+    if id:find('^generated:') then return false end
+    for _,word in ipairs({'unique','summon','_pet','_quest'}) do if id:find(word,1,true) then return false end end
+    -- Many expansion and creature-pack records are not placed in a leveled list
+    -- and do not mark the base record as respawning. Admit unscripted records as
+    -- ordinary archetypes; retain the stronger respawn/list requirement only
+    -- for scripted creatures so quest specimens stay behind Unsafe Chaos.
+    if rec.mwscript and not rec.isRespawning and not genericCreatureIds[id] then return false end
+    for _, v in pairs(rec.servicesOffered or {}) do if v then return false end end
+    return true
+end
+local function safeRecord(rec)
+    if not rec then return false end
+    if C.unsafeContent then return not rec.id:find('^generated:') end
+    return ordinaryCreatureRecord(rec)
+end
+local function populationAnchor(actor)
+    local rec=actor and actor.type.record(actor)
+    if not rec then return false end
+    if types.Creature.objectIsInstance(actor) then return ordinaryCreatureRecord(rec) end
+    if rec.mwscript or rec.isEssential then return false end
+    for _,v in pairs(rec.servicesOffered or {}) do if v then return false end end
+    return true
+end
+local function family(rec)
+    if rec.type == types.Creature.TYPE.Undead then return 'undead' end
+    if rec.type == types.Creature.TYPE.Daedra then return 'daedra' end
+    local s = (rec.id .. ' ' .. (rec.model or '')):lower()
+    if s:find('centurion') or s:find('sphere') or s:find('steam') then return 'construct' end
+    return 'beast'
+end
+local function estimatedLevel(rec)
+    local attack=0
+    for index,value in ipairs(rec.attack or {}) do if index%2==0 then attack=math.max(attack,value) end end
+    local skill=math.max(rec.combatSkill or 0,rec.magicSkill or 0,rec.stealthSkill or 0)
+    return math.max(1,math.min(100,math.floor(0.5+math.max((skill-15)/3.2,attack/1.4,math.sqrt(rec.soulValue or 0)*1.4))))
+end
+local function buildPools()
+    if pools then return end
+    pools = {beast={},undead={},daedra={},construct={},all={}}
+    -- Authored estimates improve Similar mode. Every otherwise-safe walking or
+    -- flying record still enters Random mode, including expansion/mod content.
+    local tiers = {rat=1, kwama=3, scrib=1, nix=5, alit=4, kagouti=8, guar=4,
+        cliff=5, wolf=6, bear=12, horker=6, skeleton=5, ghost=5, bonelord=15,
+        bonewalker=10, scamp=5, clannfear=12, daedroth=18, dremora=20,
+        golden=30, ogrim=22, atronach=18, spider=8, sphere=14, steam=24}
+    local vanilla={rat=1,scrib=1,kwamaforager=2,kwamaworker=3,kwamawarrior=6,nixhound=5,alit=4,kagouti=8,guar=4,
+        skeleton=5,skeletonarcher=7,ancestorghost=5,bonewalker=10,greaterbonewalker=16,bonelord=15,
+        scamp=5,clannfear=12,daedroth=18,dremora=20,goldensaint=30,ogrim=22,ogrimtitan=26,
+        flameatronach=18,frostatronach=20,stormatronach=25,centurionspider=8,centurionsphere=14,steamcenturion=24}
+    for _, rec in pairs(types.Creature.records) do
+        if safeRecord(rec) and (rec.canWalk or rec.canFly) and not (rec.canSwim and not rec.canWalk and not rec.canFly)
+            and not rec.id:find('$',1,true) then
+            local s = (rec.id .. ' ' .. (rec.model or '')):lower()
+            local estimate=vanilla[(rec.id:lower():gsub('[ _%-]',''))]
+            if rec.id:match('^t_') or rec.id:match('^bm_') then
+                for word, value in pairs(tiers) do if s:find(word,1,true) then estimate = math.max(estimate or 1,value) end end
+            end
+            estimate=estimate or estimatedLevel(rec)
+            local f = family(rec)
+            local entry={id=rec.id,level=estimate,family=f,flies=rec.canFly and not rec.canWalk}
+            pools[f][#pools[f]+1] = entry
+            pools.all[#pools.all+1]=entry
+        end
+    end
+    for _, pool in pairs(pools) do table.sort(pool,function(a,b) return a.id < b.id end) end
+end
+local function isCliff(id)
+    id=(id or ''):lower()
+    return id:find('cliff',1,true) and id:find('racer',1,true)
+end
+local function pickCreature(actor, target, rng, extra)
+    buildPools()
+    local rec = actor.type.record(actor)
+    if not types.Creature.objectIsInstance(actor) then return actor.recordId end
+    local candidates = {}
+    if extra and C.creaturePoolMode=='Random' then
+        for _,entry in ipairs(pools.all) do
+            if not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+        end
+        table.sort(candidates)
+        return #candidates>0 and candidates[rng(#candidates)] or actor.recordId
+    end
+    if extra and (rec.canFly or rec.canSwim or not rec.canWalk) then
+        -- Flying/swimming actors may anchor a pack, but its members must be
+        -- selected from the land-capable pool used by navmesh placement.
+        for _,entry in ipairs(pools.beast) do
+            if not entry.flies and not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+        end
+        return #candidates>0 and candidates[rng(#candidates)] or 'rat'
+    end
+    if rec.canFly or rec.canSwim then
+        if not (extra and C.excludeExtraCliffRacers and isCliff(actor.recordId)) then return actor.recordId end
+        for _,entry in ipairs(pools.beast) do candidates[#candidates+1]=entry.id end
+        return #candidates>0 and candidates[rng(#candidates)] or actor.recordId
+    end
+    local northern=(actor.recordId:find('^bm_') or actor.recordId:find('^t_sky_'))~=nil
+    for _, entry in ipairs(pools[family(rec)]) do
+        local regional=not entry.id:find('^bm_') and not entry.id:find('^t_sky_') or northern
+        if regional and entry.level >= math.max(1,target-C.encounterLevelBelow)
+            and entry.level <= target+C.encounterLevelAbove
+            and not (extra and C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+    end
+    return #candidates > 0 and candidates[rng(#candidates)] or actor.recordId
+end
+local function pickNpcReinforcement(actor,target,rng)
+    buildPools()
+    local text=(actor.cell.name..' '..actor.recordId..' '..(actor.type.record(actor).name or '')):lower()
+    local wanted='beast'
+    if not actor.cell.isExterior then
+        if text:find('vampir',1,true) or text:find('necrom',1,true) or text:find('tomb',1,true)
+            or text:find('crypt',1,true) or text:find('ancestral',1,true) then wanted='undead'
+        elseif text:find('daedr',1,true) or text:find('shrine',1,true) or text:find('cult',1,true) then wanted='daedra'
+        elseif text:find('dwemer',1,true) or text:find('dwarven',1,true) then wanted='construct' end
+    end
+    local families=C.creaturePoolMode=='Random' and {'all'} or {wanted}
+    local candidates={}
+    for _,familyName in ipairs(families) do
+        for _,entry in ipairs(pools[familyName]) do
+            if (C.creaturePoolMode=='Random' or (entry.level>=math.max(1,target-C.encounterLevelBelow)
+                and entry.level<=target+C.encounterLevelAbove))
+                and not (C.excludeExtraCliffRacers and isCliff(entry.id)) then
+                candidates[#candidates+1]=entry.id
+            end
+        end
+    end
+    if #candidates==0 then
+        for _,entry in ipairs(pools[wanted]) do
+            if not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+        end
+    end
+    table.sort(candidates)
+    return #candidates>0 and candidates[rng(#candidates)] or (actor.cell.isExterior and 'nix-hound' or 'skeleton')
+end
+local function pickDungeonCreature(cell,target,rng)
+    buildPools()
+    local source=pools.all
+    if C.creaturePoolMode~='Random' then
+        local text=(cell.name or ''):lower()
+        local wanted='beast'
+        if text:find('tomb',1,true) or text:find('crypt',1,true) or text:find('ancestral',1,true)
+            or text:find('vampir',1,true) or text:find('necrom',1,true) then wanted='undead'
+        elseif text:find('daedr',1,true) or text:find('shrine',1,true) then wanted='daedra'
+        elseif text:find('dwemer',1,true) or text:find('dwarven',1,true) then wanted='construct' end
+        source=pools[wanted]
+    end
+    local candidates={}
+    for _,entry in ipairs(source) do
+        if (C.creaturePoolMode=='Random' or (entry.level>=math.max(1,target-C.encounterLevelBelow)
+            and entry.level<=target+C.encounterLevelAbove))
+            and not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+    end
+    if #candidates==0 then
+        for _,entry in ipairs(pools.beast) do if not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end end
+    end
+    table.sort(candidates)
+    return #candidates>0 and candidates[rng(#candidates)] or 'rat'
+end
+local function encounterTarget(native,playerLevel,jitter,isCreature,isGenerated)
+    if not C.progression then return native end
+    if not isCreature then return math.max(native,math.floor(1+(playerLevel-1)*C.levelScaling+jitter)) end
+    local influence=math.min(1,C.levelScaling)
+    local target=math.floor(native+(playerLevel-native)*influence+jitter+0.5)
+    target=math.max(playerLevel-C.encounterLevelBelow,math.min(playerLevel+C.encounterLevelAbove,target))
+    if isGenerated and C.creaturePoolMode=='Random' then target=playerLevel+jitter end
+    return math.max(1,target)
+end
+local function buildGear()
+    if gear then return end
+    gear = {}
+    for _, kind in ipairs({types.Weapon,types.Armor,types.Clothing}) do
+        for _, rec in pairs(kind.records) do
+            if (C.unsafeContent or (not rec.mwscript and not rec.enchant)) and rec.value > 0 and not rec.id:find('$',1,true) then
+                local key = tostring(kind) .. ':' .. tostring(rec.type)
+                gear[key] = gear[key] or {}
+                gear[key][#gear[key]+1] = rec
+            end
+        end
+    end
+    for _, p in pairs(gear) do table.sort(p,function(a,b) return a.id < b.id end) end
+end
+function M.bind(s, giveLoot, encounter, isEligible)
+    state, loot, promote, eligible = s, giveLoot, encounter, isEligible
+    state.director = state.director or {actors={},cells={},generated={},cache={},supplies={},loose={},containers={},randomizedContainers={},npcLoot={},looseCells={},bossAdds={}}
+    for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds'}) do
+        state.director[key] = state.director[key] or {}
+    end
+    pending, pools, gear, itemPools, kindPools, lastPlayerCell, considered = {}, nil, nil, nil, nil, nil, {}
+    for id,a in pairs(state.director.actors) do if a.pendingReplacement then state.director.actors[id]=nil end end
+end
+function M.bossWave(actor)
+    if not C.enabled or not C.extraEncounters or not valid(actor) then return end
+    local elite=state.elites[actor.id]
+    local player=world.players[1]
+    if not elite or not elite.worldBoss or not player or player.cell~=actor.cell then return end
+    local d=state.director
+    local tracked=d.bossAdds[actor.id] or {}
+    local live={}
+    for _,id in ipairs(tracked) do
+        for _,candidate in ipairs(world.activeActors) do
+            if candidate.id==id and valid(candidate) then live[#live+1]=id;break end
+        end
+    end
+    d.bossAdds[actor.id]=live
+    local cap=C.worldBossAddCap
+    if cap<=0 or #live>=cap then return end
+    local rng=R.rng(actor.id..':boss-wave:'..math.floor(core.getSimulationTime()/C.worldBossAddInterval))
+    local low=math.min(C.worldBossAddMin,C.worldBossAddMax)
+    local high=math.max(C.worldBossAddMin,C.worldBossAddMax)
+    local count=math.min(cap-#live,low+rng(high-low+1)-1)
+    local token=actor.id..':boss-wave:'..tostring(core.getSimulationTime())
+    pending[token]={actor=actor,level=M.actorLevel(actor),count=count,cell=actor.cell.id,
+        created=core.getSimulationTime(),bossWave=true}
+    player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=actor,count=count})
+end
+local inventoryKinds={types.Weapon,types.Armor,types.Clothing,types.Potion,types.Ingredient,
+    types.Book,types.Lockpick,types.Probe,types.Apparatus}
+if types.Miscellaneous then inventoryKinds[#inventoryKinds+1]=types.Miscellaneous end
+local function poolKey(kind,rec)
+    local subtype=(kind==types.Weapon or kind==types.Armor or kind==types.Clothing or kind==types.Apparatus) and rec.type or 0
+    return tostring(kind)..':'..tostring(subtype)
+end
+local function safeInventoryRecord(kind,rec)
+    if not rec or not rec.value or rec.value<=0 or not rec.id
+        or rec.id:find('$',1,true) then return false end
+    if C.unsafeContent then return true end
+    if rec.mwscript then return false end
+    local text=(rec.id..' '..(rec.name or '')):lower()
+    for _,word in ipairs({'artifact','quest','unique'}) do
+        if text:find(word,1,true) then return false end
+    end
+    if kind==types.Miscellaneous then
+        if rec.isKey or text:find('azura',1,true) or text:find('propylon',1,true) then return false end
+        -- Miscellaneous records contain keys, quest props and documents as well
+        -- as treasure. Admit only recognizable, fungible valuables.
+        for _,word in ipairs({'gem','diamond','emerald','ruby','sapphire','pearl','soulgem','coin','gold'}) do
+            if text:find(word,1,true) then return true end
+        end
+        return false
+    end
+    return true
+end
+local function buildItemPools()
+    if itemPools then return end
+    itemPools,kindPools={},{}
+    for _,kind in ipairs(inventoryKinds) do
+        for _,rec in pairs(kind.records) do
+            if safeInventoryRecord(kind,rec) then
+                local key=poolKey(kind,rec)
+                itemPools[key]=itemPools[key] or {}
+                local equipment=kind==types.Weapon or kind==types.Armor or kind==types.Clothing
+                local entry={id=rec.id,value=rec.value,kind=kind,
+                    ordinary=not equipment or not rec.enchant,enchanted=equipment and not not rec.enchant}
+                itemPools[key][#itemPools[key]+1]=entry
+                local kindKey=tostring(kind)
+                kindPools[kindKey]=kindPools[kindKey] or {}
+                kindPools[kindKey][#kindPools[kindKey]+1]=entry
+            end
+        end
+    end
+    for _,pool in pairs(itemPools) do table.sort(pool,function(a,b) return a.id<b.id end) end
+    for _,pool in pairs(kindPools) do table.sort(pool,function(a,b) return a.id<b.id end) end
+end
+local function randomBase(kind,rec,target,rng,ordinaryOnly)
+    buildItemPools()
+    local pool=itemPools[poolKey(kind,rec)] or {}
+    local ceiling=math.max(rec.value*3,100+target*target*7)
+    local floor=math.max(1,math.min(rec.value*0.25,target*target*0.08))
+    local choices={}
+    for _,entry in ipairs(pool) do
+        if (not ordinaryOnly or entry.ordinary) and entry.value>=floor and entry.value<=ceiling then
+            choices[#choices+1]=entry
+        end
+    end
+    return #choices>0 and choices[rng(#choices)] or nil
+end
+local function randomBroadBase(target,rng)
+    buildItemPools()
+    local floor=math.max(5,target*target*0.12)
+    local ceiling=math.max(250,250+target*target*10)
+    local categories={}
+    for _,kind in ipairs(inventoryKinds) do
+        local choices={}
+        for _,entry in ipairs(kindPools[tostring(kind)] or {}) do
+            if entry.ordinary and entry.value>=floor and entry.value<=ceiling then choices[#choices+1]=entry end
+        end
+        if #choices>0 then categories[#categories+1]=choices end
+    end
+    if #categories==0 then return nil end
+    local choices=categories[rng(#categories)]
+    return choices[rng(#choices)]
+end
+local function randomNativeEnchanted(target,rng)
+    buildItemPools()
+    local floor=math.max(15,target*target*0.08)
+    local ceiling=math.max(500,500+target*target*18)
+    local categories={}
+    for _,kind in ipairs({types.Weapon,types.Armor,types.Clothing}) do
+        local choices={}
+        for _,entry in ipairs(kindPools[tostring(kind)] or {}) do
+            if entry.enchanted and entry.value>=floor and entry.value<=ceiling then choices[#choices+1]=entry end
+        end
+        if #choices>0 then categories[#categories+1]=choices end
+    end
+    if #categories==0 then return nil end
+    local choices=categories[rng(#categories)]
+    return choices[rng(#choices)]
+end
+local function randomSimilarEnchanted(kind,rec,target,rng)
+    buildItemPools()
+    local floor=math.max(15,target*target*0.08)
+    local ceiling=math.max(500,500+target*target*18)
+    local choices={}
+    for _,entry in ipairs(itemPools[poolKey(kind,rec)] or {}) do
+        if entry.enchanted and entry.value>=floor and entry.value<=ceiling then choices[#choices+1]=entry end
+    end
+    return #choices>0 and choices[rng(#choices)] or nil
+end
+local function randomContainerBase(kind,rec,target,rng,chest,lockLevel)
+    -- Regular caches remain mostly believable. Chests and difficult locks move
+    -- replacement rolls upward through valuable native and enchanted-native tiers.
+    local enchantedChance=math.min(30,5+(chest and 5 or 0)+lockLevel*0.20)
+    local valuableChance=math.min(45,25+(chest and 5 or 0)+lockLevel*0.125)
+    local roll=rng(100)
+    if roll<=enchantedChance then
+        local found=randomNativeEnchanted(target,rng)
+        if found then return found,'enchanted' end
+    end
+    if roll<=enchantedChance+valuableChance then
+        local found=randomBroadBase(target,rng)
+        if found then return found,'valuable' end
+    end
+    return randomBase(kind,rec,target,rng,true),'ordinary'
+end
+local function randomizeInventory(anchor,inventory,target,seed,skipEquipped,remixContext)
+    local rng=R.rng(seed)
+    local equipped={}
+    if skipEquipped then for _,item in pairs(types.Actor.getEquipment(anchor)) do equipped[item.id]=true end end
+    local originals={}
+    for _,kind in ipairs(inventoryKinds) do
+        for _,item in ipairs(inventory:getAll(kind)) do originals[#originals+1]={item=item,kind=kind,count=item.count} end
+    end
+    local changed=0
+    for _,entry in ipairs(originals) do
+        local item,kind=entry.item,entry.kind
+        if item:isValid() and not equipped[item.id] then
+            local rec=kind.record(item)
+            if rec and (C.unsafeContent or not rec.mwscript) and rec.value and rec.value>0 then
+                local replacement
+                if remixContext and remixContext.container then
+                    replacement=randomContainerBase(kind,rec,target,rng,
+                        remixContext.chest,remixContext.lockLevel or 0)
+                elseif remixContext and remixContext.npc and
+                    (kind==types.Weapon or kind==types.Armor or kind==types.Clothing) then
+                    local roll=rng(100)
+                    if roll<=remixContext.ashenChance then
+                        replacement=randomBase(kind,rec,target,rng,true)
+                        if replacement then
+                            local id=loot(anchor,seed..':'..item.id,remixContext.minimum or 1,
+                                replacement.id,nil,nil,inventory)
+                            if id then
+                                if item:isValid() then item:remove();changed=changed+1 end
+                            end
+                            replacement=nil
+                        end
+                    elseif roll<=remixContext.ashenChance+remixContext.enchantedChance then
+                        replacement=randomSimilarEnchanted(kind,rec,target,rng)
+                            or randomBase(kind,rec,target,rng,true)
+                    else replacement=randomBase(kind,rec,target,rng,true) end
+                else replacement=randomBase(kind,rec,target,rng) end
+                if replacement then
+                    local made
+                    if remixContext then
+                        local equipment=replacement.kind==types.Weapon or replacement.kind==types.Armor
+                            or replacement.kind==types.Clothing
+                        world.createObject(replacement.id,equipment and 1 or entry.count):moveInto(inventory)
+                        made=true
+                    elseif kind==types.Weapon or kind==types.Armor or kind==types.Clothing then
+                        made=loot(anchor,seed..':'..item.id,1,replacement.id,nil,nil,inventory)
+                        if made and entry.count>1 then world.createObject(made,entry.count-1):moveInto(inventory) end
+                    else
+                        world.createObject(replacement.id,entry.count):moveInto(inventory); made=true
+                    end
+                    if made and item:isValid() then item:remove();changed=changed+1 end
+                end
+            end
+        end
+    end
+    return changed
+end
+function M.actorLevel(actor)
+    local a = state.director.actors[actor.id]
+    return a and a.level or level()
+end
+function M.gearLevel()
+    return gearLevel()
+end
+local function npcGearChances(profile)
+    profile=profile or {}
+    local rank=profile.rank or 0
+    local base=C.npcAshenGearPercent
+    local rankBonus=({[0]=0,5,12,20})[rank] or 20
+    local ashen=base<=0 and 0 or math.min(50,base+
+        (profile.worldBoss and 30 or (profile.guard and 10 or rankBonus)))
+    local enchanted=profile.worldBoss and 30 or (profile.guard and 25 or 12+rank*5)
+    return ashen,enchanted
+end
+function M.loadout(actor, target, minimum, profile)
+    if not types.NPC.objectIsInstance(actor) or not C.npcProgression then return end
+    buildGear()
+    local rng = R.rng(actor.id .. ':loadout4')
+    profile=profile or {}
+    local ashenChance,enchantedChance=npcGearChances(profile)
+    -- Each eligible piece rolls independently. Full generated suits remain
+    -- possible anomalies rather than being prohibited, but are very unlikely.
+    local remixContext={npc=true,ashenChance=ashenChance,enchantedChance=enchantedChance,
+        minimum=minimum or 1}
+    local equipment = types.Actor.getEquipment(actor)
+    local inventory=types.Actor.inventory(actor)
+    local replacements = {}
+    -- Remix carried items before creating replacement equipment, so the new
+    -- loadout cannot be processed a second time while its equip event is queued.
+    if C.randomizeNpcInventories and not state.director.npcLoot[actor.id] then
+        state.director.npcLoot[actor.id]=true
+        if R.rng(actor.id..':inventory7')(100)<=C.npcInventoryPercent then
+            randomizeInventory(actor,inventory,target,actor.id..':inventory7',true,remixContext)
+        end
+    end
+    for slot, item in pairs(equipment) do
+        if #replacements >= 3 then break end
+        local rec, kind = item.type.record(item), item.type
+        if (kind == types.Weapon or kind == types.Armor or kind == types.Clothing) and not rec.mwscript and not rec.enchant then
+            local candidates = {}
+            local ceiling = 100 + target * target * 7
+            for _, candidate in ipairs(gear[tostring(kind)..':'..tostring(rec.type)] or {}) do
+                if candidate.id~=rec.id and candidate.value <= ceiling
+                    and candidate.value >= math.max(math.min(rec.value,ceiling)*0.6,math.min(1500,target*target*0.15)) then
+                    candidates[#candidates+1]=candidate
+                end
+            end
+            if #candidates > 0 then
+                local base = candidates[rng(#candidates)]
+                local roll=rng(100)
+                local id
+                if roll<=ashenChance then
+                    id=loot(actor,actor.id..':slot7:'..slot,minimum or 1,base.id)
+                elseif roll<=ashenChance+enchantedChance then
+                    local enchanted=randomSimilarEnchanted(kind,rec,target,rng)
+                    if enchanted then base=enchanted end
+                end
+                if not id and base.id~=rec.id then
+                    world.createObject(base.id,1):moveInto(inventory);id=base.id
+                end
+                if id then
+                    replacements[#replacements+1]={slot=slot,old=item,id=id}
+                end
+            end
+        end
+    end
+    actor:sendEvent('AshenLoot_Equip',replacements)
+    for _,entry in ipairs(replacements) do
+        if entry.old and entry.old:isValid() then entry.old:remove() end
+    end
+    local magic = types.Actor.stats.dynamic.magicka(actor).base
+    if magic >= 30 then
+        local school = types.NPC.stats.skills.destruction(actor).base
+        if school >= 20 then
+            local p = math.max(1,math.min(10,math.ceil(target/5)))
+            local element = ({'firedamage','frostdamage','shockdamage'})[rng(3)]
+            local key = 'caster:'..element..':'..p
+            local id = state.director.cache[key]
+            if not id then
+                id = world.createRecord(core.magic.spells.createRecordDraft {
+                    name='Dreamforged '..element..' '..p,type=core.magic.SPELL_TYPE.Spell,
+                    cost=math.min(20,3+p),isAutocalc=false,
+                    effects={Records.effect(element,3+p,core.magic.RANGE.Target,2)},
+                }).id
+                state.director.cache[key]=id
+            end
+            types.Actor.spells(actor):add(id)
+        end
+    end
+end
+function M.prepare(actor, inCombat)
+    if not C.enabled or not eligible(actor) or not valid(actor) then return end
+    local d = state.director
+    -- 0.7.4 stored generated actors as boolean true. Reconsider active exterior
+    -- members once so an existing save can finish an unspent cell budget.
+    local legacyExterior=d.generated[actor.id]==true and actor.cell.isExterior
+    if d.actors[actor.id] and not legacyExterior then return end
+    if legacyExterior then d.generated[actor.id]=1;d.actors[actor.id]=nil end
+    local rng = R.rng(actor.id..':progression4')
+    local native = math.max(1,types.Actor.stats.level(actor).current)
+    local guard=C.guardProgression and isGuard(actor)
+    local playerLevel=level()
+    local effectiveLevel=gearLevel()
+    local generated = d.generated[actor.id]
+    local target=encounterTarget(native,effectiveLevel,rng(5)-3,types.Creature.objectIsInstance(actor),generated~=nil)
+    if guard then target=math.max(target,math.floor(effectiveLevel*0.8)+4) end
+    target = math.max(1,target)
+    d.actors[actor.id]={level=target,cell=actor.cell.id}
+    local cell = actor.cell
+    local ck = cellKey(cell)
+    d.cells[ck]=d.cells[ck] or {count=0,boss=false}
+    local cellState=d.cells[ck]
+    if cell.isExterior then cellState.isExterior=true end
+    local boss = C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
+    if boss then cellState.boss=actor.id end
+    local town=false
+    if cell.isExterior then
+        local civilians=0
+        for _,other in ipairs(world.activeActors) do
+            if other.cell==cell and types.NPC.objectIsInstance(other) and types.Actor.stats.ai.fight(other).base<80 then civilians=civilians+1 end
+        end
+        town=C.settlementSuppression and civilians>=2
+    end
+    -- World Boss is the highest promotion result, not a separate per-cell roll.
+    -- Only actors that actually promote receive this conditional chance.
+    local allowWorldBoss=C.worldBosses and not guard and not town and isAggressive(actor)
+        and playerLevel>=C.worldBossMinLevel and activeWorldBosses(cell)<C.worldBossCellCap
+    -- Replace only before combat, never change a fighting actor underneath the player.
+    if not generated and not inCombat and not town and C.progression and types.Creature.objectIsInstance(actor)
+        and rng(100) <= C.creatureVariety and (actor.position-world.players[1].position):length() > 900 then
+        local id=pickCreature(actor,target,rng)
+        if id ~= actor.recordId then
+            local token=actor.id..':replacement'
+            pending[token]={actor=actor,replacement=id,created=core.getSimulationTime()}
+            d.actors[actor.id].pendingReplacement=true
+            world.players[1]:sendEvent('AshenLoot_CheckReplacement',{actor=actor,token=token})
+            return
+        end
+    end
+    local gearDurability=gearHealthScale(effectiveLevel,playerLevel)
+    local prestige=prestigeScale(effectiveLevel)
+    actor:sendEvent('AshenLoot_Scale',{level=target,nativeLevel=native,health=C.enemyHealth*prestige*(guard and C.guardPower or 1),
+        damage=C.enemyDamage*prestige*(guard and C.guardPower or 1),progression=C.progression,
+        allowDownscale=types.Creature.objectIsInstance(actor)})
+    if guard then M.loadout(actor,target+6,2,{guard=true});return end
+    if boss or cellState.boss==actor.id then
+        promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,gearPressure=gearDurability})
+    else promote({actor=actor,allowWorldBoss=allowWorldBoss,gearPressure=gearDurability}) end
+    local elite=state.elites[actor.id]
+    if elite and elite.worldBoss and not d.actors[actor.id].bossScaleFactor then
+        d.actors[actor.id].bossOriginalScale=actor.scale
+        local scale,factor=worldBossScale(actor)
+        actor:setScale(scale)
+        d.actors[actor.id].bossScaleFactor=factor
+    end
+    M.loadout(actor,target,elite and math.min(3,elite.rank or 1) or 1,
+        {rank=elite and elite.rank or 0,worldBoss=elite and elite.worldBoss})
+    if cellState.boss==actor.id then M.supplement(cell,target) end
+    M.containerLoot(cell,actor,target)
+    local baseBudget=cell.isExterior and C.exteriorBudget or (dungeon(cell) and C.interiorBudget or 0)
+    local maxCount=math.floor(baseBudget*C.encounterDensity+0.5)
+    if town then maxCount=0 end
+    -- A replacement may stand in for its native anchor, but an additional
+    -- generated actor never chains into another group.
+    local canAnchorPack=not generated or generated=='replacement'
+    -- Unsafe identity eligibility must never create extra population anchors.
+    -- It permits promotions/transforms; ordinary encounter records still own
+    -- the cell's strictly budgeted reinforcement generation.
+    if C.extraEncounters and populationAnchor(actor) and canAnchorPack and cellState.count < maxCount
+        and (not cell.isExterior or rng(100)<=C.exteriorAnchorChance) then
+        local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
+        local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
+        local group=cell.isExterior and (low+rng(high-low+1)-1)
+            or math.max(1,math.floor(C.encounterDensity+0.5))
+        if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
+        local count=math.min(maxCount-cellState.count,group)
+        cellState.count=cellState.count+count
+        local token=actor.id..':pack'
+        pending[token]={actor=actor,level=target,count=count,cell=ck,created=core.getSimulationTime()}
+        world.players[1]:sendEvent('AshenLoot_FindSpawn',{token=token,actor=actor,count=count})
+    end
+end
+function M.replaceResult(event)
+    local request=pending[event.token]
+    if not request or not request.replacement then return end
+    pending[event.token]=nil
+    local actor=request.actor
+    if not valid(actor) then return end
+    local d=state.director
+    if C.enabled and event.clear and (actor.position-world.players[1].position):length()>900 then
+        local replacement=world.createObject(request.replacement,1)
+        d.generated[replacement.id]='replacement'
+        replacement:teleport(actor.cell,actor.position,{rotation=actor.rotation})
+        replacement:sendEvent('AshenLoot_Spawned')
+        actor.enabled=false
+        local cellState=d.cells[actor.cell.id]
+        if cellState.boss==actor.id then cellState.boss=replacement.id end
+        d.actors[actor.id].pendingReplacement=nil
+        d.actors[actor.id].replacement=replacement
+    else
+        d.actors[actor.id]=nil
+        M.prepare(actor,true)
+    end
+end
+function M.spawnResult(event)
+    local request=pending[event.token]
+    if not request then return end
+    pending[event.token]=nil
+    local actor=request.actor
+    local cellState=state.director.cells[request.cell]
+    local function refund(amount)
+        if request.bossWave then return end
+        if cellState then cellState.count=math.max(0,cellState.count-(amount or request.count)) end
+    end
+    if not C.enabled or not C.extraEncounters or not valid(actor) or actor.cell.id~=request.cell then refund();return end
+    local rng=R.rng(event.token)
+    local made=0
+    for _,pos in ipairs(event.positions or {}) do
+        if made>=request.count then break end
+        local offset=pos-actor.position
+        if actor.cell.isExterior or offset:length()<900 then
+            local id=types.Creature.objectIsInstance(actor) and pickCreature(actor,request.level,rng,true) or actor.recordId
+            -- NPC copies are forbidden: use varied level-aware creature allies instead.
+            if types.NPC.objectIsInstance(actor) then id=pickNpcReinforcement(actor,request.level,rng) end
+            local spawn=world.createObject(id,1)
+            local parentGeneration=type(state.director.generated[actor.id])=='number'
+                and state.director.generated[actor.id] or 0
+            state.director.generated[spawn.id]=parentGeneration+1
+            if request.bossWave then
+                local adds=state.director.bossAdds[actor.id] or {}
+                adds[#adds+1]=spawn.id;state.director.bossAdds[actor.id]=adds
+            end
+            spawn:teleport(actor.cell,pos)
+            spawn:sendEvent('AshenLoot_Spawned')
+            made=made+1
+        end
+    end
+    refund(request.count-made)
+    print('[AshenLoot] encounter placement '..made..'/'..request.count..' in '..request.cell)
+end
+local scrollRecipes={
+    {name='Embers',effect='firedamage',secondary='weaknesstofire'},
+    {name='Rime',effect='frostdamage',secondary='weaknesstofrost'},
+    {name='Storms',effect='shockdamage',secondary='weaknesstoshock'},
+    {name='Sundering',effect='damagehealth',secondary='burden'},
+    {name='Binding',effect='burden',secondary='demoralizehumanoid'},
+    {name='Warding',effect='shield',secondary='resistmagicka',self=true},
+}
+local ammunitionPools
+local function buildAmmunitionPools()
+    if ammunitionPools then return end
+    ammunitionPools={arrow={},bolt={}}
+    for _,rec in pairs(types.Weapon.records) do
+        local pool=rec.type==types.Weapon.TYPE.Arrow and ammunitionPools.arrow
+            or (rec.type==types.Weapon.TYPE.Bolt and ammunitionPools.bolt or nil)
+        if pool and safeInventoryRecord(types.Weapon,rec) and not rec.enchant then
+            pool[#pool+1]={id=rec.id,power=math.max(rec.chopMaxDamage or 0,rec.slashMaxDamage or 0,
+                rec.thrustMaxDamage or 0)+(rec.value or 0)*0.02}
+        end
+    end
+    for _,pool in pairs(ammunitionPools) do
+        table.sort(pool,function(a,b) return a.power==b.power and a.id<b.id or a.power<b.power end)
+    end
+end
+local function rangedPreference(player)
+    if not player or not types.NPC.objectIsInstance(player) then return nil,0,false end
+    local marksman=types.NPC.stats.skills.marksman(player).base
+    local function weaponMode(item)
+        if not item or not types.Weapon.objectIsInstance(item) then return end
+        local rec=item and types.Weapon.record(item)
+        if not rec then return end
+        if rec.type==types.Weapon.TYPE.MarksmanBow then return 'arrow' end
+        if rec.type==types.Weapon.TYPE.MarksmanCrossbow then return 'bolt' end
+    end
+    for _,item in pairs(types.Actor.getEquipment(player)) do
+        local mode=weaponMode(item);if mode then return mode,marksman,true end
+    end
+    for _,item in ipairs(types.Actor.inventory(player):getAll(types.Weapon)) do
+        local mode=weaponMode(item);if mode then return mode,marksman,true end
+    end
+    return nil,marksman,false
+end
+local function ammunitionDrop(player,target,rng)
+    buildAmmunitionPools()
+    local mode,marksman,hasLauncher=rangedPreference(player)
+    if not mode then mode=rng(2)==1 and 'arrow' or 'bolt' end
+    local pool=ammunitionPools[mode]
+    if #pool==0 then return end
+    -- Mostly follows character power, but the random spread preserves an
+    -- occasional exciting high-material bundle at low levels.
+    local effective=math.max(1,target+rng(21)-11)
+    local percentile=math.max(0,math.min(1,effective/80))
+    local index=math.max(1,math.min(#pool,1+math.floor((#pool-1)*percentile)))
+    local count=8+rng(8)+math.floor(math.min(100,marksman)/10)
+    return pool[index].id,count,marksman,hasLauncher
+end
+local function supplyRecord(target, kind, rare, variant)
+    local band=math.max(1,math.min(20,math.ceil(target/5)))
+    variant=kind=='scroll' and math.max(1,math.min(#scrollRecipes,tonumber(variant) or 1)) or 0
+    local key='v9:'..kind..':'..band..':'..tostring(rare)..':'..variant
+    if state.director.supplies[key] then return state.director.supplies[key] end
+    local effects, name = {}, ''
+    if kind=='scroll' then
+        local base
+        for _,r in pairs(types.Book.records) do if r.isScroll and not r.mwscript then base=r;break end end
+        if not base then return end
+        local recipe=scrollRecipes[variant]
+        local range=recipe.self and core.magic.RANGE.Self or core.magic.RANGE.Target
+        effects={Records.effect(recipe.effect,5+band*2,range,recipe.self and 8 or 3)}
+        if rare then effects[#effects+1]=Records.effect(recipe.secondary,4+band,range,recipe.self and 8 or 3) end
+        local enchant=world.createRecord(core.magic.enchantments.createRecordDraft {
+            type=core.magic.ENCHANTMENT_TYPE.CastOnce,cost=0,charge=0,isAutocalc=false,effects=effects})
+        name='Dreamforged Scroll of '..(rare and 'Greater ' or '')..recipe.name..' '..band
+        local id=world.createRecord(types.Book.createRecordDraft {template=base,name=name,enchant=enchant.id,
+            text=name,skill='',value=15+band*5}).id
+        state.director.supplies[key]=id
+        return id
+    end
+    local displayTier=math.max(1,math.min(5,math.ceil(band/4)))
+    local names={
+        health={'Minor Healing Potion','Healing Potion','Major Healing Potion','Greater Healing Potion','Super Healing Potion'},
+        magicka={'Minor Mana Potion','Mana Potion','Major Mana Potion','Greater Mana Potion','Super Mana Potion'},
+        fatigue={'Minor Stamina Potion','Stamina Potion','Major Stamina Potion','Greater Stamina Potion','Super Stamina Potion'},
+    }
+    -- Native potion art is quality-coded rather than effect-coded. These three
+    -- give recovery supplies a stable red/blue/green visual language.
+    local visual={health='p_restore_health_e',magicka='p_restore_health_q',fatigue='p_restore_health_b'}
+    local base=types.Potion.record(visual[kind]) or types.Potion.record('p_restore_health_b')
+    local effect=kind=='health' and 'restorehealth' or (kind=='magicka' and 'restoremagicka' or 'restorefatigue')
+    effects={Records.effect(effect,4+band*2,core.magic.RANGE.Self,5)}
+    if rare then effects[#effects+1]=Records.effect(kind=='fatigue' and 'restorehealth' or 'restorefatigue',2+band,core.magic.RANGE.Self,5) end
+    name=(rare and 'Replenishing ' or '')..names[kind][displayTier]
+    local id=world.createRecord(types.Potion.createRecordDraft {template=base,name=name,effects=effects,
+        isAutocalc=false,value=8+band*3,weight=0.25}).id
+    state.director.supplies[key]=id
+    return id
+end
+local looseKinds={types.Weapon,types.Armor,types.Clothing,types.Potion,types.Ingredient,
+    types.Lockpick,types.Probe,types.Apparatus}
+if types.Miscellaneous then looseKinds[#looseKinds+1]=types.Miscellaneous end
+local function looseDungeon(cell)
+    if not cell or cell.isExterior then return false end
+    local name=(cell.name or ''):lower()
+    for _,word in ipairs({'tomb','crypt','ancestral','shrine','daedric','dwemer'}) do
+        if name:find(word,1,true) then return true end
+    end
+    -- Dwemer and Daedric interiors often have proper names. Their architecture
+    -- is a safer signal than treating every generic hostile interior as eligible.
+    if types.Static then
+        local checked=0
+        for _,object in ipairs(cell:getAll(types.Static)) do
+            local rec=types.Static.record(object)
+            local text=rec and ((rec.id or '')..' '..(rec.model or '')):lower() or ''
+            if text:find('dwrv',1,true) or text:find('dwemer',1,true)
+                or text:find('in_dae',1,true) or text:find('daedric',1,true) then return true end
+            checked=checked+1;if checked>=200 then break end
+        end
+    end
+    return false
+end
+local function randomLooseBase(kind,rec,target,rng)
+    local equipment=kind==types.Weapon or kind==types.Armor or kind==types.Clothing
+    local roll=rng(100)
+    if equipment and roll<=5 then
+        return randomBase(kind,rec,target,rng,true),'ashen'
+    elseif roll<=15 then
+        local found=equipment and randomSimilarEnchanted(kind,rec,target,rng) or randomNativeEnchanted(target,rng)
+        if found then return found,'enchanted' end
+    end
+    if roll<=45 then
+        local found=randomBroadBase(target,rng)
+        if found then return found,'valuable' end
+    end
+    return randomBase(kind,rec,target,rng,true),'ordinary'
+end
+function M.looseLoot(cell,anchor,target)
+    if not C.randomizeLooseDungeonItems or not looseDungeon(cell)
+        or state.director.looseCells[cell.id] then return end
+    state.director.looseCells[cell.id]=true
+    local eligibleCount,selected,replaced,ashen=0,0,0,0
+    for _,kind in ipairs(looseKinds) do
+        for _,item in ipairs(cell:getAll(kind)) do
+            local rec=kind.record(item)
+            local equipment=kind==types.Weapon or kind==types.Armor or kind==types.Clothing
+            if item:isValid() and item.enabled and not item.parentContainer and item.contentFile
+                and not item.owner.recordId and not item.owner.factionId and safeInventoryRecord(kind,rec)
+                and (C.unsafeContent or not (equipment and rec.enchant))
+                and (C.unsafeContent or rec.value<=math.max(500,500+target*target*10)) then
+                eligibleCount=eligibleCount+1
+                local rng=R.rng(item.id..':loose8')
+                if rng(100)<=C.looseDungeonItemPercent then
+                    selected=selected+1
+                    local replacement,tier=randomLooseBase(kind,rec,target,rng)
+                    if replacement then
+                        local position,rotation,scale,count=item.position,item.rotation,item.scale,item.count
+                        local made
+                        if tier=='ashen' then
+                            made=loot(anchor,item.id..':loose-gear8',1,replacement.id,nil,nil,
+                                {worldCell=cell,position=position,rotation=rotation,scale=scale})
+                            if made then ashen=ashen+1 end
+                        else
+                            local object=world.createObject(replacement.id,count)
+                            object:teleport(cell,position,rotation)
+                            if scale~=1 then object:setScale(scale) end
+                            made=true
+                        end
+                        if made and item:isValid() then item:remove();replaced=replaced+1 end
+                    end
+                end
+            end
+        end
+    end
+    print('[AshenLoot] loose cache '..cell.id..': '..selected..'/'..eligibleCount
+        ..' selected, '..replaced..' replaced, '..ashen..' Ashen')
+end
+function M.supplies(actor)
+    local rng=R.rng(actor.id..':supplies4')
+    local target=M.actorLevel(actor)
+    local function give(kind)
+        local id=supplyRecord(target,kind,rng(100)<20,kind=='scroll' and rng(#scrollRecipes) or nil)
+        if id then world.createObject(id,1):moveInto(types.Actor.inventory(actor)) end
+    end
+    -- Denser cells should yield more total supplies, but not in direct proportion
+    -- to every extra body. Square-root normalization keeps exploration sustainable.
+    local density=math.sqrt(math.max(1,C.encounterDensity))
+    if rng(100)<=C.healingPercent/density then give('health') end
+    if rng(100)<=C.supplyPercent/density then
+        local player=world.players[1]
+        local magicFocused=false
+        if player and types.NPC.objectIsInstance(player) then
+            local rec=types.NPC.record(player)
+            local class=((rec and rec.class) or ''):lower()
+            local classRecord=types.NPC.classes and types.NPC.classes.records and types.NPC.classes.records[rec.class]
+            magicFocused=class:find('warmage',1,true) or class:find('conjurer',1,true)
+                or (classRecord and tostring(classRecord.specialization):lower()=='magic')
+        end
+        if magicFocused then
+            local roll=rng(100);give(roll<=45 and 'scroll' or (roll<=85 and 'magicka' or 'fatigue'))
+        else give(({'fatigue','magicka','scroll'})[rng(3)]) end
+    end
+    local player=world.players[1]
+    local _,marksman,hasLauncher=rangedPreference(player)
+    local ammunitionChance=math.min(95,C.ammunitionPercent+math.min(50,marksman*0.5)+(hasLauncher and 25 or 0))
+    if rng(100)<=ammunitionChance/density then
+        local id,count=ammunitionDrop(player,target,rng)
+        if id then world.createObject(id,count):moveInto(types.Actor.inventory(actor)) end
+    end
+end
+function M.supplement(cell,target)
+    if not C.supplyContainers then return end
+    local added=0
+    for _,container in ipairs(cell:getAll(types.Container)) do
+        if added>=2 then break end
+        local rec=container.type.record(container)
+        if not state.director.containers[container.id] and not rec.mwscript
+            and not container.owner.recordId and not container.owner.factionId then
+            local id=supplyRecord(target,'health',false)
+            world.createObject(id,1):moveInto(types.Container.content(container))
+            state.director.containers[container.id]=true
+            added=added+1
+        end
+    end
+end
+function M.containerLoot(cell,anchor,target)
+    if not C.randomizeContainers or not dungeon(cell) then return end
+    local eligible,selected,replaced,prizes=0,0,0,0
+    for _,container in ipairs(cell:getAll(types.Container)) do
+        local rec=container.type.record(container)
+        if state.director.randomizedContainers[container.id]==nil and not rec.mwscript
+            and not container.owner.recordId and not container.owner.factionId then
+            eligible=eligible+1
+            local text=((rec.id or '')..' '..(rec.name or '')..' '..(rec.model or '')):lower()
+            local chest=text:find('chest',1,true) or text:find('coffer',1,true)
+                or text:find('strongbox',1,true) or text:find('trunk',1,true)
+            local lockLevel=math.max(0,types.Lockable.getLockLevel(container) or 0)
+            local chance=math.min(100,C.containerLootPercent+(chest and 20 or 0)+math.min(40,lockLevel*0.5))
+            local rng=R.rng(container.id..':container5')
+            state.director.randomizedContainers[container.id]=rng(100)<=chance
+            if state.director.randomizedContainers[container.id] then
+                selected=selected+1
+                local inventory=types.Container.content(container)
+                replaced=replaced+randomizeInventory(anchor,inventory,target,container.id..':container7',false,
+                    {container=true,chest=not not chest,lockLevel=lockLevel})
+                -- Every selected container rolls independently, so a lucky
+                -- dungeon can exceed the average rather than hitting a hard cap.
+                local prizeChance=math.min(90,25+(chest and 25 or 0)+math.min(40,lockLevel*0.5))
+                local prizeRng=R.rng(container.id..':cache-prize7')
+                if prizeRng(100)<=prizeChance then
+                    local minimum=1
+                    local rareChance=math.min(90,(chest and 15 or 0)+lockLevel)
+                    if prizeRng(100)<=rareChance then minimum=2 end
+                    if lockLevel>=50 and prizeRng(100)<=math.min(35,(lockLevel-40)*0.75) then minimum=3 end
+                    if loot(anchor,container.id..':cache-gear7',minimum,nil,nil,nil,inventory) then prizes=prizes+1 end
+                end
+            end
+        end
+    end
+    if eligible>0 then
+        print('[AshenLoot] container cache '..cell.id..': '..selected..'/'..eligible
+            ..' selected, '..replaced..' contents remixed, '..prizes..' prizes added')
+    end
+end
+local function glowRecord(tier)
+    local key='glow3:'..tier
+    if state.director.cache[key] then return state.director.cache[key] end
+    local c=glowColors[tier] or glowColors[1]
+    -- A model-less native light keeps the rarity glow without inheriting visible
+    -- torch geometry. Empty model paths are rejected by OpenMW record creation.
+    local template=types.Light.record('yellow light')
+    if not template then return end
+    local id=world.createRecord(types.Light.createRecordDraft {template=template,name='Dreamforged loot glow',
+        weight=0,value=0,duration=0,radius=180,color=util.color.rgb(c[1],c[2],c[3]),isCarriable=false,
+        isDynamic=true,isFire=false,isFlicker=false,isFlickerSlow=false,isNegative=false,isOffByDefault=false,
+        isPulse=true,isPulseSlow=false}).id
+    state.director.cache[key]=id
+    return id
+end
+function M.ground(item, actor, dropIndex)
+    if not C.groundDrops or not types.Actor.isDead(actor) then return end
+    local player=world.players[1]
+    local direction=player and (player.position-actor.position) or util.vector3(1,0,0)
+    direction=util.vector3(direction.x,direction.y,0)
+    local length=direction:length()
+    if length<1 then direction=util.vector3(1,0,0) else direction=direction/length end
+    dropIndex=math.max(1,math.floor(dropIndex or 1))
+    local step=math.ceil((dropIndex-1)/2)
+    local sign=dropIndex%2==0 and 1 or -1
+    local angle=dropIndex==1 and 0 or sign*math.min(math.rad(54),step*math.rad(18))
+    local spreadDirection=util.vector3(direction.x*math.cos(angle)-direction.y*math.sin(angle),
+        direction.x*math.sin(angle)+direction.y*math.cos(angle),0)
+    local distance=math.max(120,math.min(420,100+actor.scale*55+((dropIndex-1)%3)*55))
+    -- Global scripts cannot raycast in OpenMW 0.51. Keep the corpse's known
+    -- walkable elevation and move laterally toward the player; the small lift
+    -- prevents terrain intersection without placing the reward inside the body.
+    local dropPosition=actor.position+spreadDirection*distance+util.vector3(0,0,32)
+    -- Keep the horizontal fan and let the short-lived local drop helper probe
+    -- the active cell's height map/world collision for uneven terrain.
+    item:teleport(actor.cell,dropPosition)
+    local loose={grace=core.getSimulationTime()+30,item=item}
+    state.director.loose[item.id]=loose
+    if C.groundGlow then
+        local meta=state.records[item.recordId]
+        local glowId=glowRecord(meta and meta.tier or 1)
+        if glowId then
+            local light=world.createObject(glowId,1)
+            light:teleport(actor.cell,dropPosition+util.vector3(0,0,6))
+            loose.light=light
+        end
+    end
+    -- Global scripts cannot raycast on OpenMW 0.51, so attach a one-shot
+    -- custom script to the dropped object. It returns only an id and a
+    -- position (serializable across script contexts); the global handler below
+    -- performs the actual teleports and removes the helper.
+    item:addScript('scripts/ashenloot/drop.lua')
+    return true
+end
+function M.scavenge(event)
+    local actor,item=event.actor,event.item
+    if not C.enabled or not C.scavenge or not valid(actor) or not item or not item:isValid() then return end
+    if item.parentContainer or actor.cell~=item.cell or (actor.position-item.position):length()>160 then return end
+    if not types.Weapon.objectIsInstance(item) and not types.Armor.objectIsInstance(item) then return end
+    local rec=item.type.record(item)
+    if rec.mwscript or item.owner.recordId or item.owner.factionId then return end
+    local loose=state.director.loose[item.id]
+    local grace=type(loose)=='table' and loose.grace or loose
+    if (grace or 0)>core.getSimulationTime() then return end
+    item:moveInto(types.Actor.inventory(actor))
+    actor:sendEvent('AshenLoot_Pickup',item)
+end
+local function rerunDungeon(cell,cellState,force)
+    if not force and (not C.rerunnableDungeons or not cellState.clearedAt or not cellState.leftAfterClear
+        or core.getGameTime()-cellState.clearedAt<C.dungeonResetHours*3600) then return 0 end
+    local points={}
+    for _,point in pairs(cellState.spawnPoints or {}) do points[#points+1]=point end
+    if #points==0 then return 0 end
+    table.sort(points,function(a,b) return (a.key or '')<(b.key or '') end)
+    local wanted=math.max(1,math.floor(C.interiorBudget*C.encounterDensity+0.5))
+    local target=gearLevel()
+    local generation=(cellState.rerunGeneration or 0)+1
+    local rng=R.rng(cell.id..':rerun:'..generation)
+    local made=0
+    for index=1,wanted do
+        local point=points[((index-1)%#points)+1]
+        local ring=math.floor((index-1)/#points)
+        local angle=(index*2.399963)+ring
+        local radius=ring*90
+        local pos=util.vector3(point.x+math.cos(angle)*radius,point.y+math.sin(angle)*radius,point.z)
+        local id=pickDungeonCreature(cell,target,rng)
+        local spawn=world.createObject(id,1)
+        state.director.generated[spawn.id]='rerun'
+        spawn:teleport(cell,pos)
+        spawn:sendEvent('AshenLoot_Spawned')
+        made=made+1
+    end
+    cellState.count=made;cellState.boss=false
+    cellState.clearedAt=nil;cellState.leftAfterClear=false;cellState.emptySince=nil
+    cellState.hadHostiles=true;cellState.rerunGeneration=generation
+    cellState.resetGrace=core.getSimulationTime()+10
+    print('[AshenLoot] repopulated dungeon '..cell.id..' with '..made..' enemies (wave '..generation..')')
+    return made
+end
+local function updateCellState(player)
+    local current=player.cell and player.cell.id
+    if lastPlayerCell and lastPlayerCell~=current then
+        local previous=state.director.cells[lastPlayerCell]
+        if previous and previous.clearedAt then previous.leftAfterClear=true end
+        if previous and previous.isExterior then previous.wildernessLeftAt=core.getGameTime() end
+    end
+    local entering=current~=lastPlayerCell
+    lastPlayerCell=current
+    local cell=player.cell
+    if not cell then return end
+    if cell.isExterior then
+        local cellState=state.director.cells[current] or {count=0,boss=false,isExterior=true}
+        state.director.cells[current]=cellState;cellState.isExterior=true
+        if entering and C.rerunnableWilderness and cellState.wildernessLeftAt
+            and core.getGameTime()-cellState.wildernessLeftAt>=C.wildernessResetHours*3600 then
+            local live=0
+            for _,actor in ipairs(world.activeActors) do
+                if actor.cell==cell and state.director.generated[actor.id] and valid(actor) then live=live+1 end
+            end
+            cellState.count=live
+            for id,data in pairs(state.director.actors) do
+                if data.cell==current and not state.director.generated[id] then state.director.actors[id]=nil end
+            end
+            cellState.wildernessLeftAt=nil
+            print('[AshenLoot] wilderness reset: '..current..' ('..live..' surviving additions retained)')
+        end
+        return
+    end
+    if not dungeon(cell) then return end
+    local cellState=state.director.cells[current] or {count=0,boss=false}
+    state.director.cells[current]=cellState
+    if entering then
+        M.looseLoot(cell,player,level())
+        rerunDungeon(cell,cellState,false)
+    end
+    if (cellState.resetGrace or 0)>core.getSimulationTime() then return end
+    cellState.spawnPoints=cellState.spawnPoints or {}
+    local alive,sawHostile=0,false
+    for _,actor in ipairs(world.activeActors) do
+        if actor.cell==cell and not types.Player.objectIsInstance(actor)
+            and types.Actor.stats.ai.fight(actor).base>=80 then
+            sawHostile=true
+            if not types.Actor.isDead(actor) then alive=alive+1 end
+            if not cellState.spawnPoints[actor.id] then
+                cellState.spawnPoints[actor.id]={key=actor.id,x=actor.position.x,y=actor.position.y,z=actor.position.z}
+            end
+        end
+    end
+    if sawHostile then cellState.hadHostiles=true end
+    if alive>0 then
+        cellState.emptySince=nil
+    elseif cellState.hadHostiles and not cellState.clearedAt then
+        cellState.emptySince=cellState.emptySince or core.getSimulationTime()
+        if core.getSimulationTime()-cellState.emptySince>=5 then
+            cellState.clearedAt=core.getGameTime();cellState.leftAfterClear=false
+            print('[AshenLoot] dungeon cleared: '..cell.id)
+        end
+    end
+end
+function M.update(dt)
+    timer=timer+dt
+    if timer<1 or not C.enabled or not world.players[1] then return end
+    timer=0
+    updateCellState(world.players[1])
+    for itemId,loose in pairs(state.director.loose) do
+        if type(loose)=='table' and (not loose.item or not loose.item:isValid() or loose.item.parentContainer) then
+            if loose.light and loose.light:isValid() then loose.light:remove() end
+            state.director.loose[itemId]=nil
+        elseif type(loose)=='number' and loose<core.getSimulationTime()-300 then
+            state.director.loose[itemId]=nil
+        end
+    end
+    local count=0
+    local player=world.players[1]
+    for _,actor in ipairs(world.activeActors) do
+        if count>=3 then break end
+        local legacyExterior=state.director.generated[actor.id]==true and actor.cell.isExterior
+        local distance=(actor.position-player.position):length()
+        local closeEnough=not actor.cell.isExterior or (distance>=math.min(C.exteriorTriggerMin,C.exteriorTriggerRange)
+            and distance<=math.max(C.exteriorTriggerMin,C.exteriorTriggerRange))
+        if valid(actor) and eligible(actor) and (not state.director.actors[actor.id] or legacyExterior)
+            and closeEnough
+            and (considered[actor.id] or 0)<core.getSimulationTime()
+            and (types.Creature.objectIsInstance(actor)
+                or types.Actor.stats.ai.fight(actor).base>=80
+                or (C.guardProgression and isGuard(actor))) then
+            considered[actor.id]=core.getSimulationTime()+10
+            actor:sendEvent('AshenLoot_Consider');count=count+1
+        end
+    end
+    for token,request in pairs(pending) do
+        if core.getSimulationTime()-request.created>15 then
+            if request.replacement then state.director.actors[request.actor.id]=nil end
+            if request.count and state.director.cells[request.cell] then
+                state.director.cells[request.cell].count=math.max(0,state.director.cells[request.cell].count-request.count)
+            end
+            pending[token]=nil
+        end
+    end
+end
+function M.refreshPools()
+    pools, gear, itemPools, kindPools, genericCreatureIds = nil, nil, nil, nil, nil
+end
+M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,rerunDungeon=rerunDungeon,
+    pickNpcReinforcement=pickNpcReinforcement,randomizeInventory=randomizeInventory,
+    randomBase=randomBase,isGuard=isGuard,isAggressive=isAggressive,worldBossScale=worldBossScale,
+    activeWorldBosses=activeWorldBosses,
+    estimatedLevel=estimatedLevel,encounterTarget=encounterTarget,pickDungeonCreature=pickDungeonCreature,
+    randomBroadBase=randomBroadBase,randomNativeEnchanted=randomNativeEnchanted,
+    randomSimilarEnchanted=randomSimilarEnchanted,
+    randomContainerBase=randomContainerBase,npcGearChances=npcGearChances,
+    randomLooseBase=randomLooseBase,looseDungeon=looseDungeon,safeRecord=safeRecord,
+    ordinaryCreatureRecord=ordinaryCreatureRecord,populationAnchor=populationAnchor,
+    safeInventoryRecord=safeInventoryRecord,
+    gearLevel=gearLevel,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale}
+return M

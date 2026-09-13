@@ -1,0 +1,15 @@
+# Local OpenMW runtime and test artifacts
+Games/
+tests/*-profile/
+tests/compat-profile/
+tests/effects-profile/
+tests/userdata/
+tests/*.log
+tests/*.bin
+tests/*.cfg
+tests/*.yaml
+tests/*.xml
+tests/*.jpg
+tests/console_history.txt
+
+# Generated release archives are kept under dist/ intentionally.
