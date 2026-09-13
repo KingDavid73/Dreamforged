@@ -35,7 +35,9 @@ return {engineHandlers={onUpdate=function(dt)
             end
             assert(count>=24,'Maximum exterior settings produced '..count..' additions')
             for cellId,cellState in pairs(I.AshenLoot.getState().director.cells) do
-                if cellState.isExterior then assert(cellState.count<=48,'Cell budget exceeded in '..cellId) end
+                if cellState.isExterior then
+                    assert((cellState.additionalCount or 0)<=48,'Additional-spawn budget exceeded in '..cellId)
+                end
             end
             assert(variety>=6,'Maximum Random exterior settings produced only '..variety..' creature records')
             print('[Dreamforged EXTERIOR] PASS: active same/adjacent-cell anchors placed '..count..' bounded additions across '..variety..' records')

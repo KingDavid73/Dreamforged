@@ -112,7 +112,7 @@ rerunnableDungeonsDescription: "After a recognized dungeon is cleared, left, and
 dungeonResetHours: "Dungeon reset time (game hours) — max 720"
 dungeonResetHoursDescription: "Hours that must pass after clearing before a dungeon can repopulate on re-entry. Default 72. Waiting inside does not spawn enemies around the player."
 worldBosses: "Random world bosses"
-worldBossesDescription: "Adds World Boss as the highest result on the normal promotion ladder. Only genuinely aggressive actors that first become promoted enemies can roll it. Bosses use size-aware scaling, carry six powers, use six ordinary reward attempts with a widened Relic chance, and gain the full overgear health response. A separate 10% base roll can produce a Mythic artifact. Their combat reinforcement timing, wave size, and living cap are configurable below."
+worldBossesDescription: "Adds World Boss as the highest result on the normal promotion ladder. Only genuinely aggressive actors that first become promoted enemies can roll it. Each boss makes six rewards from its own base table: 1% Common, 2% Uncommon, 7% Rare, 20% Epic, 30% Legendary, 20% Relic, and 20% Mythic. Level, overgear, and configured enemy difficulty can promote results upward. Their combat reinforcement timing, wave size, and living cap are configurable below."
 worldBossChance: "World Boss chance per promotion (%) — max 100"
 worldBossChanceDescription: "Conditional chance that each successfully promoted, eligible aggressive enemy becomes a World Boss instead of Champion, Elite, or Unique, provided the active-cell cap is not already full. Default 3%."
 worldBossCellCap: "Active World Bosses per cell — max 10"

@@ -1,5 +1,18 @@
 ﻿# Ashen Loot validation
 
+## 0.10.5 World Boss table and addition budget (2026-09-13)
+
+- Deterministic rules coverage verifies the exact 1/2/7/20/30/20/20
+  Common-through-Mythic World Boss distribution before upward modifiers.
+- World-placement coverage now reads the explicit `additionalCount` cell
+  budget. Native actors, identity replacements, and separately capped boss
+  adds are excluded from that counter.
+- The full isolated OpenMW regression passed through save/reload. The
+  world-placement run passed the updated additional-budget, navmesh, scaling,
+  and inventory-transfer checks; its later fixture setting writes hit the
+  profile's pre-existing `Unexpected content key` registration issue rather
+  than a Dreamforged callback failure.
+
 ## 0.10.4 natural World Boss rewards (2026-09-13)
 
 - Rules coverage confirms the World Boss rarity bonus widens the Relic slice

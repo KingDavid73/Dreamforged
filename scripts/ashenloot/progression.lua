@@ -9,6 +9,12 @@ local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
 local genericCreatureIds
 local timer, considered, lastPlayerCell = 0, {}, nil
 local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
+local function additionalCount(cellState)
+    return math.max(0,math.floor(tonumber(cellState and cellState.additionalCount) or 0))
+end
+local function setAdditionalCount(cellState,value)
+    cellState.additionalCount=math.max(0,math.floor(tonumber(value) or 0))
+end
 local function isGuard(actor)
     if not actor or not types.NPC.objectIsInstance(actor) then return false end
     local rec=actor.type.record(actor)
@@ -358,6 +364,10 @@ function M.bind(s, giveLoot, encounter, isEligible)
     for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds'}) do
         state.director[key] = state.director[key] or {}
     end
+    for _,cellState in pairs(state.director.cells) do
+        if cellState.additionalCount==nil then setAdditionalCount(cellState,cellState.count or 0) end
+        cellState.count=nil
+    end
     pending, pools, gear, itemPools, kindPools, lastPlayerCell, considered = {}, nil, nil, nil, nil, nil, {}
     for id,a in pairs(state.director.actors) do if a.pendingReplacement then state.director.actors[id]=nil end end
 end
@@ -674,7 +684,7 @@ function M.prepare(actor, inCombat)
     d.actors[actor.id]={level=target,cell=actor.cell.id}
     local cell = actor.cell
     local ck = cellKey(cell)
-    d.cells[ck]=d.cells[ck] or {count=0,boss=false}
+    d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
     local cellState=d.cells[ck]
     if cell.isExterior then cellState.isExterior=true end
     local boss = C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
@@ -732,15 +742,15 @@ function M.prepare(actor, inCombat)
     -- Unsafe identity eligibility must never create extra population anchors.
     -- It permits promotions/transforms; ordinary encounter records still own
     -- the cell's strictly budgeted reinforcement generation.
-    if C.extraEncounters and populationAnchor(actor) and canAnchorPack and cellState.count < maxCount
+    if C.extraEncounters and populationAnchor(actor) and canAnchorPack and additionalCount(cellState) < maxCount
         and (not cell.isExterior or rng(100)<=C.exteriorAnchorChance) then
         local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
         local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
         local group=cell.isExterior and (low+rng(high-low+1)-1)
             or math.max(1,math.floor(C.encounterDensity+0.5))
         if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
-        local count=math.min(maxCount-cellState.count,group)
-        cellState.count=cellState.count+count
+        local count=math.min(maxCount-additionalCount(cellState),group)
+        setAdditionalCount(cellState,additionalCount(cellState)+count)
         local token=actor.id..':pack'
         pending[token]={actor=actor,level=target,count=count,cell=ck,created=core.getSimulationTime()}
         world.players[1]:sendEvent('AshenLoot_FindSpawn',{token=token,actor=actor,count=count})
@@ -776,7 +786,7 @@ function M.spawnResult(event)
     local cellState=state.director.cells[request.cell]
     local function refund(amount)
         if request.bossWave then return end
-        if cellState then cellState.count=math.max(0,cellState.count-(amount or request.count)) end
+        if cellState then setAdditionalCount(cellState,additionalCount(cellState)-(amount or request.count)) end
     end
     if not C.enabled or not C.extraEncounters or not valid(actor) or actor.cell.id~=request.cell then refund();return end
     local rng=R.rng(event.token)
@@ -791,7 +801,7 @@ function M.spawnResult(event)
             local spawn=world.createObject(id,1)
             local parentGeneration=type(state.director.generated[actor.id])=='number'
                 and state.director.generated[actor.id] or 0
-            state.director.generated[spawn.id]=parentGeneration+1
+            state.director.generated[spawn.id]=request.bossWave and 'bossAdd' or (parentGeneration+1)
             if request.bossWave then
                 local adds=state.director.bossAdds[actor.id] or {}
                 adds[#adds+1]=spawn.id;state.director.bossAdds[actor.id]=adds
@@ -1172,7 +1182,7 @@ local function rerunDungeon(cell,cellState,force)
         spawn:sendEvent('AshenLoot_Spawned')
         made=made+1
     end
-    cellState.count=made;cellState.boss=false
+    setAdditionalCount(cellState,made);cellState.boss=false
     cellState.clearedAt=nil;cellState.leftAfterClear=false;cellState.emptySince=nil
     cellState.hadHostiles=true;cellState.rerunGeneration=generation
     cellState.resetGrace=core.getSimulationTime()+10
@@ -1191,15 +1201,17 @@ local function updateCellState(player)
     local cell=player.cell
     if not cell then return end
     if cell.isExterior then
-        local cellState=state.director.cells[current] or {count=0,boss=false,isExterior=true}
+        local cellState=state.director.cells[current] or {additionalCount=0,boss=false,isExterior=true}
         state.director.cells[current]=cellState;cellState.isExterior=true
         if entering and C.rerunnableWilderness and cellState.wildernessLeftAt
             and core.getGameTime()-cellState.wildernessLeftAt>=C.wildernessResetHours*3600 then
             local live=0
             for _,actor in ipairs(world.activeActors) do
-                if actor.cell==cell and state.director.generated[actor.id] and valid(actor) then live=live+1 end
+                local marker=state.director.generated[actor.id]
+                if actor.cell==cell and marker and marker~='replacement' and marker~='bossAdd'
+                    and valid(actor) then live=live+1 end
             end
-            cellState.count=live
+            setAdditionalCount(cellState,live)
             for id,data in pairs(state.director.actors) do
                 if data.cell==current and not state.director.generated[id] then state.director.actors[id]=nil end
             end
@@ -1209,7 +1221,7 @@ local function updateCellState(player)
         return
     end
     if not dungeon(cell) then return end
-    local cellState=state.director.cells[current] or {count=0,boss=false}
+    local cellState=state.director.cells[current] or {additionalCount=0,boss=false}
     state.director.cells[current]=cellState
     if entering then
         M.looseLoot(cell,player,level())
@@ -1274,7 +1286,8 @@ function M.update(dt)
         if core.getSimulationTime()-request.created>15 then
             if request.replacement then state.director.actors[request.actor.id]=nil end
             if request.count and state.director.cells[request.cell] then
-                state.director.cells[request.cell].count=math.max(0,state.director.cells[request.cell].count-request.count)
+                local cellState=state.director.cells[request.cell]
+                setAdditionalCount(cellState,additionalCount(cellState)-request.count)
             end
             pending[token]=nil
         end
@@ -1294,5 +1307,6 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     randomLooseBase=randomLooseBase,looseDungeon=looseDungeon,safeRecord=safeRecord,
     ordinaryCreatureRecord=ordinaryCreatureRecord,populationAnchor=populationAnchor,
     safeInventoryRecord=safeInventoryRecord,
-    gearLevel=gearLevel,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale}
+    gearLevel=gearLevel,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
+    additionalCount=additionalCount}
 return M

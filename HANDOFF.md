@@ -1,6 +1,13 @@
-# Morrowind: Dreamforged handoff — 0.10.4 installed
+# Morrowind: Dreamforged handoff — 0.10.5 installed
 
-**Current installed release: 0.10.4.**
+**Current installed release: 0.10.5.**
+
+0.10.5 gives each World Boss six independent rewards from a dedicated
+1/2/7/20/30/20/20 Common-through-Mythic table. Level, overgear, and configured
+enemy health/damage can promote individual results upward. Spell tomes cannot
+replace these boss rewards. Cell budgets now persist as `additionalCount` and
+explicitly exclude native actors, identity replacements, and separately capped
+World Boss reinforcements.
 
 0.10.4 removes the forced World Boss Relic. Bosses now use six ordinary reward
 attempts with rank/gear rarity bonuses; the widened Relic chance is about 12%

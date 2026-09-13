@@ -11,6 +11,10 @@ M.rarities = {
     { name = 'Legendary', color = {1.00, 0.49, 0.15}, weight = 2 },
     { name = 'Relic', color = {1.00, 0.92, 0.55}, weight = 2 },
 }
+-- World Bosses use a deliberately generous, self-contained reward table.
+-- Mythic is tier 7 here because it is a curated artifact rather than part of
+-- the ordinary Common-to-Relic procedural ladder.
+M.worldBossRarities = {1, 2, 7, 20, 30, 20, 20}
 M.worldBossNames = {
     beast={'the Ashen Colossus','the Elder Fang','the Unclean','Blight-Touched','Red Mountain Hunger',
         'Scourge of the Grazelands','the Egg-Mine Terror','the Silt-Strider Bane','the Wild Hunt',
@@ -230,6 +234,23 @@ function M.rarity(random, minimum, bonus)
     end
     return #M.rarities
 end
+function M.levelRarityBonus(level)
+    return math.min(15,math.max(0,math.floor(math.log(math.max(1,level or 1)+1)/math.log(2)*2)-1))
+end
+function M.worldBossRarity(random, upwardBonus)
+    local roll=math.max(1,math.min(100,math.floor(tonumber(random(100)) or 1)))
+    local total,tier=0,#M.worldBossRarities
+    for index,weight in ipairs(M.worldBossRarities) do
+        total=total+weight
+        if roll<=total then tier=index;break end
+    end
+    -- Level, overgear and configured difficulty can promote the base result by
+    -- one step. Keeping this as a separate roll preserves the exact 1/2/7/20/
+    -- 30/20/20 base table instead of piling clamped overflow into Mythic.
+    local chance=math.max(0,math.min(100,math.floor(tonumber(upwardBonus) or 0)))
+    if tier<#M.worldBossRarities and chance>0 and random(100)<=chance then tier=tier+1 end
+    return tier
+end
 M.prefixes = {
     { name = 'Dagonfire', defensiveName = 'Fireshrouded', effect = 'firedamage', guard = 'fireshield', duration = 2 },
     { name = 'Rimefang', defensiveName = 'Frostshrouded', effect = 'frostdamage', guard = 'frostshield', duration = 2 },
@@ -350,10 +371,10 @@ local function affix(random, list, tier)
     end
     return candidates[random(#candidates)]
 end
-function M.item(seed, level, minimum, rarityBonus)
+function M.item(seed, level, minimum, rarityBonus, forcedTier)
     local r = M.rng(seed)
-    local levelBonus=math.min(15,math.max(0,math.floor(math.log(math.max(1,level or 1)+1)/math.log(2)*2)-1))
-    local tier = M.rarity(r, minimum,levelBonus+(rarityBonus or 0))
+    local levelBonus=M.levelRarityBonus(level)
+    local tier = forcedTier or M.rarity(r, minimum,levelBonus+(rarityBonus or 0))
     return { tier = tier, prefix = affix(r, M.prefixes, tier), suffix = affix(r, M.suffixes, tier),
         level = math.max(1,math.floor(level or 1)),
         power = math.max(2, math.min(36, 2 + math.floor(((level or 1) - 1) / 3))),

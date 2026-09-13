@@ -1,6 +1,20 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.4 - natural World Boss loot and Mythic chase tuning.**
+**Current release: 0.10.5 - dedicated World Boss rewards and explicit addition budgets.**
+
+## 0.10.5 World Boss reward table
+
+Every World Boss now produces six rewards from a dedicated base table: 1%
+Common, 2% Uncommon, 7% Rare, 20% Epic, 30% Legendary, 20% Relic, and 20%
+Mythic per reward. Encounter level, gear overage, and enemy health/damage
+settings can promote a rolled result upward by one tier without distorting the
+base table through percentile overflow. Spell tomes no longer replace one of
+these six boss rewards.
+
+Cell population state now stores an explicit additional-enemy count. Native
+actors and random identity replacements never consume this budget, and World
+Boss reinforcements remain governed by their own living-add cap. Existing
+saves migrate their old extra-enemy counter into the new field.
 
 ## 0.10.4 natural World Boss rewards
 
@@ -98,7 +112,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.2"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.5"
 content=AshenLoot.omwscripts
 ```
 

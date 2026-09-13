@@ -20,6 +20,18 @@ local function first()
     check(R.rarity(function() return 70 end, 1, 30)>=5, 'Rarity bonus does not improve rolls')
     check(R.rarity(function() return 59 end, 1, 40)==5, 'Rarity overflow must not collapse into Relic')
     check(R.rarity(function() return 89 end, 1, 40)==6, 'Promotion bonus does not widen Relic chance')
+    local bossExpected={1,2,7,20,30,20,20}
+    local bossObserved={0,0,0,0,0,0,0}
+    for roll=1,100 do
+        local tier=R.worldBossRarity(function() return roll end,0)
+        bossObserved[tier]=bossObserved[tier]+1
+    end
+    for tier,expected in ipairs(bossExpected) do
+        check(bossObserved[tier]==expected,'World Boss base rarity tier '..tier..': '..bossObserved[tier])
+    end
+    local calls=0
+    check(R.worldBossRarity(function() calls=calls+1;return calls==1 and 60 or 1 end,100)==6,
+        'World Boss upward modifier did not promote Legendary to Relic')
     for n = 1, 1000 do
         local elite = R.elite(tostring(n), 'Test')
         check(elite.modifiers[1] ~= elite.modifiers[2], 'Duplicate enemy modifiers')

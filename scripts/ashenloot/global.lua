@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 23, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 24, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -477,9 +477,8 @@ local function giveLoot(actor, seed, minimum, forcedBase, forcedTier, trophy, de
     -- Drops use the encounter's persisted scaled level, not the player's raw
     -- level. This keeps a boss's reward on the same level band as its stats.
     local dropLevel = player and Progress.actorLevel(actor) or 1
-    local spec = R.item(seed, dropLevel, minimum,rarityBonus)
+    local spec = R.item(seed, dropLevel, minimum,rarityBonus,forcedTier)
     spec.dropLevel = dropLevel
-    if forcedTier then spec.tier = forcedTier end
     if trophy then
         spec.prefix = trophy.prefix or spec.prefix
         spec.suffix = trophy.suffix or spec.suffix
@@ -551,21 +550,24 @@ local function gearOverage()
     return math.max(0,Progress.gearLevel()-types.Actor.stats.level(player).current)
 end
 local function mythicChance()
-    return math.min(40,10+math.floor(gearOverage()*1.5+0.5))
+    return R.worldBossRarities[7]
 end
--- Mythic artifacts remain an independent, rare World Boss roll. Ordinary
--- World Boss attempts now use the same Common-to-Relic rarity ladder as every
--- other promoted enemy, so no equipment drop is guaranteed.
-local function giveMythic(actor)
-    local rng=R.rng(actor.id..':relic')
-    if rng(100)>mythicChance() then return end
+local function worldBossRewardBonus(actor)
+    local levelBonus=R.levelRarityBonus(Progress.actorLevel(actor))
+    local overgear=math.min(30,gearOverage())
+    local difficulty=math.floor(math.max(0,C.enemyHealth-1)*10
+        +math.max(0,C.enemyDamage-1)*10+0.5)
+    return math.min(75,levelBonus+overgear+difficulty)
+end
+local function giveMythic(actor,seed,dropIndex)
+    local rng=R.rng((seed or actor.id..':mythic')..':definition')
     local def=mythicDefinitions[rng(#mythicDefinitions)]
     local kind=def.kind=='armor' and types.Armor or (def.kind=='clothing' and types.Clothing or types.Weapon)
     local base=kind.record(def.base) or (kind==types.Weapon and kind.record('wooden staff'))
     if base then
         local id,meta=Records.makeMythic(base,kind,def);meta.dropLevel=Progress.actorLevel(actor);meta.level=meta.dropLevel
         state.records[id]=meta;local item=world.createObject(id,1)
-        if not Progress.ground(item,actor) then item:moveInto(types.Actor.inventory(actor)) end
+        if not Progress.ground(item,actor,dropIndex) then item:moveInto(types.Actor.inventory(actor)) end
         local player=world.players[1];if player then player:sendEvent('AshenLoot_Record',{id=id,metadata=meta}) end
         return id
     end
@@ -873,13 +875,13 @@ local function death(actor)
     state.rewards[actor.id] = true
     Progress.supplies(actor)
     local elite = state.elites[actor.id]
-    if elite and elite.worldBoss then giveMythic(actor) end
-    local rank=elite and (elite.worldBoss and 4 or (elite.rank or 1)) or 0
+    local worldBoss=elite and elite.worldBoss
+    local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
     local attempts=({[0]=1,[1]=2,[2]=3,[3]=4,[4]=6})[rank]
     local chance=math.min(100,C.normalDropChance*100+({[0]=0,[1]=20,[2]=35,[3]=50,[4]=100})[rank])
-    -- A promotion should almost always make a visible loot burst, while still
-    -- preserving the tiny possibility of a spectacularly unlucky dry kill.
-    -- Rarity remains an independent roll; successful pieces can all be Common.
+    -- Ordinary promotions should almost always make a visible loot burst while
+    -- preserving a tiny dry-kill possibility. World Bosses reach 100% here and
+    -- route all six successes through their dedicated seven-tier table below.
     if rank>0 and rank<4 then chance=math.max(97,chance) end
     local rarityBonus=({[0]=0,[1]=8,[2]=18,[3]=30,[4]=40})[rank]+math.min(20,gearOverage())
     local profile=lootProfile();local magicProfile=profile and
@@ -902,11 +904,18 @@ local function death(actor)
             -- the same reward slot as staves/wands instead of consuming the
             -- small universal accessory share. Non-mages never replace their
             -- accessory drops with a tome.
-            local madeTome=magicProfile and family=='weapon'
+            local madeTome=not worldBoss and magicProfile and family=='weapon'
                 and rng(100)<=tomeChance and giveSpellTome(actor,true,attempt)
             if not madeTome then
-                giveLoot(actor,actor.id..':loot:'..attempt,1,nil,nil,nil,
-                    nil,family,rarityBonus,attempt)
+                if worldBoss then
+                    local bossSeed=actor.id..':world-boss-loot:'..attempt
+                    local bossTier=R.worldBossRarity(R.rng(bossSeed..':tier'),worldBossRewardBonus(actor))
+                    if bossTier==7 then giveMythic(actor,bossSeed,attempt)
+                    else giveLoot(actor,bossSeed,1,nil,bossTier,nil,nil,family,0,attempt) end
+                else
+                    giveLoot(actor,actor.id..':loot:'..attempt,1,nil,nil,nil,
+                        nil,family,rarityBonus,attempt)
+                end
             end
         end
     end
@@ -1058,6 +1067,7 @@ return {
         test = {giveLoot = giveLoot, encounter = encounter, death = death, snapshot = snapshot, physicalHit=physicalHit,
             startingKit = startingKit,reconcileAdvancement=reconcileAdvancement,useAdvancement=useAdvancement,
             mythicImpact=mythicImpact,mythicDefinitions=mythicDefinitions,getPool=getPool,mythicChance=mythicChance,
+            worldBossRewardBonus=worldBossRewardBonus,
             ensureSpellTomes=ensureSpellTomes,tomeDefinitions=tomeDefinitions,learnSpellTome=learnSpellTome,
             refreshContentPools=function() pool=nil;Progress.refreshPools() end}},
     engineHandlers = {
@@ -1183,7 +1193,16 @@ return {
                 local interfaceSettings=storage.globalSection(C.groups.interface)
                 if interfaceSettings:get('forgeKey')=='F2' then interfaceSettings:set('forgeKey','F7') end
             end
-            state.version = 23
+            if oldVersion<24 and state.director and state.director.cells then
+                -- Make the population budget's meaning explicit for old saves:
+                -- it tracks Dreamforged additions only, never native actors.
+                for _,cellState in pairs(state.director.cells) do
+                    cellState.additionalCount=math.max(0,tonumber(cellState.additionalCount)
+                        or tonumber(cellState.count) or 0)
+                    cellState.count=nil
+                end
+            end
+            state.version = 24
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

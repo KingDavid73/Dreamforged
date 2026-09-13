@@ -89,14 +89,14 @@ return {engineHandlers={onUpdate=function(dt)
             check(eq[types.Actor.EQUIPMENT_SLOT.CarriedRight] and eq[types.Actor.EQUIPMENT_SLOT.CarriedRight].recordId==item.recordId,'Scavenged weapon not wielded')
             check(d.actors[rat.id].level>=15,'Player-level encounter progression')
             check(types.Actor.stats.dynamic.health(rat).base>20,'Scaled creature health')
-            check(d.cells[p.cell.id].count>0,'Spawn budget not reserved')
+            check(d.cells[p.cell.id].additionalCount>0,'Additional-spawn budget not reserved')
             local leader=I.AshenLoot.getState().elites[d.cells[p.cell.id].boss]
             check(leader and leader.rank>=2,'Dungeon minimum elite')
             generated=count(d.generated)
             check(generated>0,'No navigation-validated extra encounters')
-            local before=d.cells[p.cell.id].count
+            local before=d.cells[p.cell.id].additionalCount
             progress.prepare(rat)
-            check(d.cells[p.cell.id].count==before and count(d.generated)==generated,'Repeated spawn')
+            check(d.cells[p.cell.id].additionalCount==before and count(d.generated)==generated,'Repeated spawn')
             pass('level-30 actor scaling, real navmesh spawns, cell budget and repeat protection')
             pass('unowned item transferred and wielded; owned equipment protected')
             settings:set('creatureVariety',100)

@@ -1,5 +1,16 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.5 - dedicated World Boss rewards
+
+- Replaced the ordinary boss rarity roll with six independent rolls from a
+  dedicated table: 1% Common, 2% Uncommon, 7% Rare, 20% Epic, 30% Legendary,
+  20% Relic, and 20% Mythic. Level, overgear, and configured enemy difficulty
+  can promote a result upward by one tier.
+- Prevented spell tomes from replacing one of the six World Boss rewards.
+- Renamed the saved cell population counter to `additionalCount`. Native
+  actors and creature identity replacements do not consume it; World Boss
+  adds remain governed by their separate cap.
+
 ## 0.10.4 - natural World Boss rewards
 
 - Removed the forced World Boss Relic/curated-artifact fallback. World Bosses
