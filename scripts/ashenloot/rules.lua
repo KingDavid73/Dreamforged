@@ -199,11 +199,25 @@ function M.rng(seed)
     end
 end
 function M.rarity(random, minimum, bonus)
-    -- Rarity bonuses improve a roll.  The old subtraction inverted the
-    -- promotion ladder, making higher-level and promoted enemies more likely
-    -- to produce Common gear.  Clamp at 100 so the six weights remain a
-    -- complete, deterministic percentile table.
-    local roll, sum = math.min(100,math.max(1,random(100)+(bonus or 0))), 0
+    -- Rarity bonuses improve a roll, but never collapse the overflow into the
+    -- final percentile.  Capping `random(100) + bonus` at 100 made every roll
+    -- above the cap a Relic, which was especially visible on promoted packs.
+    -- Keep the native top two-percent Relic slice intact and cap promoted
+    -- rolls just below it; World Bosses still receive their explicit Relic
+    -- reward from the boss table. This preserves a small natural Relic chance
+    -- without turning it into the common result for every high-tier drop.
+    local raw=math.floor(tonumber(random(100)) or 1)
+    raw=math.max(1,math.min(100,raw))
+    local amount=math.max(0,math.floor(tonumber(bonus) or 0))
+    local relicWeight=M.rarities[#M.rarities] and M.rarities[#M.rarities].weight or 1
+    local relicStart=101-relicWeight
+    local roll
+    if raw>=relicStart then
+        roll=raw
+    else
+        roll=math.min(relicStart-1,raw+amount)
+    end
+    local sum = 0
     for i, r in ipairs(M.rarities) do
         sum = sum + r.weight
         if roll <= sum then return math.max(i, minimum or 1) end

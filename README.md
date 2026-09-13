@@ -1,6 +1,15 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.2 - player-reserved ground loot, reliable rarity rolls, and complete boss corpse cards.**
+**Current release: 0.10.3 - rarity-colored ground glows and overflow-safe rarity rolls.**
+
+## 0.10.3 rarity color and weighting fix
+
+Ground-drop lights now use the same canonical RGB palette as the salvage menu
+and target cards, so Common through Relic are visually consistent everywhere.
+Rarity bonuses no longer collapse every percentile that overflows 100 into a
+Relic. The natural Relic slice remains small and stable; World Bosses still
+receive their explicit Relic reward, while Mythic artifacts remain a separate
+rare boss roll.
 
 ## 0.10.2 player handoff and rarity polish
 
@@ -285,8 +294,10 @@ pieces, but three to five remains possible on a lucky run.
 Chest status and lock level also raise minimum-rarity odds. At lock level 80, a
 selected chest has a 90% Rare-or-better boost chance and a 30% Epic-or-better
 boost chance.
-Ordinary containers still have a chance, and the underlying 65% Magic / 25%
-Rare / 8% Epic / 2% Legendary curve remains the baseline. Relics stay boss-only.
+Ordinary containers still have a chance, and the six-tier Common-to-Relic
+gradient remains the baseline (43% / 32% / 15% / 6% / 2% / 2%). Promotion
+bonuses shift results upward without overflowing into Relic; World Bosses add
+one explicit Relic reward on top of their normal attempts.
 Owned, scripted, and previously processed containers remain protected. Each new
 dungeon writes a compact cache summary to `openmw.log`.
 

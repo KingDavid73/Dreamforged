@@ -1,5 +1,14 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.3 - rarity color and weighting fix
+
+- Ground-drop lights now read the canonical rarity palette used by salvage and
+  target-card text, removing the visible Rare/Epic/Legendary color drift.
+- Fixed promoted rarity bonuses overflowing into a clamped percentile 100,
+  which made Relic the most common result in large promoted battles. Relic now
+  keeps its small natural slice; World Bosses retain their guaranteed Relic,
+  and Mythic remains a separate rare roll.
+
 ## 0.10.2 - player-reserved ground loot and rarity polish
 
 - Reserved fresh procedural ground rewards for the player until pickup. NPCs

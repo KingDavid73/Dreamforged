@@ -1,6 +1,12 @@
-# Morrowind: Dreamforged handoff — 0.10.2 installed
+# Morrowind: Dreamforged handoff — 0.10.3 installed
 
-**Current installed release: 0.10.2.**
+**Current installed release: 0.10.3.**
+
+0.10.3 makes ground-drop lights reuse the salvage/target-card rarity palette.
+It also fixes rarity-bonus overflow: promoted rolls are capped below the small
+natural Relic slice instead of turning all values above 100 into Relics. World
+Bosses still guarantee one Relic and roll Mythic separately at the configured
+gear-pressure chance.
 
 0.10.2 reserves fresh procedural ground rewards for the player while they are
 loose. The reservation is removed once the player picks the item up, so a later

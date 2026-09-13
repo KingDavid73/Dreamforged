@@ -1,5 +1,16 @@
 ﻿# Ashen Loot validation
 
+## 0.10.3 rarity color and weighting fix (2026-09-13)
+
+- Deterministic rules coverage confirms rarity bonuses cannot collapse into a
+  Relic overflow: a high promoted roll reaches Legendary, while the natural
+  Relic percentile remains reachable.
+- Ground-glow construction now consumes `R.rarities[tier].color`, the same
+  table used by salvage and target-card text.
+- Full isolated OpenMW regression should be rerun before packaging; the prior
+  0.10.2 run passed all settings, item/effect generation, promotions, loot,
+  UI, and save/reload checks.
+
 ## 0.10.2 player handoff and rarity polish (2026-09-13)
 
 - The clean isolated OpenMW regression passed all settings, generated item and

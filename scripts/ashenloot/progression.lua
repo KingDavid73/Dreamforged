@@ -8,7 +8,6 @@ local state, loot, promote, eligible
 local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
 local genericCreatureIds
 local timer, considered, lastPlayerCell = 0, {}, nil
-local glowColors = {{0.78,0.78,0.78},{0.25,0.90,0.35},{0.30,0.55,1.00},{0.72,0.28,1.00},{1.00,0.30,0.08},{1.00,0.92,0.55}}
 local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
 local function isGuard(actor)
     if not actor or not types.NPC.objectIsInstance(actor) then return false end
@@ -1070,7 +1069,11 @@ end
 local function glowRecord(tier)
     local key='glow3:'..tier
     if state.director.cache[key] then return state.director.cache[key] end
-    local c=glowColors[tier] or glowColors[1]
+    -- Use the same canonical palette rendered by the salvage and target-card
+    -- UIs. Keeping a second hand-tuned table here caused ground lights to
+    -- drift visibly from their rarity text (especially Rare/Epic/Legendary).
+    tier=math.max(1,math.min(#R.rarities,math.floor(tonumber(tier) or 1)))
+    local c=R.rarities[tier].color
     -- A model-less native light keeps the rarity glow without inheriting visible
     -- torch geometry. Empty model paths are rejected by OpenMW record creation.
     local template=types.Light.record('yellow light')
