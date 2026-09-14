@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 24, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 25, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -875,6 +875,7 @@ local function death(actor)
     state.rewards[actor.id] = true
     Progress.supplies(actor)
     local elite = state.elites[actor.id]
+    Progress.victoryRespite(actor,elite)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
     local attempts=({[0]=1,[1]=2,[2]=3,[3]=4,[4]=6})[rank]
@@ -1202,7 +1203,12 @@ return {
                     cellState.count=nil
                 end
             end
-            state.version = 24
+            if oldVersion<25 then
+                local encounterSettings=storage.globalSection(C.groups.encounters)
+                if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
+                if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
+            end
+            state.version = 25
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

@@ -467,10 +467,13 @@ return {
                     local spawnMax=math.max(C.exteriorSpawnMin,C.exteriorSpread)
                     local attempts=math.max(18,event.count*20)
                     local strictAttempts=math.floor(attempts*0.55)
+                    local dir=util.vector3(event.dirX or 1,event.dirY or 0,0)
+                    local center=event.director and actor.position+dir*((spawnMin+spawnMax)*0.5) or actor.position
+                    local radius=event.director and math.max(250,(spawnMax-spawnMin)*0.5) or spawnMax
                     for attempt=1,attempts do
                         if #positions>=event.count then break end
                         local relaxed=C.encounterDensity>=2.5 and attempt>strictAttempts
-                        local pos=nearby.findRandomPointAroundCircle(actor.position,spawnMax,options)
+                        local pos=nearby.findRandomPointAroundCircle(center,radius,options)
                         -- At maximum density, fall back to a deterministic
                         -- landscape probe if the local navmesh sampler cannot
                         -- supply enough points. This favors visible hordes over
@@ -478,16 +481,19 @@ return {
                         if not pos and relaxed then
                             local angle=attempt*2.3999632297
                             local radius=spawnMin+(spawnMax-spawnMin)*((attempt%17)/17)
-                            pos=actor.position+util.vector3(math.cos(angle)*radius,math.sin(angle)*radius,0)
+                            pos=center+util.vector3(math.cos(angle)*radius,math.sin(angle)*radius,0)
                         end
-                        local ground=pos and nearby.castRay(pos+util.vector3(0,0,relaxed and 512 or 256),pos-util.vector3(0,0,relaxed and 512 or 256),
+                        local ground=pos and nearby.castRay(pos+util.vector3(0,0,2048),pos-util.vector3(0,0,2048),
                             {collisionType=nearby.COLLISION_TYPE.World+nearby.COLLISION_TYPE.HeightMap})
                         if ground and ground.hit and ground.hitNormal and ground.hitNormal.z>=(relaxed and 0.35 or 0.65)
                             and (not actor.cell.hasWater or ground.hitPos.z>(actor.cell.waterLevel or -100000)+12) then
                             local candidate=ground.hitPos+util.vector3(0,0,8)
                             local clear=not nearby.castRay(candidate+util.vector3(0,0,60),candidate+util.vector3(0,0,220),
                                 {radius=relaxed and 25 or 45,collisionType=nearby.COLLISION_TYPE.World+nearby.COLLISION_TYPE.Door+nearby.COLLISION_TYPE.HeightMap}).hit
-                            local separated=clear and (candidate-self.position):length()>=spawnMin
+                            local fromPlayer=candidate-self.position
+                            local forward=fromPlayer.x*dir.x+fromPlayer.y*dir.y
+                            local separated=clear and fromPlayer:length()>=spawnMin and fromPlayer:length()<=spawnMax+300
+                                and (not event.director or forward>spawnMin*0.35)
                             local spacing=relaxed and 80 or 140
                             for _,other in ipairs(nearby.actors) do if (other.position-candidate):length()<spacing then separated=false end end
                             for _,other in ipairs(positions) do if (other-candidate):length()<spacing then separated=false end end

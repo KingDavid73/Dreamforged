@@ -364,12 +364,33 @@ function M.bind(s, giveLoot, encounter, isEligible)
     for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds'}) do
         state.director[key] = state.director[key] or {}
     end
+    state.director.outdoor=state.director.outdoor or {pressure=0,nextRoll=0}
     for _,cellState in pairs(state.director.cells) do
         if cellState.additionalCount==nil then setAdditionalCount(cellState,cellState.count or 0) end
         cellState.count=nil
     end
     pending, pools, gear, itemPools, kindPools, lastPlayerCell, considered = {}, nil, nil, nil, nil, nil, {}
     for id,a in pairs(state.director.actors) do if a.pendingReplacement then state.director.actors[id]=nil end end
+end
+local function exteriorTown(cell)
+    if not C.settlementSuppression then return false end
+    local civilians=0
+    for _,other in ipairs(world.activeActors) do
+        if other.cell==cell and types.NPC.objectIsInstance(other)
+            and types.Actor.stats.ai.fight(other).base<80 then civilians=civilians+1 end
+    end
+    return civilians>=2
+end
+
+-- A victory pauses the outdoor director without imposing a quota that ordinary
+-- travelers can notice. Boss kills deliberately leave time to inspect loot.
+function M.victoryRespite(actor,elite)
+    if not actor or not actor.cell or not actor.cell.isExterior or not elite then return end
+    local seconds=elite.worldBoss and 180 or ({20,45,90})[elite.rank or 1] or 20
+    local outdoor=state.director.outdoor
+    outdoor.safeCell=actor.cell.id
+    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,core.getSimulationTime()+seconds)
+    outdoor.pressure=0
 end
 function M.bossWave(actor)
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
@@ -689,14 +710,7 @@ function M.prepare(actor, inCombat)
     if cell.isExterior then cellState.isExterior=true end
     local boss = C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
     if boss then cellState.boss=actor.id end
-    local town=false
-    if cell.isExterior then
-        local civilians=0
-        for _,other in ipairs(world.activeActors) do
-            if other.cell==cell and types.NPC.objectIsInstance(other) and types.Actor.stats.ai.fight(other).base<80 then civilians=civilians+1 end
-        end
-        town=C.settlementSuppression and civilians>=2
-    end
+    local town=cell.isExterior and exteriorTown(cell) or false
     -- World Boss is the highest promotion result, not a separate per-cell roll.
     -- Only actors that actually promote receive this conditional chance.
     local allowWorldBoss=C.worldBosses and not guard and not town and isAggressive(actor)
@@ -742,12 +756,11 @@ function M.prepare(actor, inCombat)
     -- Unsafe identity eligibility must never create extra population anchors.
     -- It permits promotions/transforms; ordinary encounter records still own
     -- the cell's strictly budgeted reinforcement generation.
-    if C.extraEncounters and populationAnchor(actor) and canAnchorPack and additionalCount(cellState) < maxCount
-        and (not cell.isExterior or rng(100)<=C.exteriorAnchorChance) then
+    if not cell.isExterior and C.extraEncounters and populationAnchor(actor) and canAnchorPack
+        and additionalCount(cellState) < maxCount then
         local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
         local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
-        local group=cell.isExterior and (low+rng(high-low+1)-1)
-            or math.max(1,math.floor(C.encounterDensity+0.5))
+        local group=math.max(1,math.floor(C.encounterDensity+0.5))
         if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
         local count=math.min(maxCount-additionalCount(cellState),group)
         setAdditionalCount(cellState,additionalCount(cellState)+count)
@@ -785,7 +798,7 @@ function M.spawnResult(event)
     local actor=request.actor
     local cellState=state.director.cells[request.cell]
     local function refund(amount)
-        if request.bossWave then return end
+        if request.bossWave or request.director then return end
         if cellState then setAdditionalCount(cellState,additionalCount(cellState)-(amount or request.count)) end
     end
     if not C.enabled or not C.extraEncounters or not valid(actor) or actor.cell.id~=request.cell then refund();return end
@@ -795,13 +808,15 @@ function M.spawnResult(event)
         if made>=request.count then break end
         local offset=pos-actor.position
         if actor.cell.isExterior or offset:length()<900 then
-            local id=types.Creature.objectIsInstance(actor) and pickCreature(actor,request.level,rng,true) or actor.recordId
+            local id=request.director and pickDungeonCreature(actor.cell,request.level,rng)
+                or (types.Creature.objectIsInstance(actor) and pickCreature(actor,request.level,rng,true) or actor.recordId)
             -- NPC copies are forbidden: use varied level-aware creature allies instead.
             if types.NPC.objectIsInstance(actor) then id=pickNpcReinforcement(actor,request.level,rng) end
             local spawn=world.createObject(id,1)
             local parentGeneration=type(state.director.generated[actor.id])=='number'
                 and state.director.generated[actor.id] or 0
-            state.director.generated[spawn.id]=request.bossWave and 'bossAdd' or (parentGeneration+1)
+            state.director.generated[spawn.id]=request.bossWave and 'bossAdd'
+                or (request.director and 'director' or (parentGeneration+1))
             if request.bossWave then
                 local adds=state.director.bossAdds[actor.id] or {}
                 adds[#adds+1]=spawn.id;state.director.bossAdds[actor.id]=adds
@@ -1251,6 +1266,65 @@ local function updateCellState(player)
         end
     end
 end
+local function updateOutdoorDirector(player)
+    local cell=player.cell
+    if not cell or not cell.isExterior or not C.extraEncounters or C.exteriorBudget<=0 then return end
+    local d=state.director
+    local outdoor=d.outdoor
+    local now=core.getSimulationTime()
+    local current={x=player.position.x,y=player.position.y,z=player.position.z}
+    if outdoor.cell~=cell.id then
+        outdoor.cell=cell.id;outdoor.last=current;outdoor.distance=0
+        outdoor.pressure=0;outdoor.nextRoll=now+C.outdoorDirectorInterval
+    else
+        local last=outdoor.last or current
+        local dx,dy=current.x-last.x,current.y-last.y
+        local step=math.sqrt(dx*dx+dy*dy)
+        if step>1 then
+            outdoor.dirX, outdoor.dirY=dx/step,dy/step
+            outdoor.distance=(outdoor.distance or 0)+step
+        end
+        outdoor.last=current
+    end
+    if exteriorTown(cell) then
+        outdoor.pressure=0;outdoor.nextRoll=now+C.outdoorDirectorInterval
+        return
+    end
+    if outdoor.safeCell==cell.id and now<(outdoor.safeUntil or 0) then return end
+    if now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
+    outdoor.nextRoll=now+C.outdoorDirectorInterval
+    outdoor.distance=0
+    local live,hostiles=0,0
+    for _,actor in ipairs(world.activeActors) do
+        if actor.cell==cell and valid(actor) and not types.Player.objectIsInstance(actor) then
+            local distance=(actor.position-player.position):length()
+            if distance<3000 and types.Actor.stats.ai.fight(actor).base>=80 then hostiles=hostiles+1 end
+            if d.generated[actor.id]=='director' and distance<5000 then live=live+1 end
+        end
+    end
+    local cap=math.max(1,math.floor(C.exteriorBudget*C.encounterDensity+0.5))
+    local hp=types.Actor.stats.dynamic.health(player)
+    local healthRatio=hp.base>0 and hp.current/hp.base or 1
+    -- Existing pressure gets to resolve before another wave. Low health and a
+    -- crowded battlefield create an automatic lull without making towns unsafe.
+    if live>=cap or hostiles>=math.max(3,math.ceil(cap*0.75)) or healthRatio<=0.35 then return end
+    local rng=R.rng(cell.id..':outdoor-director:'..math.floor(now/C.outdoorDirectorInterval))
+    local chance=math.min(95,C.outdoorDirectorChance+(outdoor.pressure or 0))
+    if rng(100)>chance then
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+C.outdoorPressureGain)
+        return
+    end
+    local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
+    local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
+    local count=math.min(cap-live,low+rng(high-low+1)-1)
+    if count<=0 then return end
+    outdoor.pressure=0
+    local token=cell.id..':director:'..tostring(now)
+    pending[token]={actor=player,level=gearLevel(),count=count,cell=cell.id,
+        created=now,director=true}
+    player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
+        director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+end
 function M.update(dt)
     timer=timer+dt
     if timer<1 or not C.enabled or not world.players[1] then return end
@@ -1266,12 +1340,12 @@ function M.update(dt)
     end
     local count=0
     local player=world.players[1]
+    updateOutdoorDirector(player)
     for _,actor in ipairs(world.activeActors) do
         if count>=3 then break end
         local legacyExterior=state.director.generated[actor.id]==true and actor.cell.isExterior
         local distance=(actor.position-player.position):length()
-        local closeEnough=not actor.cell.isExterior or (distance>=math.min(C.exteriorTriggerMin,C.exteriorTriggerRange)
-            and distance<=math.max(C.exteriorTriggerMin,C.exteriorTriggerRange))
+        local closeEnough=not actor.cell.isExterior or distance<=math.max(C.exteriorSpread+500,3000)
         if valid(actor) and eligible(actor) and (not state.director.actors[actor.id] or legacyExterior)
             and closeEnough
             and (considered[actor.id] or 0)<core.getSimulationTime()
@@ -1285,7 +1359,7 @@ function M.update(dt)
     for token,request in pairs(pending) do
         if core.getSimulationTime()-request.created>15 then
             if request.replacement then state.director.actors[request.actor.id]=nil end
-            if request.count and state.director.cells[request.cell] then
+            if request.count and not request.director and state.director.cells[request.cell] then
                 local cellState=state.director.cells[request.cell]
                 setAdditionalCount(cellState,additionalCount(cellState)-request.count)
             end

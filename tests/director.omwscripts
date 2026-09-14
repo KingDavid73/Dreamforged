@@ -1,0 +1,3 @@
+GLOBAL: scripts/ashenloot_test/spread_smoke.lua
+PLAYER: scripts/ashenloot_test/player.lua
+CUSTOM: scripts/ashenloot_test/actor.lua

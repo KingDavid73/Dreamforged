@@ -1,6 +1,12 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.5 - dedicated World Boss rewards and explicit addition budgets.**
+**Current release: 0.10.6 - player-centered outdoor encounter director.**
+
+## 0.10.6 Outdoor pressure director
+
+Exterior encounters now originate from the moving player rather than individual native creature anchors. Every configurable interval, the director considers the current nearby threat count, player health, settlement status, and accumulated quiet-time pressure. Successful rolls place a bounded group ahead of the player's trajectory on validated walkable ground and send it toward the player. Failed rolls raise the next chance, creating waxing and waning pressure without spending an entire cell population at once.
+
+The exterior budget now caps living director additions near the player instead of imposing a lifetime spawn quota. Champion, Elite, and Unique victories create progressively longer pauses; defeating a World Boss creates a three-minute local safe window for looting. Hostile interiors retain their existing compact-cell population system.
 
 ## 0.10.5 World Boss reward table
 
@@ -112,7 +118,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.5"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.6"
 content=AshenLoot.omwscripts
 ```
 

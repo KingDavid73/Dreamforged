@@ -1,5 +1,12 @@
 ﻿# Ashen Loot validation
 
+## 0.10.6 outdoor pressure director (2026-09-13)
+
+- Exterior population is now driven by timed player movement, accumulated quiet-roll pressure, a live nearby-add cap, health/threat respite, and forward-biased local placement.
+- Promoted exterior deaths pause pressure for 20/45/90 seconds by tier; World Boss deaths create a three-minute safe window in that exterior cell.
+- Interior anchor population and rerunnable dungeon behavior are unchanged.
+- The complete isolated regression passed all 78 visible settings, generated records, progression, encounters, inventories, UI initialization, and save/reload. A targeted exterior run then moved the player through a real Ashlands navmesh and produced a bounded forward group containing three different loaded creature records. Expected test-harness quit warnings were the only script traceback.
+
 ## 0.10.5 World Boss table and addition budget (2026-09-13)
 
 - Deterministic rules coverage verifies the exact 1/2/7/20/30/20/20

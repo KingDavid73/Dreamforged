@@ -1,5 +1,14 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.6 - outdoor pressure director
+
+- Replaced exterior native-anchor packs with a player-centered timed director.
+- Added forward-biased, navmesh/ground-validated outdoor placement and immediate pursuit.
+- Added configurable interval, base chance, quiet-roll pressure gain, live-add cap, group size, and spawn range.
+- Added automatic respite while health is low or the nearby battlefield is crowded.
+- Added 20/45/90-second Champion/Elite/Unique victory pauses and a three-minute World Boss safe window.
+- Kept interior encounter population and dungeon reruns unchanged.
+
 ## 0.10.5 - dedicated World Boss rewards
 
 - Replaced the ordinary boss rarity roll with six independent rolls from a

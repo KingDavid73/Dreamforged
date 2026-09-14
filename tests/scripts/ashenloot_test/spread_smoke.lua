@@ -2,7 +2,7 @@ local core,world,types=require('openmw.core'),require('openmw.world'),require('o
 local I,util=require('openmw.interfaces'),require('openmw.util')
 local Config=require('scripts.ashenloot.config')
 local function set(key,value) require('openmw.storage').globalSection(Config.groupKey(key)):set(key,value) end
-local t,stage=0,0
+local t,stage,nextMove=0,0,4
 return {engineHandlers={onUpdate=function(dt)
     t=t+dt
     local ok,err=pcall(function()
@@ -12,19 +12,18 @@ return {engineHandlers={onUpdate=function(dt)
             stage=1
             p:sendEvent('AshenLoot_TestFreezeAI')
             set('creatureVariety',0);set('creaturePoolMode','Random');set('encounterDensity',3)
-            set('exteriorBudget',16);set('exteriorTriggerMin',100);set('exteriorTriggerRange',8000)
-            set('exteriorAnchorChance',100);set('exteriorGroupMin',3);set('exteriorGroupMax',5)
+            set('exteriorBudget',16);set('outdoorDirectorInterval',3);set('outdoorDirectorChance',100)
+            set('outdoorPressureGain',15);set('exteriorGroupMin',3);set('exteriorGroupMax',5)
             set('exteriorSpawnMin',300);set('exteriorSpread',1200)
             set('settlementSuppression',false);set('unsafeContent',false)
             p:teleport(world.getExteriorCell(0,0),util.vector3(4096,4096,1000))
-        elseif stage==1 and t>12 then
-            stage=2
-            for n=1,8 do
-                local angle=n*0.785398
-                local anchor=world.createObject('rat',1)
-                anchor:teleport(p.cell,p.position+util.vector3(math.cos(angle)*900,math.sin(angle)*900,0))
-            end
-        elseif stage==2 and t>24 then
+        elseif stage==1 and t>=nextMove then
+            -- Teleporting in measured steps simulates sustained travel without
+            -- depending on test-profile input or AI.
+            p:teleport(p.cell,p.position+util.vector3(220,0,0))
+            nextMove=t+2
+            if t>22 then stage=2 end
+        elseif stage==2 and t>30 then
             stage=3
             local count,variety,seen=0,0,{}
             for id in pairs(I.AshenLoot.getState().director.generated) do
@@ -33,14 +32,10 @@ return {engineHandlers={onUpdate=function(dt)
                     if actor.id==id and not seen[actor.recordId] then seen[actor.recordId]=true;variety=variety+1 end
                 end
             end
-            assert(count>=24,'Maximum exterior settings produced '..count..' additions')
-            for cellId,cellState in pairs(I.AshenLoot.getState().director.cells) do
-                if cellState.isExterior then
-                    assert((cellState.additionalCount or 0)<=48,'Additional-spawn budget exceeded in '..cellId)
-                end
-            end
-            assert(variety>=6,'Maximum Random exterior settings produced only '..variety..' creature records')
-            print('[Dreamforged EXTERIOR] PASS: active same/adjacent-cell anchors placed '..count..' bounded additions across '..variety..' records')
+            assert(count>=3,'Maximum exterior settings produced '..count..' additions')
+            assert(count<=48,'Living director cap was exceeded: '..count)
+            assert(variety>=3,'Maximum Random exterior settings produced only '..variety..' creature records')
+            print('[Dreamforged EXTERIOR] PASS: moving-player director placed '..count..' bounded additions across '..variety..' records')
             core.quit();stage=4
         end
     end)
