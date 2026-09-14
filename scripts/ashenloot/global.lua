@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 28, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 29, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -770,7 +770,8 @@ local function encounter(data)
             -- World Boss is the top rung of the promotion ladder. This roll is
             -- conditional on the actor first passing the promotion roll (or
             -- being force-promoted as a dungeon leader).
-            local worldBoss=data.worldBoss or (data.allowWorldBoss and random(100)<=C.worldBossChance)
+            local bossChance=math.max(0,math.min(100,tonumber(data.worldBossChance) or 3))
+            local worldBoss=data.worldBoss or (data.allowWorldBoss and random(100)<=bossChance)
             elite.rank = worldBoss and 3 or (data.rank or (random(100)<=C.uniquePercent and 3
                 or (random(100)<=C.eliteTierPercent and 2 or 1)))
             elite.tier = elite.rank >= 2 and 2 or 1
@@ -1254,7 +1255,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 28
+            state.version = 29
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

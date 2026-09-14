@@ -377,7 +377,9 @@ function M.bind(s, giveLoot, encounter, isEligible)
     for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds'}) do
         state.director[key] = state.director[key] or {}
     end
-    state.director.outdoor=state.director.outdoor or {pressure=0,nextRoll=0}
+    state.director.outdoor=state.director.outdoor or {pressure=0,bossProgress=0,nextRoll=0}
+    state.director.outdoor.pressure=state.director.outdoor.pressure or 0
+    state.director.outdoor.bossProgress=state.director.outdoor.bossProgress or 0
     state.director.dens=state.director.dens or {}
     state.director.directorCosts=state.director.directorCosts or {}
     state.director.spawnLevels=state.director.spawnLevels or {}
@@ -397,16 +399,41 @@ local function exteriorTown(cell)
     end
     return civilians>=2
 end
+local function directorDensity()
+    return 1.5*C.directorIntensity
+end
 
--- A victory pauses the outdoor director without imposing a quota that ordinary
--- travelers can notice. Boss kills deliberately leave time to inspect loot.
-function M.victoryRespite(actor,elite)
-    if not actor or not actor.cell or not actor.cell.isExterior or not elite then return end
-    local seconds=elite.worldBoss and 180 or ({20,45,90})[elite.rank or 1] or 20
-    local outdoor=state.director.outdoor
-    outdoor.safeCell=actor.cell.id
-    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,core.getSimulationTime()+seconds)
+-- Wilderness combat is feedback for the director. Ordinary kills and lower
+-- promotions mean the player is engaging, so they build pressure instead of
+-- granting a lull. Only major victories create meaningful breathing room.
+local function applyOutdoorVictory(outdoor,elite,now,intensity)
+    if not elite then
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+4*intensity)
+        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+1.5*intensity)
+        return
+    end
+    if not elite.worldBoss and (elite.rank or 1)<=2 then
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+(elite.rank==2 and 7 or 5)*intensity)
+        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+(elite.rank==2 and 8 or 4)*intensity)
+        local seconds=elite.rank==2 and 8 or 3
+        outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+seconds)
+        return
+    end
+    local seconds=elite.worldBoss and 180 or 25
+    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+seconds)
     outdoor.pressure=0
+    if elite.worldBoss then
+        outdoor.bossProgress=0
+        outdoor.lastBossAt=now
+    else
+        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+15*intensity)
+    end
+end
+function M.victoryRespite(actor,elite)
+    if not actor or not actor.cell or not actor.cell.isExterior then return end
+    local outdoor=state.director.outdoor
+    outdoor.safeCell=actor.cell.id -- retained for old-save diagnostics
+    applyOutdoorVictory(outdoor,elite,core.getSimulationTime(),C.directorIntensity)
 end
 function M.bossWave(actor)
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
@@ -422,11 +449,12 @@ function M.bossWave(actor)
         end
     end
     d.bossAdds[actor.id]=live
-    local cap=C.worldBossAddCap
+    local intensity=C.directorIntensity
+    local cap=math.max(1,math.floor(6*intensity+0.5))
     if cap<=0 or #live>=cap then return end
-    local rng=R.rng(actor.id..':boss-wave:'..math.floor(core.getSimulationTime()/C.worldBossAddInterval))
-    local low=math.min(C.worldBossAddMin,C.worldBossAddMax)
-    local high=math.max(C.worldBossAddMin,C.worldBossAddMax)
+    local rng=R.rng(actor.id..':boss-wave:'..math.floor(core.getSimulationTime()/math.max(5,30/intensity)))
+    local low=math.max(1,math.floor(math.sqrt(intensity)+0.5))
+    local high=math.max(low,math.floor(3*math.sqrt(intensity)+0.5))
     local count=math.min(cap-#live,low+rng(high-low+1)-1)
     local token=actor.id..':boss-wave:'..tostring(core.getSimulationTime())
     pending[token]={actor=actor,level=M.actorLevel(actor),count=count,cell=actor.cell.id,
@@ -732,6 +760,13 @@ function M.prepare(actor, inCombat)
     -- Only actors that actually promote receive this conditional chance.
     local allowWorldBoss=C.worldBosses and not guard and not town and isAggressive(actor)
         and playerLevel>=C.worldBossMinLevel and activeWorldBosses(cell)<C.worldBossCellCap
+    local outdoorBossChance=3
+    local forceOutdoorBoss=false
+    if allowWorldBoss and cell.isExterior and generated=='director' then
+        local progress=math.max(0,math.min(100,d.outdoor.bossProgress or 0))
+        outdoorBossChance=math.min(40,3+math.max(0,progress-60)*0.5)
+        forceOutdoorBoss=progress>=100
+    end
     -- Replace only before combat, never change a fighting actor underneath the player.
     if not generated and not inCombat and not town and C.progression and types.Creature.objectIsInstance(actor)
         and rng(100) <= C.creatureVariety and (actor.position-world.players[1].position):length() > 900 then
@@ -751,9 +786,15 @@ function M.prepare(actor, inCombat)
         allowDownscale=types.Creature.objectIsInstance(actor)})
     if guard then M.loadout(actor,target+6,2,{guard=true});return end
     if boss or cellState.boss==actor.id then
-        promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,gearPressure=gearDurability})
-    else promote({actor=actor,allowWorldBoss=allowWorldBoss,gearPressure=gearDurability}) end
+        promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,
+            worldBossChance=outdoorBossChance,gearPressure=gearDurability})
+    else promote({actor=actor,force=forceOutdoorBoss,worldBoss=forceOutdoorBoss,
+        allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,gearPressure=gearDurability}) end
     local elite=state.elites[actor.id]
+    if elite and elite.worldBoss and cell.isExterior then
+        d.outdoor.bossProgress=0
+        d.outdoor.lastBossAt=core.getSimulationTime()
+    end
     if elite and elite.worldBoss and not d.actors[actor.id].bossScaleFactor then
         d.actors[actor.id].bossOriginalScale=actor.scale
         local scale,factor=worldBossScale(actor)
@@ -764,8 +805,8 @@ function M.prepare(actor, inCombat)
         {rank=elite and elite.rank or 0,worldBoss=elite and elite.worldBoss})
     if cellState.boss==actor.id then M.supplement(cell,target) end
     M.containerLoot(cell,actor,target)
-    local baseBudget=cell.isExterior and C.exteriorBudget or (dungeon(cell) and C.interiorBudget or 0)
-    local maxCount=math.floor(baseBudget*C.encounterDensity+0.5)
+    local baseBudget=cell.isExterior and 6 or (dungeon(cell) and C.interiorBudget or 0)
+    local maxCount=math.floor(baseBudget*directorDensity()+0.5)
     if town then maxCount=0 end
     -- A replacement may stand in for its native anchor, but an additional
     -- generated actor never chains into another group.
@@ -775,9 +816,7 @@ function M.prepare(actor, inCombat)
     -- the cell's strictly budgeted reinforcement generation.
     if not cell.isExterior and C.extraEncounters and populationAnchor(actor) and canAnchorPack
         and additionalCount(cellState) < maxCount then
-        local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
-        local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
-        local group=math.max(1,math.floor(C.encounterDensity+0.5))
+        local group=math.max(1,math.floor(directorDensity()+0.5))
         if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
         local count=math.min(maxCount-additionalCount(cellState),group)
         setAdditionalCount(cellState,additionalCount(cellState)+count)
@@ -1084,7 +1123,7 @@ function M.supplies(actor)
     end
     -- Denser cells should yield more total supplies, but not in direct proportion
     -- to every extra body. Square-root normalization keeps exploration sustainable.
-    local density=math.sqrt(math.max(1,C.encounterDensity))
+    local density=math.sqrt(math.max(1,directorDensity()))
     if rng(100)<=C.healingPercent/density then give('health') end
     if rng(100)<=C.supplyPercent/density then
         local player=world.players[1]
@@ -1250,7 +1289,7 @@ local function rerunDungeon(cell,cellState,force)
     for _,point in pairs(cellState.spawnPoints or {}) do points[#points+1]=point end
     if #points==0 then return 0 end
     table.sort(points,function(a,b) return (a.key or '')<(b.key or '') end)
-    local wanted=math.max(1,math.floor(C.interiorBudget*C.encounterDensity+0.5))
+    local wanted=math.max(1,math.floor(C.interiorBudget*directorDensity()+0.5))
     local target=gearLevel()
     local generation=(cellState.rerunGeneration or 0)+1
     local rng=R.rng(cell.id..':rerun:'..generation)
@@ -1363,13 +1402,13 @@ local function updateDens(player)
         elseif den and valid(den) and den.cell==player.cell and (den.position-player.position):length()<3500
             and denState.cycles>0 and now>=(denState.nextWave or 0) then
             local threat=liveDirectorThreat(player)
-            local cap=math.max(1,C.exteriorBudget*C.encounterDensity)
+            local cap=math.max(1,math.floor(9*C.directorIntensity+0.5))
             local cost=math.max(0.35,math.min(1.5,denState.level/math.max(1,gearLevel())))
             local rng=R.rng(id..':den-wave:'..denState.cycles)
             local wanted=denState.tier+rng(2)-1
             local count=math.min(wanted,math.max(0,math.floor((cap-threat)/cost)))
             denState.cycles=denState.cycles-1
-            denState.nextWave=now+C.creatureDenWaveInterval
+            denState.nextWave=now+math.max(5,18/C.directorIntensity)
             if count>0 then
                 local token=id..':den-wave:'..tostring(denState.cycles)
                 pending[token]={actor=den,level=denState.level,count=count,cell=den.cell.id,
@@ -1381,14 +1420,18 @@ local function updateDens(player)
 end
 local function updateOutdoorDirector(player)
     local cell=player.cell
-    if not cell or not cell.isExterior or not C.extraEncounters or C.exteriorBudget<=0 then return end
+    if not cell or not cell.isExterior or not C.extraEncounters then return end
     local d=state.director
     local outdoor=d.outdoor
     local now=core.getSimulationTime()
+    local intensity=C.directorIntensity
+    local interval=math.max(4,12/intensity)
     local current={x=player.position.x,y=player.position.y,z=player.position.z}
     if outdoor.cell~=cell.id then
         outdoor.cell=cell.id;outdoor.last=current;outdoor.distance=0
-        outdoor.pressure=0;outdoor.nextRoll=now+C.outdoorDirectorInterval
+        -- Pressure belongs to the journey, not the arbitrary exterior-cell
+        -- boundary. Preserve it while re-aiming the next encounter.
+        outdoor.nextRoll=math.min(outdoor.nextRoll or now+interval,now+interval)
     else
         local last=outdoor.last or current
         local dx,dy=current.x-last.x,current.y-last.y
@@ -1400,44 +1443,52 @@ local function updateOutdoorDirector(player)
         outdoor.last=current
     end
     if exteriorTown(cell) then
-        outdoor.pressure=0;outdoor.nextRoll=now+C.outdoorDirectorInterval
+        outdoor.pressure=0;outdoor.nextRoll=now+interval
         return
     end
-    if outdoor.safeCell==cell.id and now<(outdoor.safeUntil or 0) then return end
+    -- Recovery follows the player across arbitrary exterior-cell borders.
+    if now<(outdoor.safeUntil or 0) then return end
     if now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
-    outdoor.nextRoll=now+C.outdoorDirectorInterval
+    outdoor.nextRoll=now+interval
     outdoor.distance=0
     local live,hostiles=liveDirectorThreat(player)
-    local cap=math.max(1,math.floor(C.exteriorBudget*C.encounterDensity+0.5))
+    local cap=math.max(1,math.floor(9*intensity+0.5))
     local hp=types.Actor.stats.dynamic.health(player)
     local healthRatio=hp.base>0 and hp.current/hp.base or 1
-    -- Existing pressure gets to resolve before another wave. Low health and a
-    -- crowded battlefield create an automatic lull without making towns unsafe.
-    if live>=cap or hostiles>=math.max(3,math.ceil(cap*0.75)) or healthRatio<=0.35 then return end
-    local rng=R.rng(cell.id..':outdoor-director:'..math.floor(now/C.outdoorDirectorInterval))
-    local chance=math.min(95,C.outdoorDirectorChance+(outdoor.pressure or 0))
+    -- Active, healthy travel advances the overall dramatic arc even while a
+    -- few native creatures are nearby. Only genuine crowding or danger pauses
+    -- new spending; one-off rats and scribs no longer starve the director.
+    if healthRatio>0.35 then
+        local cadence=math.max(120,C.worldBossCadenceMinutes*60)
+        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+100*interval/cadence)
+    end
+    if live>=cap or hostiles>=math.max(8,cap) or healthRatio<=0.35 then return end
+    local rng=R.rng(cell.id..':outdoor-director:'..math.floor(now/interval))
+    local baseChance=math.max(15,math.min(80,35+(intensity-1)*25))
+    local chance=math.min(95,baseChance+(outdoor.pressure or 0))
     if rng(100)>chance then
-        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+C.outdoorPressureGain)
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+15*intensity)
         return
     end
-    local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
-    local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
+    local low=math.max(1,math.floor(intensity+0.25))
+    local high=math.max(low,math.ceil(3*intensity))
     local power=gearLevel()
     local target=math.max(1,math.floor(power*(0.54+rng(61)/100)+0.5))
     local cost=math.max(0.35,math.min(1.5,target/power))
     local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
     if count<=0 then return end
-    outdoor.pressure=0
+    outdoor.pressure=math.max(0,(outdoor.pressure or 0)-25)
     local token=cell.id..':director:'..tostring(now)
     local denActive=false
     for _,denState in pairs(d.dens) do if denState.cell==cell.id and not denState.dead then denActive=true;break end end
-    if not denActive and rng(100)<=C.creatureDenChance and live+2<=cap then
+    local denChance=math.min(35,12*math.sqrt(intensity))
+    if not denActive and rng(100)<=denChance and live+2<=cap then
         local families={'beast','undead','daedra','construct'}
         local family=families[rng(#families)]
         local maxTier=power>=25 and 3 or (power>=10 and 2 or 1)
         local tier=rng(maxTier)
-        local cycleLow=math.min(C.creatureDenMinCycles,C.creatureDenMaxCycles)
-        local cycleHigh=math.max(C.creatureDenMinCycles,C.creatureDenMaxCycles)
+        local cycleLow=1
+        local cycleHigh=math.max(1,math.ceil(3*math.sqrt(intensity)))
         pending[token]={actor=player,level=target,count=1,cell=cell.id,created=now,
             director=true,den=true,family=family,tier=tier,cycles=cycleLow+rng(cycleHigh-cycleLow+1)-1,cost=2}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=1,
@@ -1470,7 +1521,7 @@ function M.update(dt)
         if count>=3 then break end
         local legacyExterior=state.director.generated[actor.id]==true and actor.cell.isExterior
         local distance=(actor.position-player.position):length()
-        local closeEnough=not actor.cell.isExterior or distance<=math.max(C.exteriorSpread+500,3000)
+        local closeEnough=not actor.cell.isExterior or distance<=3000
         if valid(actor) and eligible(actor) and (not state.director.actors[actor.id] or legacyExterior)
             and closeEnough
             and (considered[actor.id] or 0)<core.getSimulationTime()
@@ -1507,5 +1558,5 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     ordinaryCreatureRecord=ordinaryCreatureRecord,populationAnchor=populationAnchor,
     safeInventoryRecord=safeInventoryRecord,
     gearLevel=gearLevel,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
-    additionalCount=additionalCount}
+    additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory}
 return M

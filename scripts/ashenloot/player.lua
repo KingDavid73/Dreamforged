@@ -463,8 +463,7 @@ return {
                 if actor.cell.isExterior then
                     local options={agentBounds=types.Actor.getPathfindingAgentBounds(actor),
                         includeFlags=nearby.NAVIGATOR_FLAGS.Walk}
-                    local spawnMin=math.min(C.exteriorSpawnMin,C.exteriorSpread)
-                    local spawnMax=math.max(C.exteriorSpawnMin,C.exteriorSpread)
+                    local spawnMin,spawnMax=1200,2200
                     local attempts=math.max(18,event.count*20)
                     local strictAttempts=math.floor(attempts*0.55)
                     local dir=util.vector3(event.dirX or 1,event.dirY or 0,0)
@@ -474,7 +473,7 @@ return {
                         or (event.denWave and math.min(650,spawnMax) or spawnMax)
                     for attempt=1,attempts do
                         if #positions>=event.count then break end
-                        local relaxed=C.encounterDensity>=2.5 and attempt>strictAttempts
+                        local relaxed=C.directorIntensity>=2.5 and attempt>strictAttempts
                         local pos=nearby.findRandomPointAroundCircle(center,radius,options)
                         -- At maximum density, fall back to a deterministic
                         -- landscape probe if the local navmesh sampler cannot

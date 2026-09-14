@@ -2,11 +2,9 @@ local I,storage,core,menu=require('openmw.interfaces'),require('openmw.storage')
 local C=require('scripts.ashenloot.config')
 local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','protectQuestActors','allowRespawningNPCs','unsafeContent',
     'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove',
-    'creatureVariety','creaturePoolMode','extraEncounters','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours',
+    'extraEncounters','directorIntensity','creaturePoolMode','creatureVariety','excludeExtraCliffRacers','settlementSuppression','rerunnableWilderness','wildernessResetHours',
     'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses',
-    'worldBosses','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent',
-    'worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap',
-    'worldBossMinLevel','worldBossRange',
+    'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange',
     'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
     'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense',
     'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
@@ -47,7 +45,7 @@ return {engineHandlers={onFrame=function()
         finished=true
     end)
     if finished or not ok then
-        print('[AshenLoot SETTINGS5] '..(ok and 'PASS: all 82 native controls have non-nil defaults and working global setters; deferred all-settings reset restored a changed value' or 'FAIL: '..tostring(err)))
+        print('[AshenLoot SETTINGS5] '..(ok and 'PASS: all '..#keys..' native controls have non-nil defaults and working global setters; deferred all-settings reset restored a changed value' or 'FAIL: '..tostring(err)))
     end
     if not ok then core.quit() end
 end}}

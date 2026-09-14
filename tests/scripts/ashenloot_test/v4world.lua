@@ -1,7 +1,9 @@
 local core,types,world=require('openmw.core'),require('openmw.types'),require('openmw.world')
 local I,util=require('openmw.interfaces'),require('openmw.util')
-local settings=require('openmw.storage').globalSection('SettingsAshenLoot')
-settings:set('randomizeContainers',false)
+local storage=require('openmw.storage')
+local C=require('scripts.ashenloot.config')
+local function set(key,value) storage.globalSection(C.groupKey(key)):set(key,value) end
+set('randomizeContainers',false)
 local stage,time,rat,npc,item,owned,origin,generated,loaded=0,0,nil,nil,nil,nil,nil,0,false
 local spawnPos,replaced,downscaled,downscaledHealth,cache,cacheBefore
 local function check(c,s) assert(c,s) end
@@ -16,10 +18,10 @@ return {engineHandlers={onUpdate=function(dt)
         local d=I.AshenLoot.getState().director
         if stage==0 and time>2 then
             stage=1;p:sendEvent('AshenLoot_TestFreezeAI')
-            settings:set('creatureVariety',0);settings:set('extraEncounters',true)
-            settings:set('exteriorBudget',6);settings:set('interiorBudget',3)
-            settings:set('dungeonBosses',true)
-            settings:set('containerLootPercent',100)
+            set('creatureVariety',0);set('extraEncounters',true)
+            set('directorIntensity',1);set('interiorBudget',3)
+            set('dungeonBosses',true)
+            set('containerLootPercent',100)
             p:sendEvent('AshenLoot_TestLevel',30)
             origin=p.position
             p:sendEvent('AshenLoot_TestWorldPosition')
@@ -58,12 +60,23 @@ return {engineHandlers={onUpdate=function(dt)
         elseif stage==1 and time>5 then
             stage=2
             check(spawnPos,'No navmesh fixture location')
-            settings:set('randomizeContainers',true)
+            set('randomizeContainers',true)
             progress.containerLoot(p.cell,rat,30)
             check(d.looseCells[p.cell.id], 'Eligible ruin did not complete its one-time loose-item pass')
             check(types.Actor.stats.level(downscaled).current==1,'High-native creature level did not downscale')
             check(types.Actor.stats.dynamic.health(downscaled).base<downscaledHealth,'High-native creature health did not downscale')
             pass('high-native creature level and health downscale for a low-level target')
+            d.outdoor.pressure=0;d.outdoor.bossProgress=0
+            progress.test.applyOutdoorVictory(d.outdoor,nil,core.getSimulationTime(),1)
+            check(d.outdoor.pressure>0 and d.outdoor.bossProgress>0,
+                'Ordinary wilderness combat did not build director pressure')
+            pass('ordinary wilderness victories build encounter and World Boss pressure')
+            progress.test.applyOutdoorVictory(d.outdoor,{rank=3,worldBoss=true},core.getSimulationTime(),1)
+            check(d.outdoor.pressure==0 and d.outdoor.bossProgress==0
+                and (d.outdoor.safeUntil or 0)>core.getSimulationTime(),
+                'World Boss victory did not release pressure and grant recovery')
+            d.outdoor.safeUntil=0
+            pass('World Boss victory releases pressure and grants recovery')
             rat:teleport(p.cell,spawnPos)
         elseif stage==2 and time>7 then
             stage=21
@@ -99,12 +112,12 @@ return {engineHandlers={onUpdate=function(dt)
             check(d.cells[p.cell.id].additionalCount==before and count(d.generated)==generated,'Repeated spawn')
             pass('level-30 actor scaling, real navmesh spawns, cell budget and repeat protection')
             pass('unowned item transferred and wielded; owned equipment protected')
-            settings:set('creatureVariety',100)
+            set('creatureVariety',100)
             replaced=world.createObject('rat',1)
             replaced:teleport(p.cell,spawnPos)
             stage=22
         elseif stage==22 and time>14 then
-            settings:set('creatureVariety',100)
+            set('creatureVariety',100)
             progress.prepare(replaced)
             stage=23
         elseif stage==23 and time>17 then

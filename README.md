@@ -1,6 +1,14 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.12 - reliable all-settings reset.**
+**Current release: 0.10.13 - unified action director.**
+
+## 0.10.13 Unified action director
+
+- Outdoor pressure now persists across exterior-cell boundaries. Crossing an invisible cell edge can no longer erase a nearly ready encounter.
+- Ordinary wilderness kills and lower promotions now build encounter appetite and advance the World Boss arc. They no longer grant long pauses merely because the player engaged them.
+- Healthy active exploration works toward a World Boss climax at about ten minutes by default. The chance rises late in the arc and the next eligible director group is guaranteed to contain one when the target is reached.
+- World Boss victories release pressure and grant a three-minute recovery window that follows the player across exterior cells.
+- The settings menu replaces seventeen low-level encounter and boss knobs with **Director intensity** and **Target World Boss cadence**. Intensity jointly tunes encounter checks, groups, living threat, dens, and boss reinforcements.
 
 ## 0.10.12 Settings reset
 
@@ -145,7 +153,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.12"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.13"
 content=AshenLoot.omwscripts
 ```
 

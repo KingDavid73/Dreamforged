@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.13 unified action director (2026-09-14)
+
+- Verified all 69 streamlined native settings controls register with non-nil defaults and working setters; the all-settings reset still restores a changed value.
+- Verified ordinary exterior victories increase both encounter pressure and World Boss progress, while a World Boss victory clears both and grants recovery.
+- Re-ran the full generated-record, promotion, loot, UI, save/reload, real-navmesh, container, encounter, dungeon-rerun, and scavenging suites without Dreamforged Lua errors.
+
 ## 0.10.12 reliable all-settings reset (2026-09-13)
 
 - Verified the shorter **Reset everything** label is fully visible in the native settings renderer.

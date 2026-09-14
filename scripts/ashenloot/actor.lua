@@ -124,11 +124,14 @@ local function update(dt)
         else apply(event) end
     end
     if data.applied then
-        if data.elite.worldBoss and fightingPlayer and C.worldBossAddCap>0 then
+        if data.elite.worldBoss and fightingPlayer then
             local now=core.getSimulationTime()
-            data.bossWaveAt=data.bossWaveAt or (now+C.worldBossAddInitialDelay)
+            local intensity=C.directorIntensity
+            local firstDelay=20/intensity
+            local repeatDelay=math.max(5,30/intensity)
+            data.bossWaveAt=data.bossWaveAt or (now+firstDelay)
             if now>=data.bossWaveAt then
-                data.bossWaveAt=now+C.worldBossAddInterval
+                data.bossWaveAt=now+repeatDelay
                 core.sendGlobalEvent('AshenLoot_BossWave',self)
             end
         end

@@ -1,5 +1,13 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.13 - unified action director
+
+- Preserved outdoor pressure and recovery across exterior-cell boundaries.
+- Made ordinary and lower-promoted wilderness victories build action pressure and World Boss progress; only major victories now create meaningful lulls.
+- Added a saved ten-minute default World Boss arc with a rising late-arc chance and a guaranteed eligible boss encounter at its horizon.
+- Relaxed ordinary-hostile suppression so isolated native creatures no longer starve generated encounters.
+- Replaced seventeen low-level encounter/boss controls with Director intensity and Target World Boss cadence; the director now derives timing, group size, threat capacity, dens, and reinforcements cohesively.
+
 ## 0.10.12 - reliable all-settings reset
 
 - Shortened the global action label to **Reset everything** so it remains fully visible in the native settings layout.

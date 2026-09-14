@@ -1,6 +1,13 @@
-# Morrowind: Dreamforged handoff — 0.10.12 installed
+# Morrowind: Dreamforged handoff — 0.10.13 installed
 
-**Current installed release: 0.10.12.**
+**Current installed release: 0.10.13.**
+
+0.10.13 unifies outdoor pacing behind Director intensity and a target World
+Boss cadence. Pressure persists across exterior cells; ordinary combat adds to
+the action/boss arc; only Unique and World Boss victories grant substantial
+recovery. At default settings, healthy active travel reaches a guaranteed
+eligible outdoor World Boss group at roughly ten minutes, with a rising chance
+to encounter one somewhat earlier.
 
 0.10.12 shortens the top-level action to **Reset everything** and posts a
 confirmation message after the deferred reset completes. The reset remains
