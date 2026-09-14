@@ -71,6 +71,12 @@ return {engineHandlers={onUpdate=function(dt)
             check(d.outdoor.pressure>0 and d.outdoor.bossProgress>0,
                 'Ordinary wilderness combat did not build director pressure')
             pass('ordinary wilderness victories build encounter and World Boss pressure')
+            local pressureBefore=d.outdoor.pressure
+            local progressBefore=d.outdoor.bossProgress
+            progress.test.applyOutdoorVictory(d.outdoor,{rank=3},core.getSimulationTime(),1)
+            check(d.outdoor.pressure>pressureBefore and d.outdoor.bossProgress>progressBefore,
+                'A non-boss high-tier victory incorrectly cleared the outdoor director arc')
+            pass('non-boss victories build pressure without clearing the outdoor arc')
             progress.test.applyOutdoorVictory(d.outdoor,{rank=3,worldBoss=true},core.getSimulationTime(),1)
             check(d.outdoor.pressure==0 and d.outdoor.bossProgress==0
                 and (d.outdoor.safeUntil or 0)>core.getSimulationTime(),

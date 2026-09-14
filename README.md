@@ -1,6 +1,12 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.14 - director-safe defaults reset.**
+**Current release: 0.10.15 - persistent outdoor pressure.**
+
+## 0.10.15 Persistent outdoor pressure
+
+- Wilderness pressure now persists through ordinary, Champion, Elite, and Unique encounters. A successful director group no longer spends or resets the pressure that drives the next encounter.
+- Higher non-World-Boss promotions add more pressure and advance the World Boss arc, with only a World Boss victory or a settlement reset fully clearing the outdoor director state.
+- Added regression coverage for the high-tier non-boss path so medium encounters can create a short respite without making the wilderness go quiet.
 
 ## 0.10.14 Director-safe defaults reset
 
@@ -12,7 +18,7 @@
 - Outdoor pressure now persists across exterior-cell boundaries. Crossing an invisible cell edge can no longer erase a nearly ready encounter.
 - Ordinary wilderness kills and lower promotions now build encounter appetite and advance the World Boss arc. They no longer grant long pauses merely because the player engaged them.
 - Healthy active exploration works toward a World Boss climax at about ten minutes by default. The chance rises late in the arc and the next eligible director group is guaranteed to contain one when the target is reached.
-- World Boss victories release pressure and grant a three-minute recovery window that follows the player across exterior cells.
+- World Boss victories release pressure and grant a three-minute recovery window that follows the player across exterior cells; non-boss promotions provide only brief tactical lulls.
 - The settings menu replaces seventeen low-level encounter and boss knobs with **Director intensity** and **Target World Boss cadence**. Intensity jointly tunes encounter checks, groups, living threat, dens, and boss reinforcements.
 
 ## 0.10.12 Settings reset
@@ -158,7 +164,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.14"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.15"
 content=AshenLoot.omwscripts
 ```
 

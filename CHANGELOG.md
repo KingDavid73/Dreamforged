@@ -1,5 +1,12 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.15 - persistent outdoor pressure
+
+- Kept outdoor encounter pressure and World Boss progress across all non-boss victories, including Unique/rank-3 promotions.
+- Removed the pressure refund when the outdoor director successfully spawns a group; pressure now continues trending upward while the player remains in the wilderness.
+- Made settlement entry reset both short-term pressure and the long World Boss arc; World Boss victories remain the other full reset point.
+- Added a regression assertion for high-tier non-boss victories preserving the outdoor director arc.
+
 ## 0.10.14 - director-safe defaults reset
 
 - Verified the global reset restores Director intensity and Target World Boss cadence to their shipped defaults.

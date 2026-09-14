@@ -412,10 +412,11 @@ local function applyOutdoorVictory(outdoor,elite,now,intensity)
         outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+1.5*intensity)
         return
     end
-    if not elite.worldBoss and (elite.rank or 1)<=2 then
-        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+(elite.rank==2 and 7 or 5)*intensity)
-        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+(elite.rank==2 and 8 or 4)*intensity)
-        local seconds=elite.rank==2 and 8 or 3
+    if not elite.worldBoss then
+        local rank=math.max(1,math.min(3,elite.rank or 1))
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+({5,7,9})[rank]*intensity)
+        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+({4,8,12})[rank]*intensity)
+        local seconds=({3,8,15})[rank]
         outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+seconds)
         return
     end
@@ -1398,7 +1399,9 @@ local function updateDens(player)
             denState.dead=true
             local outdoor=state.director.outdoor
             outdoor.safeCell=den.cell.id;outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+30)
-            outdoor.pressure=0
+            -- Destroying a den grants a short tactical lull, but it does not
+            -- erase the wilderness appetite. Only a World Boss victory or a
+            -- deliberate settlement reset clears the outdoor pressure arc.
         elseif den and valid(den) and den.cell==player.cell and (den.position-player.position):length()<3500
             and denState.cycles>0 and now>=(denState.nextWave or 0) then
             local threat=liveDirectorThreat(player)
@@ -1443,7 +1446,10 @@ local function updateOutdoorDirector(player)
         outdoor.last=current
     end
     if exteriorTown(cell) then
-        outdoor.pressure=0;outdoor.nextRoll=now+interval
+        -- A settlement is the deliberate reset point. Returning to town clears
+        -- both the short-term encounter pressure and the long boss arc; merely
+        -- winning a wilderness group never does.
+        outdoor.pressure=0;outdoor.bossProgress=0;outdoor.nextRoll=now+interval
         return
     end
     -- Recovery follows the player across arbitrary exterior-cell borders.
@@ -1477,7 +1483,10 @@ local function updateOutdoorDirector(player)
     local cost=math.max(0.35,math.min(1.5,target/power))
     local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
     if count<=0 then return end
-    outdoor.pressure=math.max(0,(outdoor.pressure or 0)-25)
+    -- Spending a director group does not erase appetite. The player is still
+    -- out in the wilderness and the arc should keep trending upward until a
+    -- World Boss victory or a settlement reset.
+    outdoor.lastEncounterAt=now
     local token=cell.id..':director:'..tostring(now)
     local denActive=false
     for _,denState in pairs(d.dens) do if denState.cell==cell.id and not denState.dead then denActive=true;break end end

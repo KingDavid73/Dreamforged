@@ -1,6 +1,12 @@
-# Morrowind: Dreamforged handoff — 0.10.14 installed
+# Morrowind: Dreamforged handoff — 0.10.15 installed
 
-**Current installed release: 0.10.14.**
+**Current installed release: 0.10.15.**
+
+0.10.15 makes outdoor pressure a persistent action arc. Ordinary and all
+non-World-Boss promoted victories add pressure and boss progress; a successful
+director spawn no longer spends that pressure. Only a World Boss victory or
+returning to a settlement resets the outdoor arc. High-tier non-boss behavior
+is covered by the world regression profile.
 
 0.10.14 makes new-character initialization and **Reset everything** operate on
 the same currently registered settings list. Regression coverage explicitly
@@ -9,8 +15,8 @@ confirms retired low-level director controls are not registered again.
 
 0.10.13 unifies outdoor pacing behind Director intensity and a target World
 Boss cadence. Pressure persists across exterior cells; ordinary combat adds to
-the action/boss arc; only Unique and World Boss victories grant substantial
-recovery. At default settings, healthy active travel reaches a guaranteed
+the action/boss arc; non-boss promotions grant only brief tactical lulls while
+World Boss victories grant substantial recovery. At default settings, healthy active travel reaches a guaranteed
 eligible outdoor World Boss group at roughly ten minutes, with a rising chance
 to encounter one somewhat earlier.
 

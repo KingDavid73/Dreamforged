@@ -1,5 +1,12 @@
 ﻿# Ashen Loot validation
 
+## 0.10.15 persistent outdoor pressure (2026-09-14)
+
+- Verified ordinary wilderness victories increase encounter pressure and World Boss progress.
+- Verified a rank-3 non-World-Boss victory increases both values instead of clearing the outdoor arc.
+- Verified World Boss victory clears pressure/progress and grants recovery; settlement reset remains the deliberate second full reset point.
+- Re-ran the settings and world regression profiles, including generated records, promotions, loot, UI, navmesh placement, dungeon reruns, scavenging, and save/reload, with no Dreamforged Lua errors.
+
 ## 0.10.14 director-safe defaults reset (2026-09-14)
 
 - Changed Director intensity, Target World Boss cadence, and a general setting, invoked the actual deferred global-reset event, and verified all three returned to shipped defaults.
