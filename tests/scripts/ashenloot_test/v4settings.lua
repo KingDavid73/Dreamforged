@@ -35,12 +35,22 @@ return {engineHandlers={onFrame=function()
             -- Exercise the same deferred event used by the menu button. The
             -- next frame must restore a deliberately changed value.
             controls[4].set(0)
+            controls[17].set(3)
+            controls[29].set(60)
             core.sendGlobalEvent('Dreamforged_ResetSettings')
             resetRequested=true
             return
         end
         assert(storage.globalSection(C.groupKey('dropPercent')):get('dropPercent')==C.defaults.dropPercent,
             'Deferred all-settings reset did not restore dropPercent')
+        assert(storage.globalSection(C.groupKey('directorIntensity')):get('directorIntensity')==C.defaults.directorIntensity,
+            'Deferred all-settings reset did not restore directorIntensity')
+        assert(storage.globalSection(C.groupKey('worldBossCadenceMinutes')):get('worldBossCadenceMinutes')==C.defaults.worldBossCadenceMinutes,
+            'Deferred all-settings reset did not restore worldBossCadenceMinutes')
+        local registered=storage.globalSection('OmwSettingGroups'):asTable()
+        local encounterGroup=registered[C.groups.encounters]
+        assert(encounterGroup and not encounterGroup.settings.outdoorDirectorInterval,
+            'Retired low-level director control was reintroduced')
         done=true
         finished=true
     end)

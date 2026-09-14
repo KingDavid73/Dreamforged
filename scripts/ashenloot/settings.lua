@@ -105,5 +105,11 @@ end
 -- global settings and retain their renderer arguments (including selectors).
 -- onInit resets a new character; saved characters are restored by Settings.
 return {engineHandlers = {onInit = function()
-    for key, value in pairs(C.defaults) do storage.globalSection(C.groupKey(key)):set(key,value) end
+    -- Initialize exactly the controls registered above. C.defaults retains a
+    -- few retired tuning keys for old-save compatibility, but OpenMW rejects
+    -- writes to keys that are no longer part of a native settings group.
+    for _,group in ipairs(groups) do
+        local section=storage.globalSection(group.key)
+        for _,setting in ipairs(group.settings) do section:set(setting.key,setting.default) end
+    end
 end}}

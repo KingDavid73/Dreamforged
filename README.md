@@ -1,6 +1,11 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.13 - unified action director.**
+**Current release: 0.10.14 - director-safe defaults reset.**
+
+## 0.10.14 Director-safe defaults reset
+
+- **Reset everything** now explicitly restores the new Director intensity and Target World Boss cadence controls alongside every other registered Dreamforged setting.
+- Fresh-character initialization uses the same registered control list. Retired granular director keys remain available only for old-save compatibility and are never written back into the streamlined settings menu.
 
 ## 0.10.13 Unified action director
 
@@ -153,7 +158,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.13"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.14"
 content=AshenLoot.omwscripts
 ```
 

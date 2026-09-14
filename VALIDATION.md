@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.14 director-safe defaults reset (2026-09-14)
+
+- Changed Director intensity, Target World Boss cadence, and a general setting, invoked the actual deferred global-reset event, and verified all three returned to shipped defaults.
+- Verified all 69 registered controls retain non-nil defaults and working setters after the reset.
+- Verified the retired outdoor check-interval key is absent from the registered encounter group and produces no unknown-content errors during initialization or reset.
+
 ## 0.10.13 unified action director (2026-09-14)
 
 - Verified all 69 streamlined native settings controls register with non-nil defaults and working setters; the all-settings reset still restores a changed value.

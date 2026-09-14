@@ -1,6 +1,11 @@
-# Morrowind: Dreamforged handoff — 0.10.13 installed
+# Morrowind: Dreamforged handoff — 0.10.14 installed
 
-**Current installed release: 0.10.13.**
+**Current installed release: 0.10.14.**
+
+0.10.14 makes new-character initialization and **Reset everything** operate on
+the same currently registered settings list. Regression coverage explicitly
+changes and restores Director intensity and Target World Boss cadence, and
+confirms retired low-level director controls are not registered again.
 
 0.10.13 unifies outdoor pacing behind Director intensity and a target World
 Boss cadence. Pressure persists across exterior cells; ordinary combat adds to

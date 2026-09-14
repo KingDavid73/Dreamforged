@@ -1,5 +1,11 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.14 - director-safe defaults reset
+
+- Verified the global reset restores Director intensity and Target World Boss cadence to their shipped defaults.
+- Changed fresh-character initialization to write only currently registered controls, preventing retired low-level director keys from being reintroduced or rejected by OpenMW.
+- Added regression coverage for both new director controls and the absence of the retired check-interval control.
+
 ## 0.10.13 - unified action director
 
 - Preserved outdoor pressure and recovery across exterior-cell boundaries.
