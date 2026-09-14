@@ -1,6 +1,16 @@
-# Morrowind: Dreamforged handoff — 0.10.18 installed
+# Morrowind: Dreamforged handoff — 0.10.19 installed
 
-**Current installed release: 0.10.18.**
+**Current installed release: 0.10.19.**
+
+0.10.19 makes outdoor World Bosses a deliberate climax. Player-centered
+director placements use a configurable minimum preparation distance (default
+1200 world units). While a living boss is farther than the configurable 900
+unit approach distance, its bottom bar appends an approximate distance; inside
+that range only the centered name and health bar remain. Promotion immediately
+empties pressure and sets a saved active-boss lock, so the outdoor director
+does not roll another group until the boss dies. The boss actor's existing add
+waves continue. Death clears the lock and starts the normal recovery window;
+invalid/non-aggressive demotion also releases the lock.
 
 0.10.18 makes settlements a pause rather than an outdoor-pressure reset.
 Pressure and the World Boss arc survive town boundaries and clear only after a

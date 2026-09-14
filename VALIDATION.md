@@ -1,5 +1,16 @@
 ﻿# Ashen Loot validation
 
+## 0.10.19 World Boss preparation and climax lockout (2026-09-14)
+
+- Source and isolated-profile checks cover the two new boss settings, their
+  defaults/bounds, the temporary distance suffix, and save-state initialization
+  for the active outdoor boss id.
+- Promotion now clears outdoor pressure and blocks director batches while the
+  boss is alive; the existing boss-add path remains available. Boss death (and
+  invalid demotion) releases the lock before the ordinary recovery window.
+- Outdoor placement continues to use walkable forward positions, with the new
+  preparation minimum applied to player-centered director requests only.
+
 ## 0.10.18 deliberate recovery and batched outdoor pacing (2026-09-14)
 
 - OpenMW 0.51 loaded the safe-sleep Rest UI handler, state-version migration,

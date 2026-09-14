@@ -52,6 +52,8 @@ local groups={
         option('eliteTierPercent', 'number', {min=0,max=100,integer=true}),
         option('worldBossMinLevel', 'number', {min=1,max=50,integer=true}),
         option('worldBossRange', 'number', {min=1000,max=10000,integer=true}),
+        option('worldBossSpawnMinDistance', 'number', {min=1000,max=3000,integer=true}),
+        option('worldBossDistanceHide', 'number', {min=100,max=3000,integer=true}),
     }},
     {key=C.groups.loot,name='lootSettings',description='lootSettingsDescription',order=60,settings={
         option('healingPercent', 'number', {min=0,max=100,integer=true}),

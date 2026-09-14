@@ -457,6 +457,10 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor.nextRoll=state.director.outdoor.nextRoll or 0
     state.director.outdoor.distance=state.director.outdoor.distance or 0
     state.director.outdoor.terrainRetries=state.director.outdoor.terrainRetries or 0
+    -- A living outdoor World Boss owns the current climax. Its actor script
+    -- continues to request reinforcement waves while the director remains
+    -- paused until the boss's death event clears this id.
+    state.director.outdoor.activeBossId=state.director.outdoor.activeBossId or false
     state.director.dens=state.director.dens or {}
     state.director.directorCosts=state.director.directorCosts or {}
     state.director.spawnLevels=state.director.spawnLevels or {}
@@ -531,6 +535,9 @@ function M.victoryRespite(actor,elite)
     local outdoor=state.director.outdoor
     local now=core.getSimulationTime()
     outdoor.safeCell=actor.cell.id -- retained for old-save diagnostics
+    if elite and elite.worldBoss and outdoor.activeBossId==actor.id then
+        outdoor.activeBossId=false
+    end
     applyOutdoorVictory(outdoor,elite,now,C.directorIntensity)
     -- Native kills continue to build pressure. A generated outdoor group gets
     -- one L4D-style relax window only after its last member dies; this avoids
@@ -921,7 +928,14 @@ function M.prepare(actor, inCombat)
         combatDps=combatDps}) end
     local elite=state.elites[actor.id]
     if elite and elite.worldBoss and cell.isExterior then
+        -- Promotion is the moment the World Boss becomes real. Empty the
+        -- outdoor pressure arc immediately and let the boss's own add waves
+        -- carry the encounter until its death event releases the lock.
         d.outdoor.bossProgress=0
+        d.outdoor.pressure=0
+        d.outdoor.activeBossId=actor.id
+        d.outdoor.phase='build';d.outdoor.peakUntil=0;d.outdoor.relaxUntil=0
+        d.outdoor.safeUntil=0
         d.outdoor.lastBossAt=core.getSimulationTime()
     end
     if elite and elite.worldBoss and not d.actors[actor.id].bossScaleFactor then
@@ -1625,6 +1639,15 @@ local function updateOutdoorDirector(player)
         -- World Boss arc so simply brushing a town boundary cannot erase the
         -- journey's accumulated appetite. A deliberate safe sleep sends the
         -- reset event above.
+        outdoor.nextRoll=now+interval
+        outdoor.distance=0
+        return
+    end
+    if outdoor.activeBossId then
+        -- A living World Boss is the outdoor climax. Do not spend pressure or
+        -- roll another player-centered group while its add waves are active.
+        outdoor.pressure=0
+        outdoor.bossProgress=0
         outdoor.nextRoll=now+interval
         outdoor.distance=0
         return

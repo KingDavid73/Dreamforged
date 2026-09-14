@@ -4,7 +4,7 @@ local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','pro
     'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove',
     'extraEncounters','directorIntensity','creaturePoolMode','creatureVariety','excludeExtraCliffRacers','settlementSuppression','rerunnableWilderness','wildernessResetHours',
     'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses',
-    'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange',
+    'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide',
     'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
     'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense',
     'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}

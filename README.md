@@ -1,6 +1,21 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.18 - deliberate recovery and batched outdoor pacing.**
+**Current release: 0.10.19 - World Boss preparation and outdoor climax lockout.**
+
+## 0.10.19 World Boss preparation and outdoor climax lockout
+
+- Player-centered outdoor placements now use a configurable minimum preparation
+  distance (default 1200 world units), so a newly promoted World Boss does not
+  materialize directly on top of the player. The existing director trajectory,
+  terrain validation, and bounded retry behavior remain unchanged.
+- While a living World Boss is still far away, its bottom-center boss bar shows
+  the approximate distance in world units. The suffix disappears inside the
+  configurable approach distance (default 900), leaving the clean boss name
+  and health bar for the fight itself.
+- Promotion of an outdoor World Boss immediately empties pressure and pauses
+  the outdoor director. The boss's existing reinforcement waves continue, and
+  the director resumes only after the boss death event (which also grants the
+  existing recovery window). Invalid boss demotions release the pause safely.
 
 ## 0.10.18 Deliberate recovery and batched outdoor pacing
 
@@ -196,7 +211,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.18"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.19"
 content=AshenLoot.omwscripts
 ```
 

@@ -222,6 +222,11 @@ local function updateBossCard()
         end
     end
     if not nearest then return end
+    local displayName=meta.name
+    local hideDistance=math.max(0,tonumber(C.worldBossDistanceHide) or 900)
+    if distance>hideDistance then
+        displayName=displayName..'  ['..math.floor(distance+0.5)..' units]'
+    end
     local hp=types.Actor.stats.dynamic.health(nearest)
     local maximum=math.max(1,math.ceil(hp.base+hp.modifier))
     local current=math.max(0,math.ceil(hp.current))
@@ -232,7 +237,7 @@ local function updateBossCard()
         content=ui.content {
             {type=ui.TYPE.Flex,props={horizontal=true,arrange=ui.ALIGNMENT.Center,size=util.vector2(width,26)},
                 content=ui.content {{type=ui.TYPE.Text,template=I.MWUI.templates.textNormal,
-                    props={text=meta.name,textColor=util.color.rgb(0.92,0.88,0.78)}}}},
+                    props={text=displayName,textColor=util.color.rgb(0.92,0.88,0.78)}}}},
             {type=ui.TYPE.Image,props={resource=whiteTexture,color=util.color.rgb(0.05,0.025,0.02),
                 position=util.vector2(0,30),size=util.vector2(width,20)}},
             {type=ui.TYPE.Image,props={resource=whiteTexture,color=util.color.rgb(0.18,0.015,0.01),
@@ -498,7 +503,9 @@ return {
                 if actor.cell.isExterior then
                     local options={agentBounds=types.Actor.getPathfindingAgentBounds(actor),
                         includeFlags=nearby.NAVIGATOR_FLAGS.Walk}
-                    local spawnMin,spawnMax=1200,2200
+                    local directorMin=math.max(1000,math.min(3000,tonumber(C.worldBossSpawnMinDistance) or 1200))
+                    local spawnMin=event.director and directorMin or 1200
+                    local spawnMax=event.director and math.max(directorMin+200,2200) or 2200
                     local attempts=math.max(18,event.count*20)
                     local strictAttempts=math.floor(attempts*0.55)
                     local dir=util.vector3(event.dirX or 1,event.dirY or 0,0)

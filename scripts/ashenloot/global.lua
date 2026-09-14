@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 30, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 31, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -264,6 +264,11 @@ local function demoteInvalidWorldBoss(actor)
     local elite=state.elites[actor.id]
     if not elite or not elite.worldBoss or C.unsafeContent or types.Actor.stats.ai.fight(actor).base>=80 then return end
     local director=state.director
+    if director and director.outdoor and director.outdoor.activeBossId==actor.id then
+        -- If an invalid/non-aggressive actor is demoted before death, release
+        -- the outdoor climax lock so the director cannot remain paused forever.
+        director.outdoor.activeBossId=false
+    end
     local actorState=director and director.actors and director.actors[actor.id]
     if actorState and actorState.bossOriginalScale then actor:setScale(actorState.bossOriginalScale)
     else actor:setScale(math.max(0.01,actor.scale/1.45)) end
@@ -280,6 +285,14 @@ end
 local function attach(actor)
     if actor and actor:isValid() then demoteInvalidWorldBoss(actor) end
     local elite=actor and state.elites[actor.id]
+    -- Old saves can contain a living outdoor World Boss created before the
+    -- climax lock existed. Rehydrate the lock when that actor becomes active;
+    -- the first boss remains authoritative if an unusual save has several.
+    if elite and elite.worldBoss and actor.cell and actor.cell.isExterior
+        and state.director and state.director.outdoor
+        and not state.director.outdoor.activeBossId then
+        state.director.outdoor.activeBossId=actor.id
+    end
     local requiredNameVersion=types.NPC.objectIsInstance(actor) and 3 or 2
     if elite and elite.worldBoss and elite.nameVersion~=requiredNameVersion then
         local rec=actor.type.record(actor)
@@ -1270,7 +1283,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 30
+            state.version = 31
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

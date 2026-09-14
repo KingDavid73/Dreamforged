@@ -1,5 +1,16 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.19 - World Boss preparation and outdoor climax lockout
+
+- Added configurable World Boss preparation and approach distances. Outdoor
+  director placements stay at least 1200 world units away by default, and the
+  bottom boss bar shows a temporary distance suffix until the boss is within
+  900 units.
+- Added a saved active-boss lock. Outdoor World Boss promotion clears pressure
+  immediately and pauses new director rolls while the living boss's existing
+  reinforcement waves continue. Boss death releases the lock and starts the
+  normal recovery window; invalid demotion also releases it.
+
 ## 0.10.18 - deliberate recovery and batched outdoor pacing
 
 - Settlements now pause the outdoor director without clearing pressure or the

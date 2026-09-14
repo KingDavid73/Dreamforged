@@ -8,7 +8,7 @@ for _,key in ipairs({'resetAllSettings'}) do keyGroups[key]=groupKeys.reset end
 for _,key in ipairs({'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove'}) do keyGroups[key]=groupKeys.scaling end
 for _,key in ipairs({'creatureVariety','creaturePoolMode','extraEncounters','directorIntensity','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorTriggerMin','exteriorTriggerRange','exteriorAnchorChance','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours'}) do keyGroups[key]=groupKeys.encounters end
 for _,key in ipairs({'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses'}) do keyGroups[key]=groupKeys.dungeons end
-for _,key in ipairs({'worldBosses','worldBossCadenceMinutes','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap','worldBossMinLevel','worldBossRange'}) do keyGroups[key]=groupKeys.bosses end
+for _,key in ipairs({'worldBosses','worldBossCadenceMinutes','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide'}) do keyGroups[key]=groupKeys.bosses end
 for _,key in ipairs({'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic'}) do keyGroups[key]=groupKeys.loot end
 for _,key in ipairs({'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense'}) do keyGroups[key]=groupKeys.npcs end
 for _,key in ipairs({'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}) do keyGroups[key]=groupKeys.interface end
@@ -41,6 +41,7 @@ local defaults = {
     autoSalvageLegendary = false, autoSalvageRelic = false,
     randomizeNpcInventories = true, npcInventoryPercent = 45, npcAshenGearPercent = 5,
     worldBosses = true, worldBossCadenceMinutes = 10, worldBossChance = 3, worldBossCellCap = 1, worldBossMinLevel = 5, worldBossRange = 5000,
+    worldBossSpawnMinDistance = 1200, worldBossDistanceHide = 900,
     worldBossAddInitialDelay = 20, worldBossAddInterval = 30,
     worldBossAddMin = 1, worldBossAddMax = 3, worldBossAddCap = 6,
     encounterLevelBelow = 4, encounterLevelAbove = 10,
@@ -74,7 +75,8 @@ return setmetatable({defaults = defaults,groupKey=groupKey,groups=groupKeys,keyG
         npcInventoryPercent={0,100}, npcAshenGearPercent={0,50}, worldBossCadenceMinutes={2,60}, worldBossChance={0,100}, worldBossCellCap={1,10},
         worldBossAddInitialDelay={0,300}, worldBossAddInterval={5,300}, worldBossAddMin={1,10},
         worldBossAddMax={1,10}, worldBossAddCap={0,30},
-        worldBossMinLevel={1,50}, worldBossRange={1000,10000}}
+        worldBossMinLevel={1,50}, worldBossRange={1000,10000}, worldBossSpawnMinDistance={1000,3000},
+        worldBossDistanceHide={100,3000}}
     bounds.encounterLevelBelow={0,20};bounds.encounterLevelAbove={0,30};bounds.dungeonResetHours={6,720};bounds.wildernessResetHours={6,720}
     if bounds[key] then return math.max(bounds[key][1], math.min(bounds[key][2], tonumber(get(key)) or defaults[key])) end
     return get(key)
