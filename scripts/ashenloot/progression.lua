@@ -454,6 +454,9 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor.phase=state.director.outdoor.phase or 'build'
     state.director.outdoor.peakUntil=state.director.outdoor.peakUntil or 0
     state.director.outdoor.relaxUntil=state.director.outdoor.relaxUntil or 0
+    state.director.outdoor.nextRoll=state.director.outdoor.nextRoll or 0
+    state.director.outdoor.distance=state.director.outdoor.distance or 0
+    state.director.outdoor.terrainRetries=state.director.outdoor.terrainRetries or 0
     state.director.dens=state.director.dens or {}
     state.director.directorCosts=state.director.directorCosts or {}
     state.director.spawnLevels=state.director.spawnLevels or {}
@@ -536,6 +539,28 @@ function M.victoryRespite(actor,elite)
     if state.director.generated[actor.id]=='director' and not liveOutdoorDirectorGroup(actor.cell,actor) then
         enterOutdoorRelax(outdoor,now,C.directorIntensity)
     end
+end
+-- A safe sleep is the deliberate recovery point for the outdoor director.
+-- Ordinary waiting/resting, walking through a settlement, and short victory
+-- lulls leave the pressure arc intact so the next wilderness leg still has a
+-- destination. The player script sends this event after the native Rest UI
+-- closes following a game-time advance in a cell that permits sleep.
+function M.safeSleep(player)
+    if player and not player:isValid() then return end
+    local outdoor=state.director.outdoor
+    local now=core.getSimulationTime()
+    outdoor.pressure=0
+    outdoor.bossProgress=0
+    outdoor.phase='build'
+    outdoor.peakUntil=0
+    outdoor.relaxUntil=0
+    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+10)
+    outdoor.nextRoll=now+10
+    outdoor.distance=0
+    outdoor.terrainRetries=0
+    outdoor.lastSafeSleep=core.getGameTime()
+    outdoor.safeCell=player and player.cell and player.cell.id or outdoor.safeCell
+    print('[AshenLoot] safe sleep reset outdoor pressure')
 end
 function M.bossWave(actor)
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
@@ -1040,7 +1065,46 @@ function M.spawnResult(event)
             made=made+1
         end
     end
-    refund(request.count-made)
+    local missing=math.max(0,request.count-made)
+    if request.director and missing>0 then
+        local now=core.getSimulationTime()
+        local player=world.players[1]
+        -- A bad terrain/navmesh sample is not a reason to spend pressure. Give
+        -- the placement sampler one bounded retry after a short delay. This
+        -- keeps a single awkward hillside from silently deleting a director
+        -- group, without creating a tight retry loop every frame.
+        if (request.terrainRetries or 0)<1 and player and player:isValid()
+            and actor and actor:isValid() and actor.cell and actor.cell.id==request.cell then
+            local retry={}
+            for key,value in pairs(request) do retry[key]=value end
+            retry.count=missing
+            retry.created=now
+            retry.terrainRetries=(request.terrainRetries or 0)+1
+            local token=request.cell..':director-retry:'..tostring(now)..':'..tostring(retry.terrainRetries)
+            pending[token]=retry
+            local eventData={token=token,actor=actor,count=missing,director=true,
+                den=retry.den,denWave=retry.denWave,dirX=retry.dirX,dirY=retry.dirY}
+            player:sendEvent('AshenLoot_FindSpawn',eventData)
+            local interval=math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
+            state.director.outdoor.nextRoll=now+math.min(5,interval)
+            state.director.outdoor.distance=150
+            print('[AshenLoot] director placement retry '..missing..' in '..request.cell)
+        else
+            -- Persistent placement failure contributes a small amount of
+            -- appetite so the next ten-second batch is not suppressed forever.
+            local outdoor=state.director.outdoor
+            outdoor.pressure=math.min(100,(outdoor.pressure or 0)+5*C.directorIntensity)
+            outdoor.nextRoll=now+math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
+            outdoor.distance=0
+            print('[AshenLoot] director placement failed '..missing..' in '..request.cell)
+        end
+    end
+    if missing==0 or not request.director or (request.terrainRetries or 0)>=1 then
+        if request.director and made>0 then
+            enterOutdoorPeak(state.director.outdoor,core.getSimulationTime(),C.directorIntensity)
+        end
+    end
+    refund(missing)
     print('[AshenLoot] encounter placement '..made..'/'..request.count..' in '..request.cell)
 end
 local scrollRecipes={
@@ -1485,7 +1549,10 @@ local function liveDirectorThreat(player)
     for _,actor in ipairs(world.activeActors) do
         if actor.cell==player.cell and valid(actor) and not types.Player.objectIsInstance(actor) then
             local distance=(actor.position-player.position):length()
-            if distance<3000 and types.Actor.stats.ai.fight(actor).base>=80 then hostiles=hostiles+1 end
+            -- Peaceful native wildlife (netch farms, egg mines, etc.) is not
+            -- crowding. Only actors that would actually attack the player
+            -- suppress the director's hostile-population check.
+            if distance<3000 and isAggressive(actor) then hostiles=hostiles+1 end
             if state.director.generated[actor.id]=='director' or state.director.generated[actor.id]=='den' then
                 if distance<5000 then threat=threat+(state.director.directorCosts[actor.id] or 1) end
             end
@@ -1519,7 +1586,8 @@ local function updateDens(player)
             if count>0 then
                 local token=id..':den-wave:'..tostring(denState.cycles)
                 pending[token]={actor=den,level=denState.level,count=count,cell=den.cell.id,
-                    created=now,director=true,denWave=true,family=denState.family,cost=cost}
+                    created=now,director=true,denWave=true,family=denState.family,cost=cost,
+                    dirX=0,dirY=0}
                 player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=den,count=count,denWave=true})
             end
         end
@@ -1532,7 +1600,10 @@ local function updateOutdoorDirector(player)
     local outdoor=d.outdoor
     local now=core.getSimulationTime()
     local intensity=C.directorIntensity
-    local interval=math.max(4,12/intensity)
+    -- Director decisions are intentionally batched. A ten-second floor keeps
+    -- one-off nearby creatures from causing constant rolls while still
+    -- maintaining the intended pressure cadence during active travel.
+    local interval=math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
     local current={x=player.position.x,y=player.position.y,z=player.position.z}
     if outdoor.cell~=cell.id then
         outdoor.cell=cell.id;outdoor.last=current;outdoor.distance=0
@@ -1550,11 +1621,12 @@ local function updateOutdoorDirector(player)
         outdoor.last=current
     end
     if exteriorTown(cell) then
-        -- A settlement is the deliberate reset point. Returning to town clears
-        -- both the short-term encounter pressure and the long boss arc; merely
-        -- winning a wilderness group never does.
-        outdoor.pressure=0;outdoor.bossProgress=0;outdoor.nextRoll=now+interval
-        outdoor.phase='build';outdoor.peakUntil=0;outdoor.relaxUntil=0
+        -- Settlements are a pause, not a reset. Preserve the pressure and
+        -- World Boss arc so simply brushing a town boundary cannot erase the
+        -- journey's accumulated appetite. A deliberate safe sleep sends the
+        -- reset event above.
+        outdoor.nextRoll=now+interval
+        outdoor.distance=0
         return
     end
     -- Recovery follows the player across arbitrary exterior-cell borders.
@@ -1566,7 +1638,11 @@ local function updateOutdoorDirector(player)
         if now<(outdoor.relaxUntil or 0) then return end
         outdoor.phase='build';outdoor.relaxUntil=0
     end
-    if now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
+    local directorPending=false
+    for _,request in pairs(pending) do
+        if request.director and request.cell==cell.id then directorPending=true;break end
+    end
+    if directorPending or now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
     outdoor.nextRoll=now+interval
     outdoor.distance=0
     local live,hostiles=liveDirectorThreat(player)
@@ -1585,7 +1661,7 @@ local function updateOutdoorDirector(player)
     local baseChance=math.max(15,math.min(80,35+(intensity-1)*25))
     local chance=math.min(95,baseChance+(outdoor.pressure or 0))
     if rng(100)>chance then
-        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+15*intensity)
+        outdoor.pressure=math.min(100,(outdoor.pressure or 0)+(tonumber(C.outdoorPressureGain) or 15)*intensity)
         return
     end
     local low=math.max(1,math.floor(intensity+0.25))
@@ -1597,7 +1673,7 @@ local function updateOutdoorDirector(player)
     if count<=0 then return end
     -- Spending a director group does not erase appetite. The player is still
     -- out in the wilderness and the arc should keep trending upward until a
-    -- World Boss victory or a settlement reset.
+    -- World Boss victory or a deliberate safe sleep.
     outdoor.lastEncounterAt=now
     local token=cell.id..':director:'..tostring(now)
     local denActive=false
@@ -1611,16 +1687,16 @@ local function updateOutdoorDirector(player)
         local cycleLow=1
         local cycleHigh=math.max(1,math.ceil(3*math.sqrt(intensity)))
         pending[token]={actor=player,level=target,count=1,cell=cell.id,created=now,
-            director=true,den=true,family=family,tier=tier,cycles=cycleLow+rng(cycleHigh-cycleLow+1)-1,cost=2}
+            director=true,den=true,family=family,tier=tier,cycles=cycleLow+rng(cycleHigh-cycleLow+1)-1,cost=2,
+            dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=1,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
-        enterOutdoorPeak(outdoor,now,intensity)
     else
         pending[token]={actor=player,level=target,count=count,cell=cell.id,
-            created=now,director=true,cost=cost}
+            created=now,director=true,cost=cost,
+            dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
-        enterOutdoorPeak(outdoor,now,intensity)
     end
 end
 function M.update(dt)
@@ -1682,5 +1758,5 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     safeInventoryRecord=safeInventoryRecord,
     gearLevel=gearLevel,combatDps=playerCombatDps,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
     additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory,
-    enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax}
+     enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax,safeSleep=M.safeSleep}
 return M

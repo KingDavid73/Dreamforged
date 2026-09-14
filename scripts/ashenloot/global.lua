@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 29, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 30, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -1270,7 +1270,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 29
+            state.version = 30
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },
@@ -1284,6 +1284,9 @@ return {
         AshenLoot_BossWave = guard(Progress.bossWave),
         AshenLoot_ReplacementResult = guard(Progress.replaceResult),
         AshenLoot_Scavenge = guard(Progress.scavenge),
+        AshenLoot_SafeSleep = guard(function(event)
+            Progress.safeSleep(event and event.player or world.players[1])
+        end),
         AshenLoot_AlignGroundDropResult = guard(function(event)
             local loose=event and state.director and state.director.loose and state.director.loose[event.id]
             local item=loose and loose.item

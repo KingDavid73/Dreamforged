@@ -1,6 +1,16 @@
-# Morrowind: Dreamforged handoff — 0.10.17 installed
+# Morrowind: Dreamforged handoff — 0.10.18 installed
 
-**Current installed release: 0.10.17.**
+**Current installed release: 0.10.18.**
+
+0.10.18 makes settlements a pause rather than an outdoor-pressure reset.
+Pressure and the World Boss arc survive town boundaries and clear only after a
+safe sleep in a sleep-enabled interior (or a World Boss victory). Outdoor
+director decisions use a ten-second minimum batch cadence, block overlapping
+requests, and get one bounded terrain/navmesh retry before a persistent failure
+adds pressure. Peaceful native actors no longer count as hostile crowding.
+OpenMW has no dedicated Lua sleep-completed callback, so the player script uses
+the Rest UI transition, meaningful game-time advance, and the cell's `NoSleep`
+tag as a conservative safe-sleep signal.
 
 0.10.17 clamps the cached player DPS estimator to the intended 1.25–2 second
 Morrowind cadence for both physical attacks and spells.
@@ -16,7 +26,7 @@ attack/cast cadence. Ordinary wildlife remains quick to dispatch.
 0.10.15 makes outdoor pressure a persistent action arc. Ordinary and all
 non-World-Boss promoted victories add pressure and boss progress; a successful
 director spawn no longer spends that pressure. Only a World Boss victory or
-returning to a settlement resets the outdoor arc. High-tier non-boss behavior
+deliberate safe sleep resets the outdoor arc. High-tier non-boss behavior
 is covered by the world regression profile.
 
 0.10.14 makes new-character initialization and **Reset everything** operate on

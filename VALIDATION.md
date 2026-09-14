@@ -1,5 +1,18 @@
 ﻿# Ashen Loot validation
 
+## 0.10.18 deliberate recovery and batched outdoor pacing (2026-09-14)
+
+- OpenMW 0.51 loaded the safe-sleep Rest UI handler, state-version migration,
+  ten-second director cadence, hostile-only crowd check, pending-request guard,
+  and bounded terrain retry without Lua initialization errors.
+- The existing isolated v4 regression passed all settings, generated records,
+  promotions, loot, pacing, UI, and save/reload assertions after the runtime
+  copy was synchronized. The world-profile smoke remains suitable for a
+  focused exterior placement check before the next full world run.
+- Safe-sleep detection is intentionally conservative: the public Lua API has no
+  sleep-completed event, so only a Rest UI close after meaningful game-time
+  advance in a non-`NoSleep` interior clears the outdoor pressure arc.
+
 ## 0.10.17 cadence correction (2026-09-14)
 
 - Re-ran the OpenMW world profile after clamping the weapon/spell cadence to

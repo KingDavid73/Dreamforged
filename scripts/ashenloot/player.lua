@@ -19,6 +19,7 @@ local classKitGranted = false
 local classElapsed = 0
 local classAttributes
 local advancementElapsed,activeAbilities,activeIndex,lastAdvancementSignature=0,{},0,''
+local restSession
 local attributeIds = {'strength', 'intelligence', 'willpower', 'agility', 'speed', 'endurance', 'personality', 'luck'}
 local classSkills = {
     al_warrior = {major = {'longblade', 'block', 'heavyarmor', 'armorer', 'athletics'},
@@ -32,6 +33,20 @@ local classSkills = {
     al_conjurer = {major = {'conjuration', 'illusion', 'mysticism', 'alteration', 'enchant'},
         minor = {'restoration', 'destruction', 'alchemy', 'unarmored', 'shortblade'}},
 }
+local function isRestMode(mode)
+    local modes=I.UI and I.UI.MODE
+    local known=modes and (modes.Rest or modes.RestMenu)
+    if known and mode==known then return true end
+    return type(mode)=='string' and mode:lower():find('rest',1,true)~=nil
+end
+local function safeSleepCell(cell)
+    if not cell or cell.isExterior then return false end
+    if cell.hasTag then
+        local ok,noSleep=pcall(cell.hasTag,cell,'NoSleep')
+        if ok and noSleep then return false end
+    end
+    return true
+end
 local book, forgeWindow, targetCard, bossCard
 local page, lastTarget, elapsed = 0, nil, 0
 local forgePage=1
@@ -446,6 +461,26 @@ return {
         end,
     },
     eventHandlers = {
+        UiModeChanged = function(data)
+            if not data then return end
+            local entering=isRestMode(data.newMode)
+            local leaving=isRestMode(data.oldMode) and not entering
+            if entering then
+                restSession={cell=self.cell,gameTime=core.getGameTime()}
+            elseif leaving and restSession then
+                local elapsed=core.getGameTime()-(restSession.gameTime or 0)
+                local cell=self.cell
+                -- OpenMW currently exposes no sleep-completed Lua event. The
+                -- native Rest UI does expose its mode transition; combining
+                -- that with a meaningful game-time advance and a cell that
+                -- permits sleep gives us a conservative safe-sleep signal.
+                -- Wilderness waiting and NoSleep cells never clear pressure.
+                if elapsed>=60 and cell==restSession.cell and safeSleepCell(cell) then
+                    core.sendGlobalEvent('AshenLoot_SafeSleep',{player=self,duration=elapsed})
+                end
+                restSession=nil
+            end
+        end,
         AshenLoot_CheckReplacement=function(event)
             local actor=event.actor
             local clear=false

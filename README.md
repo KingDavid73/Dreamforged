@@ -1,6 +1,27 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.17 - paced pressure and time-to-kill balance.**
+**Current release: 0.10.18 - deliberate recovery and batched outdoor pacing.**
+
+## 0.10.18 Deliberate recovery and batched outdoor pacing
+
+- Entering a settlement now pauses outdoor director rolls without clearing the
+  accumulated pressure or World Boss arc. The arc resets only after a genuine
+  safe sleep in a sleep-enabled interior (or the existing World Boss victory
+  reset); simply crossing a town boundary or using ordinary waiting no longer
+  erases the journey.
+- Outdoor director decisions are batched at a minimum ten-second cadence. A
+  failed roll raises pressure using the configured gain, while a terrain or
+  navmesh placement failure receives one bounded retry before contributing a
+  small pressure increment. Pending director requests block overlapping batches
+  so failed placement cannot create a retry storm.
+- Peaceful native actors no longer count as hostile crowding for outdoor
+  suppression. Netch farms, egg mines, and other non-aggressive wildlife can be
+  present without preventing a nearby director encounter.
+
+OpenMW 0.51 does not expose a dedicated Lua sleep-completed callback. Dreamforged
+therefore recognizes the native Rest UI closing after meaningful game-time
+advance in a non-`NoSleep` interior as the safe-sleep reset signal; wilderness
+waiting and no-sleep cells never clear pressure.
 
 ## 0.10.17 Cadence correction
 
@@ -175,7 +196,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.16"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.18"
 content=AshenLoot.omwscripts
 ```
 

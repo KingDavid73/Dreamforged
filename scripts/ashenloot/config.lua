@@ -21,7 +21,7 @@ local defaults = {
     abilityControllerUse = 'DPadRight',
     progression = true, levelScaling = 0.6, gearLevelInfluence = 0.5, enemyHealth = 1, enemyDamage = 1,
     npcProgression = true, creatureVariety = 50, extraEncounters = true,
-    directorIntensity = 1, exteriorBudget = 6, outdoorDirectorInterval = 12, outdoorDirectorChance = 35,
+    directorIntensity = 1, exteriorBudget = 6, outdoorDirectorInterval = 10, outdoorDirectorChance = 35,
     outdoorPressureGain = 15,
     creatureDenChance = 12, creatureDenWaveInterval = 18, creatureDenMinCycles = 1, creatureDenMaxCycles = 3,
     exteriorTriggerMin = 300, exteriorTriggerRange = 2200, exteriorAnchorChance = 65,
@@ -63,7 +63,7 @@ return setmetatable({defaults = defaults,groupKey=groupKey,groups=groupKeys,keyG
     end
     if key == 'settleSeconds' then return math.max(0.5, math.min(10, tonumber(get(key)) or 2)) end
     local bounds = {levelScaling={0,2}, gearLevelInfluence={0,1}, enemyHealth={0.25,3}, enemyDamage={0.25,3}, encounterDensity={0.5,3},guardPower={1,2.5},
-        directorIntensity={0.25,3}, exteriorBudget={0,30}, outdoorDirectorInterval={3,60}, outdoorDirectorChance={0,100},
+        directorIntensity={0.25,3}, exteriorBudget={0,30}, outdoorDirectorInterval={5,60}, outdoorDirectorChance={0,100},
         outdoorPressureGain={0,50}, creatureDenChance={0,100}, creatureDenWaveInterval={5,120},
         creatureDenMinCycles={1,6}, creatureDenMaxCycles={1,6}, exteriorTriggerMin={100,2000}, exteriorTriggerRange={600,8000}, exteriorAnchorChance={0,100},
         exteriorGroupMin={1,10}, exteriorGroupMax={1,10}, exteriorSpawnMin={100,3000},

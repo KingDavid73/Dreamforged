@@ -1,5 +1,16 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.18 - deliberate recovery and batched outdoor pacing
+
+- Settlements now pause the outdoor director without clearing pressure or the
+  World Boss arc. Only a deliberate safe sleep in a sleep-enabled interior (or
+  a World Boss victory) resets the wilderness arc.
+- Outdoor checks use a ten-second minimum batch cadence. Quiet rolls add the
+  configured pressure gain; placement gets one bounded terrain/navmesh retry,
+  and persistent failure adds a small pressure increment instead of looping.
+- Pending director requests prevent overlapping batches, and peaceful native
+  actors no longer count as hostile crowding when deciding whether to spawn.
+
 ## 0.10.17 - cadence correction
 
 - Clamped physical and spell cadence in the player DPS estimator to the
