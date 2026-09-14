@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.11 stable settings reset layout (2026-09-13)
+
+- Verified the new Dreamforged-wide reset group registers before General and compatibility in the OpenMW 0.51 settings page.
+- Verified the dedicated reset renderer loads in MENU context and its deferred `Dreamforged_ResetSettings` event is accepted by the GLOBAL script without startup errors.
+- Re-ran the complete OpenMW integration and save/reload suite: all 82 ordinary settings controls retained non-nil defaults and working global setters, and all generated-record, encounter, loot, promotion, progression, UI, and save/reload assertions passed.
+
 ## 0.10.10 den cleanup and settings reset (2026-09-13)
 
 - Verified the dedicated menu script and reset-button renderer load in the OpenMW 0.51 menu context.

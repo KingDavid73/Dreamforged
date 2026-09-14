@@ -33,6 +33,7 @@ for _,def in ipairs(mythicDefinitions) do
     if not def.kind then def.kind='weapon';def.effects={{'restorehealth',1,1,core.magic.RANGE.Target}} end
 end
 local enrollmentTimer, lastCoverage = 0, ''
+local settingsResetPending = false
 local beastHandlerRegistered = false
 local projectileHandlerRegistered = false
 local tomeHandlerRegistered = false
@@ -1112,6 +1113,30 @@ return {
         end,
         onActorActive = guard(attach), onPlayerAdded = guard(function(player) snapshot(player);refreshAutoSalvageBaseline(player) end),
         onUpdate = function(dt)
+            if settingsResetPending then
+                settingsResetPending = false
+                local okReset, errReset = pcall(function()
+                    -- Reset only Dreamforged settings that are actually
+                    -- registered with OpenMW's native menu. C.defaults also
+                    -- contains internal compatibility values (and legacy
+                    -- keys) that are not visible settings; writing those
+                    -- emits unknown-key callbacks and can make the menu lose
+                    -- its controls. Other mods' groups are left untouched.
+                    local groups = storage.globalSection('OmwSettingGroups'):asTable()
+                    for _, group in pairs(groups) do
+                        local isDreamforged = group and group.key
+                            and (group.key == 'SettingsAshenLoot'
+                                or group.key:sub(1, #'SettingsDreamforged') == 'SettingsDreamforged')
+                        if isDreamforged and group.settings then
+                            local section = storage.globalSection(group.key)
+                            for key, setting in pairs(group.settings) do
+                                section:set(key, setting.default)
+                            end
+                        end
+                    end
+                end)
+                if not okReset then print('[AshenLoot] ERROR resetting settings: '..tostring(errReset)) end
+            end
             local ok,err=pcall(Progress.update,dt)
             if not ok then print('[AshenLoot] ERROR director: '..tostring(err)) end
             local salvageOk,salvageErr=pcall(updateAutoSalvage,dt)
@@ -1265,6 +1290,7 @@ return {
         AshenLoot_AdvancementReconcile = guard(reconcileAdvancement),
         AshenLoot_UseAdvancement = guard(useAdvancement),
         AshenLoot_ApplyTargetedAdvancement = guard(applyTargetedAdvancement),
+        Dreamforged_ResetSettings = guard(function() settingsResetPending = true end),
         AshenLoot_Demo = guard(function()
             for tier = 1, 4 do giveLoot(world.players[1], 'demo:' .. tier, tier, 'iron longsword', tier) end
             snapshot()

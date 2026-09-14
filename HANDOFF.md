@@ -1,6 +1,12 @@
-# Morrowind: Dreamforged handoff — 0.10.10 installed
+# Morrowind: Dreamforged handoff — 0.10.11 installed
 
-**Current installed release: 0.10.10.**
+**Current installed release: 0.10.11.**
+
+0.10.11 places the all-settings reset in its own top-of-page settings
+section, above General and compatibility. Its bulk global writes are deferred
+to the next global update tick so native section resets can rebuild controls
+without losing buttons or shifting the page. The previous 0.10.10 den VFX
+cleanup remains included.
 
 0.10.5 gives each World Boss six independent rewards from a dedicated
 1/2/7/20/30/20/20 Common-through-Mythic table. Level, overgear, and configured

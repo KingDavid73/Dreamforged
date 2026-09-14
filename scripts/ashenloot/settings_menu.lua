@@ -2,8 +2,6 @@ local I=require('openmw.interfaces')
 local core=require('openmw.core')
 local ui=require('openmw.ui')
 local async=require('openmw.async')
-local storage=require('openmw.storage')
-local C=require('scripts.ashenloot.config')
 
 I.Settings.registerRenderer('dreamforgedReset',function()
     local button={
@@ -15,9 +13,10 @@ I.Settings.registerRenderer('dreamforgedReset',function()
         }},
     }
     button.events={mouseClick=async:callback(function()
-        for key,value in pairs(C.defaults) do
-            storage.globalSection(C.groupKey(key)):set(key,value)
-        end
+        -- Defer the bulk write to the GLOBAL script's next update tick. A
+        -- menu click that writes dozens of settings while the native page is
+        -- rebuilding can invalidate the section layout and hide its buttons.
+        core.sendGlobalEvent('Dreamforged_ResetSettings')
     end)}
     return button
 end)

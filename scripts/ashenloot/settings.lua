@@ -6,6 +6,9 @@ local function option(key, renderer, argument)
         default = C.defaults[key], argument = argument}
 end
 local groups={
+    {key=C.groups.reset,name='resetSettings',description='resetSettingsDescription',order=0,settings={
+        option('resetAllSettings', 'dreamforgedReset'),
+    }},
     {key='SettingsAshenLoot',name='generalSettings',description='generalSettingsDescription',order=10,settings={
         option('enabled', 'checkbox'),
         option('preset', 'select', {l10n = 'AshenLoot', items = {'Crawler', 'Testing', 'Balanced', 'Custom'}}),
@@ -15,7 +18,6 @@ local groups={
         option('protectQuestActors', 'checkbox'),
         option('allowRespawningNPCs', 'checkbox'),
         option('unsafeContent', 'checkbox'),
-        option('resetAllSettings', 'dreamforgedReset'),
     }},
     {key=C.groups.scaling,name='scalingSettings',description='scalingSettingsDescription',order=20,settings={
         option('progression', 'checkbox'),

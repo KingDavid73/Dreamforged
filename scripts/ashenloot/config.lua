@@ -1,9 +1,10 @@
 local storage = require('openmw.storage')
 local groupKeys={
-    scaling='SettingsDreamforgedScaling',encounters='SettingsDreamforgedEncounters',
+    reset='SettingsDreamforgedReset',scaling='SettingsDreamforgedScaling',encounters='SettingsDreamforgedEncounters',
     dungeons='SettingsDreamforgedDungeons',bosses='SettingsDreamforgedBosses',
     loot='SettingsDreamforgedLoot',npcs='SettingsDreamforgedNPCs',interface='SettingsDreamforgedInterface'}
 local keyGroups={}
+for _,key in ipairs({'resetAllSettings'}) do keyGroups[key]=groupKeys.reset end
 for _,key in ipairs({'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove'}) do keyGroups[key]=groupKeys.scaling end
 for _,key in ipairs({'creatureVariety','creaturePoolMode','extraEncounters','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorTriggerMin','exteriorTriggerRange','exteriorAnchorChance','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours'}) do keyGroups[key]=groupKeys.encounters end
 for _,key in ipairs({'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses'}) do keyGroups[key]=groupKeys.dungeons end

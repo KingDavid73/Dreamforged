@@ -1,5 +1,11 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.11 - stable settings reset layout
+
+- Moved the all-settings reset into a dedicated top-of-page Dreamforged-wide section, above the General section's native Reset button.
+- Deferred its global settings writes to the next global update tick, preventing native settings controls from disappearing or shifting during a section reset.
+- Kept the den VFX cleanup from 0.10.10.
+
 ## 0.10.10 - den cleanup and settings reset
 
 - Creature-den particle overlays are removed immediately when the den dies.

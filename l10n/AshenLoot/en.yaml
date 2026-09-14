@@ -1,6 +1,8 @@
 page: "Morrowind: Dreamforged"
 generalSettings: "General and compatibility"
 generalSettingsDescription: "Master controls, presets, processing cadence, and safety boundaries."
+resetSettings: "Dreamforged-wide reset"
+resetSettingsDescription: "Restore every Dreamforged settings group to its shipped defaults before a clean testing pass."
 resetAllSettings: "Reset every Dreamforged setting"
 resetAllSettingsDescription: "Restores every Dreamforged settings group to the shipped defaults. This is useful before a clean balance-testing pass."
 resetAllSettingsButton: "Reset all Dreamforged settings to defaults"
