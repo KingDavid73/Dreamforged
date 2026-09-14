@@ -1,5 +1,10 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.10 - den cleanup and settings reset
+
+- Creature-den particle overlays are removed immediately when the den dies.
+- Added a menu-context button that resets every Dreamforged setting group to its shipped defaults.
+
 ## 0.10.9 - adaptive reward pacing
 
 - Added a persistent global reward reserve funded by defeated enemies, with strongly promotion-weighted contributions.

@@ -13,7 +13,7 @@ for _,key in ipairs({'npcProgression','randomizeNpcInventories','npcInventoryPer
 for _,key in ipairs({'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}) do keyGroups[key]=groupKeys.interface end
 local function groupKey(key) return keyGroups[key] or 'SettingsAshenLoot' end
 local defaults = {
-    enabled = true, preset = 'Crawler', elitePercent = 25, dropPercent = 35,
+    enabled = true, preset = 'Crawler', elitePercent = 25, dropPercent = 35, resetAllSettings = false,
     settleSeconds = 2, protectQuestActors = true, allowRespawningNPCs = false, unsafeContent = false,
     showTargetCard = true, inventoryKey = 'F8', forgeKey = 'F7', pageSize = 4, maxGeneratedItems = 2000,
     abilityControllerModifier = 'RightShoulder', abilityControllerCycle = 'DPadLeft',

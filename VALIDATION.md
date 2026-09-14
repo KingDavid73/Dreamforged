@@ -1,5 +1,12 @@
 ﻿# Ashen Loot validation
 
+## 0.10.10 den cleanup and settings reset (2026-09-13)
+
+- Verified the dedicated menu script and reset-button renderer load in the OpenMW 0.51 menu context.
+- Verified all 82 ordinary controls continue to retain non-nil defaults and working global setters alongside the reset action.
+- Verified den overlays use a stable VFX id accepted by the actor animation API and are removed on the first dead-actor update.
+- Re-ran the complete integration and save/reload suite.
+
 ## 0.10.9 adaptive reward pacing (2026-09-13)
 
 - Simulated 1,000 director decisions and verified that saving, steady payout, and spending-spree outcomes all occur without overspending the reserve.

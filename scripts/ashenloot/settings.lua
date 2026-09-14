@@ -15,6 +15,7 @@ local groups={
         option('protectQuestActors', 'checkbox'),
         option('allowRespawningNPCs', 'checkbox'),
         option('unsafeContent', 'checkbox'),
+        option('resetAllSettings', 'dreamforgedReset'),
     }},
     {key=C.groups.scaling,name='scalingSettings',description='scalingSettingsDescription',order=20,settings={
         option('progression', 'checkbox'),

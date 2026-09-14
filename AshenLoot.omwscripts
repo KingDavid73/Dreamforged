@@ -1,4 +1,5 @@
 GLOBAL: scripts/ashenloot/settings.lua
+MENU: scripts/ashenloot/settings_menu.lua
 GLOBAL: scripts/ashenloot/global.lua
 PLAYER: scripts/ashenloot/player.lua
 CUSTOM: scripts/ashenloot/drop.lua

@@ -5,6 +5,7 @@ local I = require('openmw.interfaces')
 local C = require('scripts.ashenloot.config')
 local storage = require('openmw.storage')
 local nearby = require('openmw.nearby')
+local animation = require('openmw.animation')
 local hasRandomizer = core.contentFiles.has('morrowind_world_randomizer.omwscripts')
 local randomizer = hasRandomizer and storage.globalSection('MWR_By_Diject')
 local data = {checked = false, applied = false, deathSent = false, witnessed = false}
@@ -97,6 +98,10 @@ local function update(dt)
     if lastBase and hp.base ~= lastBase then quiet = 0 end
     lastBase = hp.base
     if types.Actor.isDead(self) then
+        if data.den and not data.denVfxCleared then
+            animation.removeVfx(self,'dreamforged_den')
+            data.denVfxCleared=true
+        end
         -- A fast kill still earns ordinary loot; never promote a corpse or a disabled parent.
         if (data.checked or data.witnessed) and not data.deathSent then
             data.deathSent = true
@@ -200,7 +205,8 @@ return {
             types.Actor.stats.ai.fight(self).base=0
             if event and event.model then
                 self:sendEvent('AddVfx',{model=event.model,
-                    options={particleTextureOverride=event.particle,loop=true,useAmbientLight=false}})
+                    options={particleTextureOverride=event.particle,loop=true,useAmbientLight=false,
+                        vfxId='dreamforged_den'}})
             end
         end,
         AshenLoot_MythicAttack=function(target)

@@ -1,6 +1,6 @@
-# Morrowind: Dreamforged handoff — 0.10.9 installed
+# Morrowind: Dreamforged handoff — 0.10.10 installed
 
-**Current installed release: 0.10.9.**
+**Current installed release: 0.10.10.**
 
 0.10.5 gives each World Boss six independent rewards from a dedicated
 1/2/7/20/30/20/20 Common-through-Mythic table. Level, overgear, and configured
