@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.17 cadence correction (2026-09-14)
+
+- Re-ran the OpenMW world profile after clamping the weapon/spell cadence to
+  1.25–2 seconds; the cached DPS check, pacing-state check, placement, loot,
+  rerun, and save/reload assertions passed.
+
 ## 0.10.16 paced pressure and DPS-aware promotion durability (2026-09-14)
 
 - Re-ran both isolated OpenMW 0.51 profiles after the director state-machine

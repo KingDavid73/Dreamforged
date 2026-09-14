@@ -177,7 +177,7 @@ local function playerCombatDps()
         -- intentionally conservative and includes a modest miss/fatigue
         -- allowance, so a tooltip's maximum hit is not treated as sustained
         -- DPS. It also covers staves/wands and their cast-on-use enchants.
-        local interval=math.max(1.25,2.0/speed)
+        local interval=math.min(2.0,math.max(1.25,2.0/speed))
         local dps=damage*0.72/interval+enchantmentDamage(record.enchant)*0.72/interval
         bestWeapon=math.max(bestWeapon,dps)
     end
@@ -192,7 +192,7 @@ local function playerCombatDps()
             if damage>0 then
                 -- Spells need a little more time than a physical swing for
                 -- selection, animation, and failed casts to settle.
-                bestSpell=math.max(bestSpell,damage*0.65/2.5)
+                bestSpell=math.max(bestSpell,damage*0.65/2.0)
             end
         end
     end

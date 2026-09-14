@@ -1,5 +1,11 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.17 - cadence correction
+
+- Clamped physical and spell cadence in the player DPS estimator to the
+  intended 1.25–2 second Morrowind window. Slow native weapons no longer make
+  promoted health scale beyond the documented time-to-kill bands.
+
 ## 0.10.16 - paced pressure and DPS-aware promotion durability
 
 - Added a saved Build/Peak/Relax outdoor cadence. Travel and ordinary kills keep

@@ -1,6 +1,9 @@
-# Morrowind: Dreamforged handoff — 0.10.16 installed
+# Morrowind: Dreamforged handoff — 0.10.17 installed
 
-**Current installed release: 0.10.16.**
+**Current installed release: 0.10.17.**
+
+0.10.17 clamps the cached player DPS estimator to the intended 1.25–2 second
+Morrowind cadence for both physical attacks and spells.
 
 0.10.16 adds a saved outdoor Build/Peak/Relax cadence. Travel and ordinary
 victories continue building pressure; a director group briefly enters Peak and

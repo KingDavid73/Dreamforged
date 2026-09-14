@@ -1,6 +1,10 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.16 - paced pressure and time-to-kill balance.**
+**Current release: 0.10.17 - paced pressure and time-to-kill balance.**
+
+## 0.10.17 Cadence correction
+
+- Clamped the DPS estimator's physical and spell cadence to the intended 1.25–2 second Morrowind window, so slow native weapons do not accidentally make promoted enemies far too durable.
 
 ## 0.10.16 Paced outdoor director and DPS-aware promotion durability
 
