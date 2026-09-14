@@ -1,5 +1,12 @@
 ﻿# Ashen Loot validation
 
+## 0.10.8 bounded loot budgets (2026-09-13)
+
+- Deterministically simulated 5,000 reward packages across all five enemy ranks.
+- Verified per-rank minimum/maximum package sizes, promotion quality floors, low-tier caps, the six-drop ceiling, and the independent World Boss Mythic roll.
+- Verified ordinary enemies remain supply-oriented while promoted rewards spend leftover budget on quality upgrades rather than cheap-item volume.
+- Re-ran the complete OpenMW 0.51 integration suite after the reward resolver change.
+
 ## 0.10.7 experimental creature dens (2026-09-13)
 
 - A targeted real-world run forced a den encounter, dynamically cloned and placed the stationary Kwama Queen record, then produced family-wave additions through the exterior navmesh with no creature-record or animation errors.

@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 26, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 27, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -869,6 +869,15 @@ local function updateSpellTomePickup(dt)
         end
     end
 end
+local function enemyLootBudget(actor,rank)
+    local actorLevel=Progress.actorLevel(actor)
+    local base=({[0]=1,[1]=7,[2]=18,[3]=38,[4]=80})[rank]
+    local perLevel=({[0]=0.04,[1]=0.15,[2]=0.30,[3]=0.55,[4]=1.0})[rank]
+    local gearPart=math.max(0,gearOverage())*({[0]=0,[1]=0.10,[2]=0.20,[3]=0.35,[4]=0.60})[rank]
+    local difficulty=math.max(0,C.enemyHealth-1)+math.max(0,C.enemyDamage-1)
+    local difficultyPart=difficulty*({[0]=0,[1]=2,[2]=5,[3]=10,[4]=15})[rank]
+    return base+actorLevel*perLevel+gearPart+difficultyPart
+end
 local function death(actor)
     if not actor or not actor:isValid() or not eligible(actor) or not types.Actor.isDead(actor) then return end
     if state.rewards[actor.id] then return end
@@ -878,46 +887,26 @@ local function death(actor)
     Progress.victoryRespite(actor,elite)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
-    local attempts=({[0]=1,[1]=2,[2]=3,[3]=4,[4]=6})[rank]
-    local chance=math.min(100,C.normalDropChance*100+({[0]=0,[1]=20,[2]=35,[3]=50,[4]=100})[rank])
-    -- Ordinary promotions should almost always make a visible loot burst while
-    -- preserving a tiny dry-kill possibility. World Bosses reach 100% here and
-    -- route all six successes through their dedicated seven-tier table below.
-    if rank>0 and rank<4 then chance=math.max(97,chance) end
-    local rarityBonus=({[0]=0,[1]=8,[2]=18,[3]=30,[4]=40})[rank]+math.min(20,gearOverage())
+    local rng=R.rng(actor.id..':loot-budget-v1')
+    -- The configured ordinary drop rate is an intensity input rather than a
+    -- literal equipment chance for every scrib. Crawler's 35% becomes roughly
+    -- 12% at level one; promoted enemies always resolve a reward budget.
+    local ordinaryChance=math.min(35,C.normalDropChance*35+math.min(10,Progress.actorLevel(actor)*0.15))
+    if rank==0 and rng(100)>ordinaryChance then return end
+    local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank),mythicChance())
     local profile=lootProfile();local magicProfile=profile and
         (profile.key=='magic' or profile.key=='warmage' or profile.key=='conjurer')
-    for attempt=1,attempts do
-        local rng=R.rng(actor.id..':reward-attempt:'..attempt)
-        if rng(100)<=chance then
-            local familyRoll=rng(100)
-            -- Keep the same family gradient used by the base-item selector:
-            -- weapons 50%, armor 40%, garments 5%, jewelry/accessories 5%.
-            local family=familyRoll<=50 and 'weapon'
-                or (familyRoll<=90 and 'armor'
-                or (familyRoll<=95 and 'clothing' or 'accessory'))
-            -- The tome branch moved from a 10%-share accessory family to the
-            -- 50%-share weapon family. Normalize the in-branch chance so the
-            -- overall drop rate stays close to the previous behavior while
-            -- still preserving the Magic profile's 3x preference.
-            local tomeChance=math.min(90,C.spellTomePercent*(magicProfile and 3 or 0.5)*0.2)
-            -- Spell tomes are mage weapons in the loot taxonomy: they fill
-            -- the same reward slot as staves/wands instead of consuming the
-            -- small universal accessory share. Non-mages never replace their
-            -- accessory drops with a tome.
-            local madeTome=not worldBoss and magicProfile and family=='weapon'
-                and rng(100)<=tomeChance and giveSpellTome(actor,true,attempt)
-            if not madeTome then
-                if worldBoss then
-                    local bossSeed=actor.id..':world-boss-loot:'..attempt
-                    local bossTier=R.worldBossRarity(R.rng(bossSeed..':tier'),worldBossRewardBonus(actor))
-                    if bossTier==7 then giveMythic(actor,bossSeed,attempt)
-                    else giveLoot(actor,bossSeed,1,nil,bossTier,nil,nil,family,0,attempt) end
-                else
-                    giveLoot(actor,actor.id..':loot:'..attempt,1,nil,nil,nil,
-                        nil,family,rarityBonus,attempt)
-                end
-            end
+    for attempt,tier in ipairs(tiers) do
+        local familyRoll=rng(100)
+        local family=familyRoll<=50 and 'weapon' or (familyRoll<=90 and 'armor'
+            or (familyRoll<=95 and 'clothing' or 'accessory'))
+        local tomeChance=math.min(90,C.spellTomePercent*(magicProfile and 3 or 0.5)*0.2)
+        local madeTome=tier<7 and not worldBoss and magicProfile and family=='weapon'
+            and rng(100)<=tomeChance and giveSpellTome(actor,true,attempt)
+        if not madeTome then
+            local seed=actor.id..':budget-loot:'..attempt..':'..tier
+            if tier==7 then giveMythic(actor,seed,attempt)
+            else giveLoot(actor,seed,1,nil,tier,nil,nil,family,0,attempt) end
         end
     end
 end
@@ -1208,7 +1197,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 26
+            state.version = 27
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

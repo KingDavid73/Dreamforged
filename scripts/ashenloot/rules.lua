@@ -251,6 +251,65 @@ function M.worldBossRarity(random, upwardBonus)
     if tier<#M.worldBossRarities and chance>0 and random(100)<=chance then tier=tier+1 end
     return tier
 end
+M.lootCosts={1,2,5,12,25,45}
+M.lootBudgetProfiles={
+    [0]={min=1,max=2,floor=1,lowCap=2},
+    [1]={min=1,max=3,floor=2,lowCap=1},
+    [2]={min=1,max=4,floor=3,lowCap=1},
+    [3]={min=2,max=5,floor=4,lowCap=1},
+    [4]={min=3,max=6,floor=5,lowCap=0},
+}
+-- Convert one defeated actor's power budget into a bounded package. Promotion
+-- floors, low-tier caps and a hard six-slot ceiling prevent both fifty Commons
+-- and mechanically identical boss piles. Unspent value upgrades existing rolls.
+function M.lootBudgetPlan(random,rank,budget,mythicPercent)
+    rank=math.max(0,math.min(4,math.floor(tonumber(rank) or 0)))
+    budget=math.max(0,tonumber(budget) or 0)
+    local profile=M.lootBudgetProfiles[rank]
+    local goal=profile.min+random(profile.max-profile.min+1)-1
+    local tiers={}
+    if rank==4 and random(100)<=math.max(0,math.min(100,mythicPercent or 0)) then tiers[#tiers+1]=7 end
+    local proceduralGoal=math.max(rank>0 and 1 or 0,goal-#tiers)
+    local remaining=budget
+    if proceduralGoal>0 then
+        tiers[#tiers+1]=profile.floor
+        remaining=math.max(0,remaining-M.lootCosts[profile.floor])
+    end
+    local low=0
+    while #tiers<goal do
+        local slotsLeft=goal-#tiers
+        local ideal=remaining/math.max(1,slotsLeft)
+        local choices,weights,total={},{},0
+        local requiredAfter=math.max(0,profile.min-(#tiers+1))
+        local spendable=remaining-requiredAfter*M.lootCosts[profile.floor]
+        for tier=1,6 do
+            local isLow=tier<profile.floor
+            if M.lootCosts[tier]<=spendable and (not isLow or low<profile.lowCap) then
+                local distance=math.abs(math.log(math.max(1,ideal))/math.log(2)-math.log(M.lootCosts[tier])/math.log(2))
+                local weight=math.max(1,math.floor(24/(1+distance)+0.5))
+                choices[#choices+1]=tier;weights[#weights+1]=weight;total=total+weight
+            end
+        end
+        if #choices==0 then break end
+        local roll=random(total);local chosen=choices[#choices]
+        for index,weight in ipairs(weights) do roll=roll-weight;if roll<=0 then chosen=choices[index];break end end
+        tiers[#tiers+1]=chosen;remaining=remaining-M.lootCosts[chosen]
+        if chosen<profile.floor then low=low+1 end
+    end
+    -- Remaining budget raises quality instead of buying a tail of cheap items.
+    local upgraded=true
+    while upgraded do
+        upgraded=false
+        for index=#tiers,1,-1 do
+            local tier=tiers[index]
+            if tier<6 then
+                local delta=M.lootCosts[tier+1]-M.lootCosts[tier]
+                if remaining>=delta then tiers[index]=tier+1;remaining=remaining-delta;upgraded=true end
+            end
+        end
+    end
+    return tiers,remaining
+end
 M.prefixes = {
     { name = 'Dagonfire', defensiveName = 'Fireshrouded', effect = 'firedamage', guard = 'fireshield', duration = 2 },
     { name = 'Rimefang', defensiveName = 'Frostshrouded', effect = 'frostdamage', guard = 'frostshield', duration = 2 },

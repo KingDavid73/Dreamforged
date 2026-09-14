@@ -1,5 +1,13 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.8 - bounded loot budgets
+
+- Replaced independent drop-count and rarity nudges with bounded per-enemy loot budgets.
+- Promotion rank, enemy level, player overgear, and configured combat difficulty now increase the reward budget.
+- Added promotion quality floors, low-tier caps, and a six-item hard ceiling; leftover budget upgrades existing drops instead of buying Common spam.
+- World Boss Mythics now use one explicit roll per boss package, while the remainder of the package starts at Legendary quality.
+- Ordinary wildlife and unpromoted enemies now primarily serve as supply-scavenging targets and only occasionally yield procedural equipment.
+
 ## 0.10.7 - experimental creature dens
 
 - Added stationary, destructible Kwama Queen-based dens as an optional outdoor director encounter.

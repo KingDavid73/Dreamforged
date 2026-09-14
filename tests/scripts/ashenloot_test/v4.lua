@@ -51,6 +51,31 @@ local function update(dt)
             check(I.AshenLoot.progression.test.prestigeScale(100)==1,'Prestige changed level-100 baseline')
             check(I.AshenLoot.progression.test.prestigeScale(500)==5,'Level-500 prestige multiplier')
             check(I.AshenLoot.progression.test.encounterTarget(50,500,0,true,true)>=496,'Uncapped generated encounter level')
+            local budgetExamples={[0]=1.1,[1]=8.5,[2]=22,[3]=45,[4]=90}
+            local budgetCounts={}
+            for rank=0,4 do
+                local profile=R.lootBudgetProfiles[rank];budgetCounts[rank]={0,0,0,0,0,0,0}
+                for sample=1,1000 do
+                    local tiers=R.lootBudgetPlan(R.rng('budget-plan:'..rank..':'..sample),rank,budgetExamples[rank],20)
+                    check(#tiers>=profile.min and #tiers<=profile.max,'Loot package size escaped rank bounds: rank='..rank..' sample='..sample..' size='..#tiers)
+                    local low=0
+                    for _,tier in ipairs(tiers) do
+                        check(tier>=1 and tier<=7,'Invalid planned loot tier')
+                        budgetCounts[rank][tier]=budgetCounts[rank][tier]+1
+                        if tier<profile.floor then low=low+1 end
+                    end
+                    check(low<=profile.lowCap,'Loot package escaped low-tier cap')
+                end
+            end
+            check(budgetCounts[0][1]>900,'Ordinary budget stopped favoring single Common equipment')
+            check(budgetCounts[4][1]==0 and budgetCounts[4][2]==0 and budgetCounts[4][3]==0 and budgetCounts[4][4]==0,
+                'World Boss budget bought low-tier filler')
+            check(budgetCounts[4][7]>=150 and budgetCounts[4][7]<=250,'World Boss Mythic roll escaped expected range')
+            print(string.format('[AshenLoot V4] budget samples: normal C=%d; champion U+=%d; elite R+=%d; unique E+=%d; boss L=%d Rl=%d M=%d',
+                budgetCounts[0][1],budgetCounts[1][2]+budgetCounts[1][3]+budgetCounts[1][4]+budgetCounts[1][5]+budgetCounts[1][6],
+                budgetCounts[2][3]+budgetCounts[2][4]+budgetCounts[2][5]+budgetCounts[2][6],
+                budgetCounts[3][4]+budgetCounts[3][5]+budgetCounts[3][6],budgetCounts[4][5],budgetCounts[4][6],budgetCounts[4][7]))
+            pass('5,000 bounded loot-budget packages keep ordinary equipment scarce and boss rewards concentrated')
             local capSpec=R.item('damage-cap',3,6);capSpec.tier=6;capSpec.style=3
             local capId=Records.makeItem(types.Weapon.record('daedric battle axe'),types.Weapon,capSpec)
             ids[#ids+1]=capId

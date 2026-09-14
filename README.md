@@ -1,6 +1,12 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.7 - experimental creature dens and power-weighted outdoor pressure.**
+**Current release: 0.10.8 - bounded loot budgets and supply-focused ordinary wildlife.**
+
+## 0.10.8 Loot budgets
+
+- Promoted enemies now receive a power budget based on promotion rank, level, player overgear, and configured difficulty. The budget buys a small bounded package and spends leftovers upgrading quality instead of producing piles of cheap items.
+- Champion, Elite, Unique, and World Boss packages have progressively higher quality floors and hard item-count limits. World Bosses cannot turn their budget into Common-through-Epic filler and retain one independent configurable Mythic chance.
+- Ordinary creatures and enemies usually provide arrows, potions, and other supplies rather than procedural equipment. Procedural gear remains a modest lucky roll, while promoted encounters are the main loot-hunt loop.
 
 ## 0.10.7 Creature dens and threat budget
 
@@ -126,7 +132,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.7"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.8"
 content=AshenLoot.omwscripts
 ```
 
