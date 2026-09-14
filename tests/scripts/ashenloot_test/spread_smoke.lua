@@ -14,6 +14,8 @@ return {engineHandlers={onUpdate=function(dt)
             set('creatureVariety',0);set('creaturePoolMode','Random');set('encounterDensity',3)
             set('exteriorBudget',16);set('outdoorDirectorInterval',3);set('outdoorDirectorChance',100)
             set('outdoorPressureGain',15);set('exteriorGroupMin',3);set('exteriorGroupMax',5)
+            set('creatureDenChance',100);set('creatureDenWaveInterval',5)
+            set('creatureDenMinCycles',2);set('creatureDenMaxCycles',2)
             set('exteriorSpawnMin',300);set('exteriorSpread',1200)
             set('settlementSuppression',false);set('unsafeContent',false)
             p:teleport(world.getExteriorCell(0,0),util.vector3(4096,4096,1000))
@@ -32,9 +34,12 @@ return {engineHandlers={onUpdate=function(dt)
                     if actor.id==id and not seen[actor.recordId] then seen[actor.recordId]=true;variety=variety+1 end
                 end
             end
-            assert(count>=3,'Maximum exterior settings produced '..count..' additions')
+            assert(count>=2,'Forced den plus waves produced only '..count..' additions')
             assert(count<=48,'Living director cap was exceeded: '..count)
-            assert(variety>=3,'Maximum Random exterior settings produced only '..variety..' creature records')
+            assert(variety>=2,'Forced den waves produced only '..variety..' creature records')
+            local dens=0
+            for _ in pairs(I.AshenLoot.getState().director.dens or {}) do dens=dens+1 end
+            assert(dens>=1,'Forced den encounter did not create a tracked Kwama Queen den')
             print('[Dreamforged EXTERIOR] PASS: moving-player director placed '..count..' bounded additions across '..variety..' records')
             core.quit();stage=4
         end

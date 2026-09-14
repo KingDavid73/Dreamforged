@@ -468,8 +468,10 @@ return {
                     local attempts=math.max(18,event.count*20)
                     local strictAttempts=math.floor(attempts*0.55)
                     local dir=util.vector3(event.dirX or 1,event.dirY or 0,0)
-                    local center=event.director and actor.position+dir*((spawnMin+spawnMax)*0.5) or actor.position
-                    local radius=event.director and math.max(250,(spawnMax-spawnMin)*0.5) or spawnMax
+                    local forwardDirector=event.director and not event.denWave
+                    local center=forwardDirector and actor.position+dir*((spawnMin+spawnMax)*0.5) or actor.position
+                    local radius=forwardDirector and math.max(250,(spawnMax-spawnMin)*0.5)
+                        or (event.denWave and math.min(650,spawnMax) or spawnMax)
                     for attempt=1,attempts do
                         if #positions>=event.count then break end
                         local relaxed=C.encounterDensity>=2.5 and attempt>strictAttempts
@@ -493,7 +495,7 @@ return {
                             local fromPlayer=candidate-self.position
                             local forward=fromPlayer.x*dir.x+fromPlayer.y*dir.y
                             local separated=clear and fromPlayer:length()>=spawnMin and fromPlayer:length()<=spawnMax+300
-                                and (not event.director or forward>spawnMin*0.35)
+                                and (not forwardDirector or forward>spawnMin*0.35)
                             local spacing=relaxed and 80 or 140
                             for _,other in ipairs(nearby.actors) do if (other.position-candidate):length()<spacing then separated=false end end
                             for _,other in ipairs(positions) do if (other-candidate):length()<spacing then separated=false end end

@@ -2,7 +2,7 @@ local I,storage,core,menu=require('openmw.interfaces'),require('openmw.storage')
 local C=require('scripts.ashenloot.config')
 local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','protectQuestActors','allowRespawningNPCs','unsafeContent',
     'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove',
-    'creatureVariety','creaturePoolMode','extraEncounters','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours',
+    'creatureVariety','creaturePoolMode','extraEncounters','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours',
     'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses',
     'worldBosses','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent',
     'worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap',

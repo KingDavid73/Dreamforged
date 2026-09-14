@@ -89,6 +89,10 @@ local function update(dt)
     if timer < 0.25 then return end
     timer = 0
     if not available() then return end
+    if data.den then
+        I.AI.removePackages()
+        types.Actor.stats.ai.fight(self).base=0
+    end
     local hp = types.Actor.stats.dynamic.health(self)
     if lastBase and hp.base ~= lastBase then quiet = 0 end
     lastBase = hp.base
@@ -189,6 +193,15 @@ return {
             types.Actor.stats.ai.fight(self).base=90
             local player=nearby.players[1]
             if player then I.AI.startPackage{type='Combat',target=player,cancelOther=true} end
+        end,
+        AshenLoot_DenSpawned = function(event)
+            data.den=true
+            I.AI.removePackages()
+            types.Actor.stats.ai.fight(self).base=0
+            if event and event.model then
+                self:sendEvent('AddVfx',{model=event.model,
+                    options={particleTextureOverride=event.particle,loop=true,useAmbientLight=false}})
+            end
         end,
         AshenLoot_MythicAttack=function(target)
             if target and target:isValid() then

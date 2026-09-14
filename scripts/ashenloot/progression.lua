@@ -335,6 +335,19 @@ local function pickDungeonCreature(cell,target,rng)
     table.sort(candidates)
     return #candidates>0 and candidates[rng(#candidates)] or 'rat'
 end
+local function pickFamilyCreature(familyName,target,rng)
+    buildPools()
+    local source=pools[familyName] or pools.all
+    local candidates={}
+    for _,entry in ipairs(source) do
+        if entry.level>=math.max(1,target-C.encounterLevelBelow)
+            and entry.level<=target+C.encounterLevelAbove
+            and not (C.excludeExtraCliffRacers and isCliff(entry.id)) then candidates[#candidates+1]=entry.id end
+    end
+    if #candidates==0 then for _,entry in ipairs(source) do candidates[#candidates+1]=entry.id end end
+    table.sort(candidates)
+    return #candidates>0 and candidates[rng(#candidates)] or 'rat'
+end
 local function encounterTarget(native,playerLevel,jitter,isCreature,isGenerated)
     if not C.progression then return native end
     if not isCreature then return math.max(native,math.floor(1+(playerLevel-1)*C.levelScaling+jitter)) end
@@ -365,6 +378,9 @@ function M.bind(s, giveLoot, encounter, isEligible)
         state.director[key] = state.director[key] or {}
     end
     state.director.outdoor=state.director.outdoor or {pressure=0,nextRoll=0}
+    state.director.dens=state.director.dens or {}
+    state.director.directorCosts=state.director.directorCosts or {}
+    state.director.spawnLevels=state.director.spawnLevels or {}
     for _,cellState in pairs(state.director.cells) do
         if cellState.additionalCount==nil then setAdditionalCount(cellState,cellState.count or 0) end
         cellState.count=nil
@@ -700,6 +716,7 @@ function M.prepare(actor, inCombat)
     local effectiveLevel=gearLevel()
     local generated = d.generated[actor.id]
     local target=encounterTarget(native,effectiveLevel,rng(5)-3,types.Creature.objectIsInstance(actor),generated~=nil)
+    if d.spawnLevels[actor.id] then target=math.max(1,math.floor(d.spawnLevels[actor.id]+0.5)) end
     if guard then target=math.max(target,math.floor(effectiveLevel*0.8)+4) end
     target = math.max(1,target)
     d.actors[actor.id]={level=target,cell=actor.cell.id}
@@ -791,6 +808,51 @@ function M.replaceResult(event)
         M.prepare(actor,true)
     end
 end
+local denThemes={
+    beast={name='Brood Nest',effect='burden'},
+    undead={name='Grave Brood',effect='drainhealth'},
+    daedra={name='Profane Hatchery',effect='weaknesstomagicka'},
+    construct={name='Dwemer Incubator',effect='shockdamage'},
+}
+local function denRecord(familyName,tier)
+    local key='den-record:'..familyName..':'..tier
+    local cached=state.director.cache[key]
+    if cached and types.Creature.records[cached] then return cached end
+    local queen=types.Creature.records['kwama queen']
+    if not queen then
+        for _,rec in pairs(types.Creature.records) do
+            if (rec.model or ''):lower():find('kwama queen',1,true) then queen=rec;break end
+        end
+    end
+    if not queen then return nil end
+    local adjective=({'Lesser ',' ','Greater '})[tier] or ''
+    local record=world.createRecord(types.Creature.createRecordDraft{
+        template=queen,name=adjective..(denThemes[familyName] or denThemes.beast).name,
+        isEssential=false,isRespawning=false,canWalk=false,canSwim=false,canFly=false,
+        attack={0,1,0,1,0,1},combatSkill=5,magicSkill=5,stealthSkill=5,soulValue=0,baseGold=0,
+    })
+    state.director.cache[key]=record.id
+    return record.id
+end
+local function createDen(request,pos)
+    local id=denRecord(request.family,request.tier)
+    if not id then return nil end
+    local den=world.createObject(id,1)
+    den:teleport(request.actor.cell,pos)
+    local native=math.max(1,types.Actor.stats.level(den).current)
+    local health=({1.1,1.8,2.7})[request.tier] or 1.1
+    state.director.generated[den.id]='den'
+    state.director.directorCosts[den.id]=request.cost or 2
+    state.director.actors[den.id]={level=request.level,cell=request.cell,den=true}
+    state.director.dens[den.id]={family=request.family,tier=request.tier,cycles=request.cycles,
+        nextWave=core.getSimulationTime()+5,cell=request.cell,level=request.level,dead=false}
+    den:sendEvent('AshenLoot_Scale',{level=request.level,nativeLevel=native,health=health,
+        damage=0.25,progression=true,allowDownscale=true})
+    local effect=core.magic.effects.records[(denThemes[request.family] or denThemes.beast).effect]
+    local static=effect and effect.castStatic and types.Static.record(effect.castStatic)
+    den:sendEvent('AshenLoot_DenSpawned',{model=static and static.model,particle=effect and effect.particle})
+    return den
+end
 function M.spawnResult(event)
     local request=pending[event.token]
     if not request then return end
@@ -808,7 +870,12 @@ function M.spawnResult(event)
         if made>=request.count then break end
         local offset=pos-actor.position
         if actor.cell.isExterior or offset:length()<900 then
-            local id=request.director and pickDungeonCreature(actor.cell,request.level,rng)
+            if request.den then
+                if createDen(request,pos) then made=made+1 end
+                break
+            end
+            local id=request.denWave and pickFamilyCreature(request.family,request.level,rng)
+                or (request.director and pickDungeonCreature(actor.cell,request.level,rng))
                 or (types.Creature.objectIsInstance(actor) and pickCreature(actor,request.level,rng,true) or actor.recordId)
             -- NPC copies are forbidden: use varied level-aware creature allies instead.
             if types.NPC.objectIsInstance(actor) then id=pickNpcReinforcement(actor,request.level,rng) end
@@ -817,6 +884,10 @@ function M.spawnResult(event)
                 and state.director.generated[actor.id] or 0
             state.director.generated[spawn.id]=request.bossWave and 'bossAdd'
                 or (request.director and 'director' or (parentGeneration+1))
+            if request.director then
+                state.director.directorCosts[spawn.id]=request.cost or 1
+                state.director.spawnLevels[spawn.id]=request.level
+            end
             if request.bossWave then
                 local adds=state.director.bossAdds[actor.id] or {}
                 adds[#adds+1]=spawn.id;state.director.bossAdds[actor.id]=adds
@@ -1266,6 +1337,48 @@ local function updateCellState(player)
         end
     end
 end
+local function liveDirectorThreat(player)
+    local threat,hostiles=0,0
+    for _,actor in ipairs(world.activeActors) do
+        if actor.cell==player.cell and valid(actor) and not types.Player.objectIsInstance(actor) then
+            local distance=(actor.position-player.position):length()
+            if distance<3000 and types.Actor.stats.ai.fight(actor).base>=80 then hostiles=hostiles+1 end
+            if state.director.generated[actor.id]=='director' or state.director.generated[actor.id]=='den' then
+                if distance<5000 then threat=threat+(state.director.directorCosts[actor.id] or 1) end
+            end
+        end
+    end
+    return threat,hostiles
+end
+local function updateDens(player)
+    local now=core.getSimulationTime()
+    for id,denState in pairs(state.director.dens) do
+        local den
+        for _,actor in ipairs(world.activeActors) do if actor.id==id then den=actor;break end end
+        if den and den:isValid() and types.Actor.isDead(den) and not denState.dead then
+            denState.dead=true
+            local outdoor=state.director.outdoor
+            outdoor.safeCell=den.cell.id;outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+30)
+            outdoor.pressure=0
+        elseif den and valid(den) and den.cell==player.cell and (den.position-player.position):length()<3500
+            and denState.cycles>0 and now>=(denState.nextWave or 0) then
+            local threat=liveDirectorThreat(player)
+            local cap=math.max(1,C.exteriorBudget*C.encounterDensity)
+            local cost=math.max(0.35,math.min(1.5,denState.level/math.max(1,gearLevel())))
+            local rng=R.rng(id..':den-wave:'..denState.cycles)
+            local wanted=denState.tier+rng(2)-1
+            local count=math.min(wanted,math.max(0,math.floor((cap-threat)/cost)))
+            denState.cycles=denState.cycles-1
+            denState.nextWave=now+C.creatureDenWaveInterval
+            if count>0 then
+                local token=id..':den-wave:'..tostring(denState.cycles)
+                pending[token]={actor=den,level=denState.level,count=count,cell=den.cell.id,
+                    created=now,director=true,denWave=true,family=denState.family,cost=cost}
+                player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=den,count=count,denWave=true})
+            end
+        end
+    end
+end
 local function updateOutdoorDirector(player)
     local cell=player.cell
     if not cell or not cell.isExterior or not C.extraEncounters or C.exteriorBudget<=0 then return end
@@ -1294,14 +1407,7 @@ local function updateOutdoorDirector(player)
     if now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
     outdoor.nextRoll=now+C.outdoorDirectorInterval
     outdoor.distance=0
-    local live,hostiles=0,0
-    for _,actor in ipairs(world.activeActors) do
-        if actor.cell==cell and valid(actor) and not types.Player.objectIsInstance(actor) then
-            local distance=(actor.position-player.position):length()
-            if distance<3000 and types.Actor.stats.ai.fight(actor).base>=80 then hostiles=hostiles+1 end
-            if d.generated[actor.id]=='director' and distance<5000 then live=live+1 end
-        end
-    end
+    local live,hostiles=liveDirectorThreat(player)
     local cap=math.max(1,math.floor(C.exteriorBudget*C.encounterDensity+0.5))
     local hp=types.Actor.stats.dynamic.health(player)
     local healthRatio=hp.base>0 and hp.current/hp.base or 1
@@ -1316,14 +1422,32 @@ local function updateOutdoorDirector(player)
     end
     local low=math.min(C.exteriorGroupMin,C.exteriorGroupMax)
     local high=math.max(C.exteriorGroupMin,C.exteriorGroupMax)
-    local count=math.min(cap-live,low+rng(high-low+1)-1)
+    local power=gearLevel()
+    local target=math.max(1,math.floor(power*(0.54+rng(61)/100)+0.5))
+    local cost=math.max(0.35,math.min(1.5,target/power))
+    local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
     if count<=0 then return end
     outdoor.pressure=0
     local token=cell.id..':director:'..tostring(now)
-    pending[token]={actor=player,level=gearLevel(),count=count,cell=cell.id,
-        created=now,director=true}
-    player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
-        director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+    local denActive=false
+    for _,denState in pairs(d.dens) do if denState.cell==cell.id and not denState.dead then denActive=true;break end end
+    if not denActive and rng(100)<=C.creatureDenChance and live+2<=cap then
+        local families={'beast','undead','daedra','construct'}
+        local family=families[rng(#families)]
+        local maxTier=power>=25 and 3 or (power>=10 and 2 or 1)
+        local tier=rng(maxTier)
+        local cycleLow=math.min(C.creatureDenMinCycles,C.creatureDenMaxCycles)
+        local cycleHigh=math.max(C.creatureDenMinCycles,C.creatureDenMaxCycles)
+        pending[token]={actor=player,level=target,count=1,cell=cell.id,created=now,
+            director=true,den=true,family=family,tier=tier,cycles=cycleLow+rng(cycleHigh-cycleLow+1)-1,cost=2}
+        player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=1,
+            director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+    else
+        pending[token]={actor=player,level=target,count=count,cell=cell.id,
+            created=now,director=true,cost=cost}
+        player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
+            director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+    end
 end
 function M.update(dt)
     timer=timer+dt
@@ -1340,6 +1464,7 @@ function M.update(dt)
     end
     local count=0
     local player=world.players[1]
+    updateDens(player)
     updateOutdoorDirector(player)
     for _,actor in ipairs(world.activeActors) do
         if count>=3 then break end

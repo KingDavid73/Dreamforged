@@ -1,6 +1,14 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.6 - player-centered outdoor encounter director.**
+**Current release: 0.10.7 - experimental creature dens and power-weighted outdoor pressure.**
+
+## 0.10.7 Creature dens and threat budget
+
+Outdoor director rolls can now become stationary, destructible creature dens built from a dynamically cloned Kwama Queen. A den receives one of four identities—Brood Nest, Grave Brood, Profane Hatchery, or Dwemer Incubator—and a matching magical visual treatment. Its family determines whether it produces beasts, undead, Daedra, or constructs. Dens begin their first wave after five seconds, produce a configurable 1–3 cycles by default, stop permanently when killed or exhausted, and grant a short local respite when destroyed.
+
+Den tier is gated by combined character power: early characters receive Lesser dens, tier two becomes available around effective level 10, and Greater dens around effective level 25. Tier raises both durability and wave size. The exterior cap is now a threat-point budget rather than a headcount. Enemies near the player's combined level and best-equippable gear score cost roughly one point, while deliberately weaker enemies cost as little as 0.35; this naturally allows larger late-game groups without burying a new character.
+
+Settings expose den chance, wave interval, and minimum/maximum cycles. The default den chance is 12% of successful outdoor director encounters.
 
 ## 0.10.6 Outdoor pressure director
 
@@ -118,7 +126,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.6"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.7"
 content=AshenLoot.omwscripts
 ```
 

@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 25, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 26, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -1208,7 +1208,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 25
+            state.version = 26
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

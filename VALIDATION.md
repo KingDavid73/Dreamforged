@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.7 experimental creature dens (2026-09-13)
+
+- A targeted real-world run forced a den encounter, dynamically cloned and placed the stationary Kwama Queen record, then produced family-wave additions through the exterior navmesh with no creature-record or animation errors.
+- Threat accounting now uses saved per-actor costs derived from requested encounter level versus combined character/gear power; dens cost two points and all child waves share the same live budget.
+- The full isolated regression passed all visible settings, record generation, progression, encounters, inventories, UI initialization, and save/reload. Physical den combat, exact particle appearance, and long-session pacing remain live-playtest items.
+
 ## 0.10.6 outdoor pressure director (2026-09-13)
 
 - Exterior population is now driven by timed player movement, accumulated quiet-roll pressure, a live nearby-add cap, health/threat respite, and forward-biased local placement.

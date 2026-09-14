@@ -1,5 +1,14 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.7 - experimental creature dens
+
+- Added stationary, destructible Kwama Queen-based dens as an optional outdoor director encounter.
+- Added beast, undead, Daedra, and construct identities with matching names, particles, and family-specific waves.
+- Added three level-gated den tiers that scale durability and wave size.
+- Added configurable den chance, wave interval, and minimum/maximum spawn cycles.
+- Replaced raw outdoor headcount with a threat-cost budget based on enemy level versus combined character/gear power.
+- Added a short pressure respite after destroying a den.
+
 ## 0.10.6 - outdoor pressure director
 
 - Replaced exterior native-anchor packs with a player-centered timed director.
