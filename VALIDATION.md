@@ -1,5 +1,12 @@
 ﻿# Ashen Loot validation
 
+## 0.10.9 adaptive reward pacing (2026-09-13)
+
+- Simulated 1,000 director decisions and verified that saving, steady payout, and spending-spree outcomes all occur without overspending the reserve.
+- Verified all payouts remain inputs to the bounded package resolver rather than bypassing promotion floors or item-count ceilings.
+- Verified all 82 settings controls, including the four new director controls, retain valid defaults and global setters.
+- Re-ran the complete OpenMW 0.51 integration and save/reload suite.
+
 ## 0.10.8 bounded loot budgets (2026-09-13)
 
 - Deterministically simulated 5,000 reward packages across all five enemy ranks.

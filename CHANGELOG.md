@@ -1,5 +1,13 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.9 - adaptive reward pacing
+
+- Added a persistent global reward reserve funded by defeated enemies, with strongly promotion-weighted contributions.
+- Added frugal, steady, and spending-spree payout moods that feed saved credit into promoted-enemy loot budgets.
+- Added reward hunger: merely expected promoted drops make later payouts likelier, while above-expected rewards and Mythics reduce it.
+- Retained rank quality floors and hard item-count ceilings so generosity improves quality instead of inventory clutter.
+- Added Loot settings for enabling adaptation, generosity, reserve capacity, and base spree chance.
+
 ## 0.10.8 - bounded loot budgets
 
 - Replaced independent drop-count and rarity nudges with bounded per-enemy loot budgets.

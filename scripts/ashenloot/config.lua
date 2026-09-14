@@ -8,7 +8,7 @@ for _,key in ipairs({'progression','levelScaling','gearLevelInfluence','enemyHea
 for _,key in ipairs({'creatureVariety','creaturePoolMode','extraEncounters','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorTriggerMin','exteriorTriggerRange','exteriorAnchorChance','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours'}) do keyGroups[key]=groupKeys.encounters end
 for _,key in ipairs({'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses'}) do keyGroups[key]=groupKeys.dungeons end
 for _,key in ipairs({'worldBosses','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap','worldBossMinLevel','worldBossRange'}) do keyGroups[key]=groupKeys.bosses end
-for _,key in ipairs({'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic'}) do keyGroups[key]=groupKeys.loot end
+for _,key in ipairs({'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic'}) do keyGroups[key]=groupKeys.loot end
 for _,key in ipairs({'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense'}) do keyGroups[key]=groupKeys.npcs end
 for _,key in ipairs({'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}) do keyGroups[key]=groupKeys.interface end
 local function groupKey(key) return keyGroups[key] or 'SettingsAshenLoot' end
@@ -28,6 +28,7 @@ local defaults = {
     interiorBudget = 3, uniquePercent = 5, eliteTierPercent = 25, dungeonBosses = true,
     settlementSuppression = true, guardProgression = true, guardPower = 1.35,
     healingPercent = 65, supplyPercent = 25, ammunitionPercent = 15, spellTomePercent = 25, groundDrops = true,
+    adaptiveLootDirector = true, lootDirectorStrength = 1, lootDirectorReserve = 150, lootDirectorSpreeChance = 15,
     scavenge = true, civilianDefense = true,
     supplyContainers = true,
     exteriorSpread = 2200,
@@ -67,6 +68,7 @@ return setmetatable({defaults = defaults,groupKey=groupKey,groups=groupKeys,keyG
         exteriorGroupMin={1,10}, exteriorGroupMax={1,10}, exteriorSpawnMin={100,3000},
         interiorBudget={0,8}, creatureVariety={0,100},
         uniquePercent={0,100}, eliteTierPercent={0,100}, healingPercent={0,100}, supplyPercent={0,100}, ammunitionPercent={0,100}, spellTomePercent={0,100}, exteriorSpread={300,8000},
+        lootDirectorStrength={0.1,3},lootDirectorReserve={0,500},lootDirectorSpreeChance={0,100},
         containerLootPercent={0,100}, looseDungeonItemPercent={0,100},
         npcInventoryPercent={0,100}, npcAshenGearPercent={0,50}, worldBossChance={0,100}, worldBossCellCap={1,10},
         worldBossAddInitialDelay={0,300}, worldBossAddInterval={5,300}, worldBossAddMin={1,10},

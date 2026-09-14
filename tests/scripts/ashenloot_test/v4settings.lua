@@ -7,7 +7,7 @@ local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','pro
     'worldBosses','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent',
     'worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap',
     'worldBossMinLevel','worldBossRange',
-    'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
+    'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
     'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense',
     'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
 local calls,controls={},nil
@@ -33,6 +33,6 @@ return {engineHandlers={onFrame=function()
             assert(storage.globalSection(C.groupKey(key)):get(key)==default,'Setting callback '..key)
         end
     end)
-    print('[AshenLoot SETTINGS5] '..(ok and 'PASS: all 78 native controls have non-nil defaults and working global setters' or 'FAIL: '..tostring(err)))
+    print('[AshenLoot SETTINGS5] '..(ok and 'PASS: all 82 native controls have non-nil defaults and working global setters' or 'FAIL: '..tostring(err)))
     if not ok then core.quit() end
 end}}

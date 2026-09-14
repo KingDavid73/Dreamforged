@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 27, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 28, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -878,6 +878,31 @@ local function enemyLootBudget(actor,rank)
     local difficultyPart=difficulty*({[0]=0,[1]=2,[2]=5,[3]=10,[4]=15})[rank]
     return base+actorLevel*perLevel+gearPart+difficultyPart
 end
+local function rewardDirectorBudget(actor,rank,rng)
+    state.rewardDirector=state.rewardDirector or {bank=0,hunger=0,kills=0,sprees=0}
+    local director=state.rewardDirector
+    director.kills=(director.kills or 0)+1
+    if not C.adaptiveLootDirector then return 0,director end
+    local strength=C.lootDirectorStrength
+    local levelFactor=1+math.min(200,Progress.actorLevel(actor))*0.0025
+    local earned=({[0]=0.35,[1]=3,[2]=7,[3]=14,[4]=25})[rank]*levelFactor*strength
+    director.bank=math.min(C.lootDirectorReserve,math.max(0,(director.bank or 0)+earned))
+    if rank<=0 then return 0,director end
+    local spend,mood=R.lootDirectorSpend(rng,director.bank,director.hunger or 0,rank,strength,C.lootDirectorSpreeChance)
+    director.bank=math.max(0,director.bank-spend);director.lastMood=mood
+    if mood=='spree' then director.sprees=(director.sprees or 0)+1 end
+    return spend,director
+end
+local function settleRewardHunger(director,rank,tiers)
+    if not director or rank<=0 then return end
+    local highest=0
+    for _,tier in ipairs(tiers) do highest=math.max(highest,tier) end
+    local target=math.min(6,rank+1)
+    if highest==7 then director.hunger=math.max(0,(director.hunger or 0)-45)
+    elseif highest>target then director.hunger=math.max(0,(director.hunger or 0)-12*(highest-target))
+    else director.hunger=math.min(100,(director.hunger or 0)+({4,7,10,14})[rank]) end
+    director.lastTier=highest
+end
 local function death(actor)
     if not actor or not actor:isValid() or not eligible(actor) or not types.Actor.isDead(actor) then return end
     if state.rewards[actor.id] then return end
@@ -888,12 +913,14 @@ local function death(actor)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
     local rng=R.rng(actor.id..':loot-budget-v1')
+    local directorSpend,rewardDirector=rewardDirectorBudget(actor,rank,rng)
     -- The configured ordinary drop rate is an intensity input rather than a
     -- literal equipment chance for every scrib. Crawler's 35% becomes roughly
     -- 12% at level one; promoted enemies always resolve a reward budget.
     local ordinaryChance=math.min(35,C.normalDropChance*35+math.min(10,Progress.actorLevel(actor)*0.15))
     if rank==0 and rng(100)>ordinaryChance then return end
-    local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank),mythicChance())
+    local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank)+directorSpend,mythicChance())
+    settleRewardHunger(rewardDirector,rank,tiers)
     local profile=lootProfile();local magicProfile=profile and
         (profile.key=='magic' or profile.key=='warmage' or profile.key=='conjurer')
     for attempt,tier in ipairs(tiers) do
@@ -1197,7 +1224,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 27
+            state.version = 28
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

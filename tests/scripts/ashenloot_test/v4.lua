@@ -71,11 +71,19 @@ local function update(dt)
             check(budgetCounts[4][1]==0 and budgetCounts[4][2]==0 and budgetCounts[4][3]==0 and budgetCounts[4][4]==0,
                 'World Boss budget bought low-tier filler')
             check(budgetCounts[4][7]>=150 and budgetCounts[4][7]<=250,'World Boss Mythic roll escaped expected range')
+            local moods={saving=0,steady=0,spree=0};local spent=0;local directorRng=R.rng('reward-director-sequence')
+            for sample=1,1000 do
+                local amount,mood=R.lootDirectorSpend(directorRng,100,60,3,1,15)
+                check(amount>=0 and amount<=100,'Reward director overspent its reserve')
+                moods[mood]=moods[mood]+1;spent=spent+amount
+            end
+            check(moods.saving>100 and moods.steady>100 and moods.spree>50 and spent>5000,
+                string.format('Reward director variation saving=%d steady=%d spree=%d spent=%.1f',moods.saving,moods.steady,moods.spree,spent))
             print(string.format('[AshenLoot V4] budget samples: normal C=%d; champion U+=%d; elite R+=%d; unique E+=%d; boss L=%d Rl=%d M=%d',
                 budgetCounts[0][1],budgetCounts[1][2]+budgetCounts[1][3]+budgetCounts[1][4]+budgetCounts[1][5]+budgetCounts[1][6],
                 budgetCounts[2][3]+budgetCounts[2][4]+budgetCounts[2][5]+budgetCounts[2][6],
                 budgetCounts[3][4]+budgetCounts[3][5]+budgetCounts[3][6],budgetCounts[4][5],budgetCounts[4][6],budgetCounts[4][7]))
-            pass('5,000 bounded loot-budget packages keep ordinary equipment scarce and boss rewards concentrated')
+            pass('bounded loot packages plus frugal, steady and spree director spending preserve paced reward variation')
             local capSpec=R.item('damage-cap',3,6);capSpec.tier=6;capSpec.style=3
             local capId=Records.makeItem(types.Weapon.record('daedric battle axe'),types.Weapon,capSpec)
             ids[#ids+1]=capId

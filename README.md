@@ -1,6 +1,14 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.8 - bounded loot budgets and supply-focused ordinary wildlife.**
+**Current release: 0.10.9 - adaptive reward pacing director.**
+
+## 0.10.9 Adaptive reward pacing
+
+Dreamforged now maintains a saved global reward reserve alongside its encounter-pressure state. Every eligible defeat earns reward credit: ordinary enemies contribute only a trickle, while Champions, Elites, Uniques, and World Bosses contribute progressively more. On a promoted defeat the director may remain frugal, make a steady payout, or spend a large share of its reserve. That payout joins the enemy's personal loot budget, so accumulated effort can become a quality spike without bypassing rank floors or the six-item ceiling.
+
+Promoted encounters that only meet their expected quality raise hidden reward hunger. Above-expected gear lowers it, and a Mythic lowers it sharply. Hunger increases the likelihood of a later payout or spending spree; it never directly guarantees a named item. Credit is earned and spent when enemies die and loot is generated, so leaving items behind, reloading, or farming harmless targets does not create a collection-based exploit.
+
+The Loot settings expose an enable toggle, generosity multiplier, maximum reserve, and base spree chance. The default is intended as a humane single-player pace: no daily hooks, paid scarcity, timed obligations, or visible near-miss manipulation.
 
 ## 0.10.8 Loot budgets
 
@@ -132,7 +140,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.8"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.9"
 content=AshenLoot.omwscripts
 ```
 

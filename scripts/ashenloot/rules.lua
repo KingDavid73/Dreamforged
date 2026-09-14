@@ -310,6 +310,24 @@ function M.lootBudgetPlan(random,rank,budget,mythicPercent)
     end
     return tiers,remaining
 end
+-- Decide how much saved reward credit joins this promoted enemy's personal
+-- budget. Hunger makes long dry stretches less likely, but never guarantees a
+-- named item. A spree releases much of the reserve; a frugal result saves it.
+function M.lootDirectorSpend(random,bank,hunger,rank,strength,spreePercent)
+    bank=math.max(0,tonumber(bank) or 0);hunger=math.max(0,math.min(100,tonumber(hunger) or 0))
+    rank=math.max(0,math.min(4,math.floor(tonumber(rank) or 0)))
+    strength=math.max(0.1,math.min(3,tonumber(strength) or 1))
+    if rank<=0 or bank<1 then return 0,'saving' end
+    local releaseChance=math.min(92,18+rank*11+hunger*0.45)
+    if random(100)>releaseChance then return 0,'saving' end
+    local spreeChance=math.min(90,(tonumber(spreePercent) or 15)+hunger*0.35)
+    if random(100)<=spreeChance then
+        local fraction=0.45+random(41)/100
+        return math.min(bank,math.max(1,bank*fraction*strength)),'spree'
+    end
+    local allowance=(2+rank*3+random(5+rank*3))*strength
+    return math.min(bank,allowance),'steady'
+end
 M.prefixes = {
     { name = 'Dagonfire', defensiveName = 'Fireshrouded', effect = 'firedamage', guard = 'fireshield', duration = 2 },
     { name = 'Rimefang', defensiveName = 'Frostshrouded', effect = 'frostdamage', guard = 'frostshield', duration = 2 },
