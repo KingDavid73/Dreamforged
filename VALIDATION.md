@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.12 reliable all-settings reset (2026-09-13)
+
+- Verified the shorter **Reset everything** label is fully visible in the native settings renderer.
+- Verified the deferred reset restores a changed setting, leaves other mods' groups untouched, and emits the normal Dreamforged confirmation event.
+- Re-ran the complete OpenMW integration and save/reload suite with no Dreamforged Lua errors.
+
 ## 0.10.11 stable settings reset layout (2026-09-13)
 
 - Verified the new Dreamforged-wide reset group registers before General and compatibility in the OpenMW 0.51 settings page.

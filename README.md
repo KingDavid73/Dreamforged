@@ -1,11 +1,11 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.11 - stable settings reset layout.**
+**Current release: 0.10.12 - reliable all-settings reset.**
 
-## 0.10.11 Settings reset layout
+## 0.10.12 Settings reset
 
 - Creature-den particle overlays now use a dedicated removable VFX identity and disappear as soon as the Kwama Queen spawner dies.
-- **Reset all Dreamforged settings to defaults** now lives in a dedicated top section above General and compatibility. The reset is deferred by one update tick so OpenMW can rebuild its native settings controls cleanly; section reset buttons no longer compete with a synchronous bulk write.
+- **Reset everything** now lives in a dedicated top section above General and compatibility. The reset is deferred by one update tick, touches only registered Dreamforged settings, and posts a confirmation message so OpenMW can rebuild its native controls cleanly.
 
 ## 0.10.9 Adaptive reward pacing
 
@@ -145,7 +145,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.11"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.12"
 content=AshenLoot.omwscripts
 ```
 

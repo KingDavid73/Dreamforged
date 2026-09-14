@@ -1,5 +1,11 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.12 - reliable all-settings reset
+
+- Shortened the global action label to **Reset everything** so it remains fully visible in the native settings layout.
+- Added a player-facing confirmation message after the deferred reset completes.
+- Kept the reset scoped to registered Dreamforged groups and excluded internal/legacy keys and other mods' settings.
+
 ## 0.10.11 - stable settings reset layout
 
 - Moved the all-settings reset into a dedicated top-of-page Dreamforged-wide section, above the General section's native Reset button.

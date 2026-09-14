@@ -1,6 +1,10 @@
-# Morrowind: Dreamforged handoff — 0.10.11 installed
+# Morrowind: Dreamforged handoff — 0.10.12 installed
 
-**Current installed release: 0.10.11.**
+**Current installed release: 0.10.12.**
+
+0.10.12 shortens the top-level action to **Reset everything** and posts a
+confirmation message after the deferred reset completes. The reset remains
+scoped to registered Dreamforged groups only.
 
 0.10.11 places the all-settings reset in its own top-of-page settings
 section, above General and compatibility. Its bulk global writes are deferred

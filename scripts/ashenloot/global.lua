@@ -1134,6 +1134,11 @@ return {
                             end
                         end
                     end
+                    local player = world.players[1]
+                    if player and player:isValid() then
+                        player:sendEvent('AshenLoot_ForgeResult',
+                            {message='Dreamforged settings restored to defaults.'})
+                    end
                 end)
                 if not okReset then print('[AshenLoot] ERROR resetting settings: '..tostring(errReset)) end
             end
