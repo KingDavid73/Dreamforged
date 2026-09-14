@@ -1,6 +1,13 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.15 - persistent outdoor pressure.**
+**Current release: 0.10.16 - paced pressure and time-to-kill balance.**
+
+## 0.10.16 Paced outdoor director and DPS-aware promotion durability
+
+- Outdoor exploration now follows a small Left 4 Dead-inspired cadence: pressure builds during travel and ordinary fights, a successful group enters a short **Peak**, and the last generated enemy in that group opens a 30–45 second **Relax** window. Pressure and the World Boss arc remain saved underneath the lull; only a World Boss victory or settlement reset clears them.
+- Creature dens use the same short peak/relax pacing when destroyed, without erasing the wilderness appetite.
+- Promoted enemy health now uses a conservative time-to-kill target: roughly 6 seconds for Champions, 11 for Elites, 22 for Uniques, and 90 for World Bosses. The target is based on the player's strongest usable weapon or damaging spell, with a 1.25–2 second Morrowind attack/cast cadence and a modest hit/fatigue allowance. Ordinary wildlife is unchanged, so fodder remains quick to dispatch.
+- The player's best equipable gear still contributes to encounter level and promoted durability; the DPS estimate is cached briefly and includes weapon enchantment/proc damage plus known damaging spells, including cast-on-use staves and wands.
 
 ## 0.10.15 Persistent outdoor pressure
 
@@ -164,7 +171,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.15"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.16"
 content=AshenLoot.omwscripts
 ```
 

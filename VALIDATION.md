@@ -1,5 +1,17 @@
 ﻿# Ashen Loot validation
 
+## 0.10.16 paced pressure and DPS-aware promotion durability (2026-09-14)
+
+- Re-ran both isolated OpenMW 0.51 profiles after the director state-machine
+  and DPS estimator changes; settings, world placement, navmesh, promotion,
+  loot, dungeon rerun, scavenging, and save/reload checks passed.
+- Verified ordinary and non-boss victories continue building pressure, while
+  World Boss victories still clear the arc and grant recovery.
+- Verified the DPS estimator includes a strongest usable weapon or damaging
+  known spell without changing the quick native time-to-kill of unpromoted
+  wildlife; promoted health uses the documented Champion/Elite/Unique/World
+  Boss target bands.
+
 ## 0.10.15 persistent outdoor pressure (2026-09-14)
 
 - Verified ordinary wilderness victories increase encounter pressure and World Boss progress.

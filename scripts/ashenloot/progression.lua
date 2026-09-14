@@ -135,12 +135,83 @@ local function prestigeScale(effectiveLevel)
     -- 5x baseline health/strength before promotion and gear-pressure bonuses.
     return math.max(1,effectiveLevel/100)
 end
-local function gearHealthScale(effectiveLevel,playerLevel)
+local directDamageEffects={damagehealth=true,firedamage=true,frostdamage=true,shockdamage=true,
+    poison=true,damagefatigue=true}
+local function effectDamage(effect)
+    if not effect or not directDamageEffects[effect.id] then return 0 end
+    local low=tonumber(effect.magnitudeMin) or 0
+    local high=tonumber(effect.magnitudeMax) or low
+    local amount=math.max(0,(low+high)*0.5)
+    -- Damage-over-time effects contribute their first tick to the reliable
+    -- estimate; counting every tick here would make a proc look like a full
+    -- sustained rotation and overinflate enemy health.
+    if (tonumber(effect.duration) or 0)>1 then amount=amount*1.15 end
+    return amount
+end
+local function enchantmentDamage(enchantId)
+    if not enchantId or not core.magic.enchantments.records then return 0 end
+    local enchant=core.magic.enchantments.records[enchantId]
+    if not enchant then return 0 end
+    local total=0
+    for _,effect in pairs(enchant.effects or {}) do total=total+effectDamage(effect) end
+    return total
+end
+local function playerCombatDps()
+    local player=world.players[1]
+    local director=state and state.director
+    local now=core.getSimulationTime()
+    if director and director.playerDpsAt and now-director.playerDpsAt<2 then
+        return director.playerDps or 1
+    end
+    if not player or not player:isValid() then return 1 end
+    local bestWeapon,bestSpell=0,0
+    local seen={}
+    local function considerWeapon(item)
+        if not item or seen[item.id] or not types.Weapon.objectIsInstance(item) then return end
+        seen[item.id]=true
+        local record=types.Weapon.record(item)
+        if not record or record.type>types.Weapon.TYPE.MarksmanCrossbow then return end
+        local damage=math.max(record.chopMaxDamage or 0,record.slashMaxDamage or 0,record.thrustMaxDamage or 0)
+        local speed=math.max(0.5,tonumber(record.speed) or 1)
+        -- A Morrowind attack is not a one-second MMO swing. This cadence is
+        -- intentionally conservative and includes a modest miss/fatigue
+        -- allowance, so a tooltip's maximum hit is not treated as sustained
+        -- DPS. It also covers staves/wands and their cast-on-use enchants.
+        local interval=math.max(1.25,2.0/speed)
+        local dps=damage*0.72/interval+enchantmentDamage(record.enchant)*0.72/interval
+        bestWeapon=math.max(bestWeapon,dps)
+    end
+    local inventory=types.Actor.inventory(player)
+    if inventory then for _,item in ipairs(inventory:getAll()) do considerWeapon(item) end end
+    for _,item in pairs(types.Actor.getEquipment(player)) do considerWeapon(item) end
+    local known=types.Actor.spells(player)
+    for _,spell in pairs(core.magic.spells.records or {}) do
+        if spell and spell.id and known[spell.id] then
+            local damage=0
+            for _,effect in pairs(spell.effects or {}) do damage=damage+effectDamage(effect) end
+            if damage>0 then
+                -- Spells need a little more time than a physical swing for
+                -- selection, animation, and failed casts to settle.
+                bestSpell=math.max(bestSpell,damage*0.65/2.5)
+            end
+        end
+    end
+    local result=math.max(1,bestWeapon,bestSpell)
+    if director then director.playerDps=result;director.playerDpsAt=now end
+    return result
+end
+local function gearHealthScale(effectiveLevel,playerLevel,dps)
     -- Gear already raises the target level. Add a durability response as well,
     -- because Morrowind weapon damage can outpace ordinary level-based health.
     -- Damage is deliberately untouched: this is anti-trivialization, not a
-    -- blanket increase to enemy burst damage.
-    return math.min(3,1+math.max(0,effectiveLevel-playerLevel)*0.10)
+    -- blanket increase to enemy burst damage. DPS is only a gentle nudge;
+    -- promoted actors receive the stronger time-to-kill pass in global.lua.
+    local levelScale=math.min(3,1+math.max(0,effectiveLevel-playerLevel)*0.10)
+    if not dps then return levelScale end
+    local expected=math.max(3,1.7+playerLevel*1.15)
+    local ratio=math.max(0.5,math.min(5,dps/expected))
+    local combatScale=math.max(0.9,math.min(1.25,0.95+(ratio-1)*0.08))
+    return math.min(3,levelScale*combatScale)
 end
 local function cellKey(cell) return cell.id end
 local function dungeon(cell)
@@ -380,6 +451,9 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor=state.director.outdoor or {pressure=0,bossProgress=0,nextRoll=0}
     state.director.outdoor.pressure=state.director.outdoor.pressure or 0
     state.director.outdoor.bossProgress=state.director.outdoor.bossProgress or 0
+    state.director.outdoor.phase=state.director.outdoor.phase or 'build'
+    state.director.outdoor.peakUntil=state.director.outdoor.peakUntil or 0
+    state.director.outdoor.relaxUntil=state.director.outdoor.relaxUntil or 0
     state.director.dens=state.director.dens or {}
     state.director.directorCosts=state.director.directorCosts or {}
     state.director.spawnLevels=state.director.spawnLevels or {}
@@ -401,6 +475,24 @@ local function exteriorTown(cell)
 end
 local function directorDensity()
     return 1.5*C.directorIntensity
+end
+
+local function enterOutdoorRelax(outdoor,now,intensity,seconds)
+    outdoor.phase='relax'
+    outdoor.relaxUntil=math.max(outdoor.relaxUntil or 0,now+(seconds or math.max(30,45/intensity)))
+    outdoor.peakUntil=0
+end
+local function enterOutdoorPeak(outdoor,now,intensity)
+    outdoor.phase='peak'
+    outdoor.peakUntil=math.max(outdoor.peakUntil or 0,now+math.max(5,8/intensity))
+    outdoor.relaxUntil=0
+end
+local function liveOutdoorDirectorGroup(cell,except)
+    for _,other in ipairs(world.activeActors) do
+        if other~=except and other.cell==cell and valid(other)
+            and state.director.generated[other.id]=='director' then return true end
+    end
+    return false
 end
 
 -- Wilderness combat is feedback for the director. Ordinary kills and lower
@@ -426,6 +518,7 @@ local function applyOutdoorVictory(outdoor,elite,now,intensity)
     if elite.worldBoss then
         outdoor.bossProgress=0
         outdoor.lastBossAt=now
+        outdoor.phase='build';outdoor.peakUntil=0;outdoor.relaxUntil=0
     else
         outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+15*intensity)
     end
@@ -433,8 +526,16 @@ end
 function M.victoryRespite(actor,elite)
     if not actor or not actor.cell or not actor.cell.isExterior then return end
     local outdoor=state.director.outdoor
+    local now=core.getSimulationTime()
     outdoor.safeCell=actor.cell.id -- retained for old-save diagnostics
-    applyOutdoorVictory(outdoor,elite,core.getSimulationTime(),C.directorIntensity)
+    applyOutdoorVictory(outdoor,elite,now,C.directorIntensity)
+    -- Native kills continue to build pressure. A generated outdoor group gets
+    -- one L4D-style relax window only after its last member dies; this avoids
+    -- pausing the director after every rat while still giving a hard-fought
+    -- encounter room to breathe.
+    if state.director.generated[actor.id]=='director' and not liveOutdoorDirectorGroup(actor.cell,actor) then
+        enterOutdoorRelax(outdoor,now,C.directorIntensity)
+    end
 end
 function M.bossWave(actor)
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
@@ -780,7 +881,8 @@ function M.prepare(actor, inCombat)
             return
         end
     end
-    local gearDurability=gearHealthScale(effectiveLevel,playerLevel)
+    local combatDps=playerCombatDps()
+    local gearDurability=gearHealthScale(effectiveLevel,playerLevel,combatDps)
     local prestige=prestigeScale(effectiveLevel)
     actor:sendEvent('AshenLoot_Scale',{level=target,nativeLevel=native,health=C.enemyHealth*prestige*(guard and C.guardPower or 1),
         damage=C.enemyDamage*prestige*(guard and C.guardPower or 1),progression=C.progression,
@@ -788,9 +890,10 @@ function M.prepare(actor, inCombat)
     if guard then M.loadout(actor,target+6,2,{guard=true});return end
     if boss or cellState.boss==actor.id then
         promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,
-            worldBossChance=outdoorBossChance,gearPressure=gearDurability})
+            worldBossChance=outdoorBossChance,gearPressure=gearDurability,combatDps=combatDps})
     else promote({actor=actor,force=forceOutdoorBoss,worldBoss=forceOutdoorBoss,
-        allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,gearPressure=gearDurability}) end
+        allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,gearPressure=gearDurability,
+        combatDps=combatDps}) end
     local elite=state.elites[actor.id]
     if elite and elite.worldBoss and cell.isExterior then
         d.outdoor.bossProgress=0
@@ -1399,6 +1502,7 @@ local function updateDens(player)
             denState.dead=true
             local outdoor=state.director.outdoor
             outdoor.safeCell=den.cell.id;outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+30)
+            enterOutdoorRelax(outdoor,now,C.directorIntensity,30)
             -- Destroying a den grants a short tactical lull, but it does not
             -- erase the wilderness appetite. Only a World Boss victory or a
             -- deliberate settlement reset clears the outdoor pressure arc.
@@ -1450,10 +1554,18 @@ local function updateOutdoorDirector(player)
         -- both the short-term encounter pressure and the long boss arc; merely
         -- winning a wilderness group never does.
         outdoor.pressure=0;outdoor.bossProgress=0;outdoor.nextRoll=now+interval
+        outdoor.phase='build';outdoor.peakUntil=0;outdoor.relaxUntil=0
         return
     end
     -- Recovery follows the player across arbitrary exterior-cell borders.
     if now<(outdoor.safeUntil or 0) then return end
+    if outdoor.phase=='peak' then
+        if now<(outdoor.peakUntil or 0) then return end
+        outdoor.phase='build';outdoor.peakUntil=0
+    elseif outdoor.phase=='relax' then
+        if now<(outdoor.relaxUntil or 0) then return end
+        outdoor.phase='build';outdoor.relaxUntil=0
+    end
     if now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
     outdoor.nextRoll=now+interval
     outdoor.distance=0
@@ -1502,11 +1614,13 @@ local function updateOutdoorDirector(player)
             director=true,den=true,family=family,tier=tier,cycles=cycleLow+rng(cycleHigh-cycleLow+1)-1,cost=2}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=1,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+        enterOutdoorPeak(outdoor,now,intensity)
     else
         pending[token]={actor=player,level=target,count=count,cell=cell.id,
             created=now,director=true,cost=cost}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+        enterOutdoorPeak(outdoor,now,intensity)
     end
 end
 function M.update(dt)
@@ -1566,6 +1680,7 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     randomLooseBase=randomLooseBase,looseDungeon=looseDungeon,safeRecord=safeRecord,
     ordinaryCreatureRecord=ordinaryCreatureRecord,populationAnchor=populationAnchor,
     safeInventoryRecord=safeInventoryRecord,
-    gearLevel=gearLevel,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
-    additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory}
+    gearLevel=gearLevel,combatDps=playerCombatDps,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
+    additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory,
+    enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax}
 return M

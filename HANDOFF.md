@@ -1,6 +1,14 @@
-# Morrowind: Dreamforged handoff — 0.10.15 installed
+# Morrowind: Dreamforged handoff — 0.10.16 installed
 
-**Current installed release: 0.10.15.**
+**Current installed release: 0.10.16.**
+
+0.10.16 adds a saved outdoor Build/Peak/Relax cadence. Travel and ordinary
+victories continue building pressure; a director group briefly enters Peak and
+the last generated member opens a 30–45 second Relax lull without deleting the
+pressure or World Boss arc. Promoted enemy health now targets roughly 6/11/22/90
+seconds for Champion/Elite/Unique/World Boss tiers using a cached estimate of
+the player's strongest weapon or damaging spell at a conservative Morrowind
+attack/cast cadence. Ordinary wildlife remains quick to dispatch.
 
 0.10.15 makes outdoor pressure a persistent action arc. Ordinary and all
 non-World-Boss promoted victories add pressure and boss progress; a successful

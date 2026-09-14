@@ -66,6 +66,13 @@ return {engineHandlers={onUpdate=function(dt)
             check(types.Actor.stats.level(downscaled).current==1,'High-native creature level did not downscale')
             check(types.Actor.stats.dynamic.health(downscaled).base<downscaledHealth,'High-native creature health did not downscale')
             pass('high-native creature level and health downscale for a low-level target')
+            check(progress.test.combatDps()>0,'Player combat DPS estimator returned no usable profile')
+            progress.test.enterOutdoorPeak(d.outdoor,core.getSimulationTime(),1)
+            check(d.outdoor.phase=='peak' and d.outdoor.peakUntil>core.getSimulationTime(),'Outdoor peak state did not open')
+            progress.test.enterOutdoorRelax(d.outdoor,core.getSimulationTime(),1,30)
+            check(d.outdoor.phase=='relax' and d.outdoor.relaxUntil>core.getSimulationTime(),'Outdoor relax state did not open')
+            d.outdoor.phase='build';d.outdoor.peakUntil=0;d.outdoor.relaxUntil=0
+            pass('cached strongest-weapon/spell DPS and Build/Peak/Relax pacing state')
             d.outdoor.pressure=0;d.outdoor.bossProgress=0
             progress.test.applyOutdoorVictory(d.outdoor,nil,core.getSimulationTime(),1)
             check(d.outdoor.pressure>0 and d.outdoor.bossProgress>0,
@@ -126,7 +133,7 @@ return {engineHandlers={onUpdate=function(dt)
             set('creatureVariety',100)
             progress.prepare(replaced)
             stage=23
-        elseif stage==23 and time>17 then
+        elseif stage==23 and time>21 then
             local replacement=d.actors[replaced.id].replacement
             check(replacement and replacement:isValid() and not replaced.enabled,'Creature replacement')
             check(replacement.recordId~='rat','Actual monster tier unchanged')

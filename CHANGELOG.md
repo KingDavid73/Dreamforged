@@ -1,5 +1,20 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.16 - paced pressure and DPS-aware promotion durability
+
+- Added a saved Build/Peak/Relax outdoor cadence. Travel and ordinary kills keep
+  building pressure; a successful director group gets a short peak lockout and
+  the last generated member opens a 30–45 second lull without clearing pressure
+  or World Boss progress. Settlements and World Boss victories remain full
+  resets.
+- Added a brief den-relax state when a creature den is destroyed.
+- Promoted enemy health now targets roughly 6/11/22/90 seconds for Champion,
+  Elite, Unique, and World Boss tiers using the player's strongest weapon or
+  damaging spell. Weapon enchantment damage, staves/wands, and known damaging
+  spells are included with a conservative 1.25–2 second Morrowind cadence.
+- Ordinary unpromoted creatures retain their quick native time-to-kill profile;
+  DPS-aware durability is applied to promoted encounters only.
+
 ## 0.10.15 - persistent outdoor pressure
 
 - Kept outdoor encounter pressure and World Boss progress across all non-boss victories, including Unique/rank-3 promotions.

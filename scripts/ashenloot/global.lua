@@ -316,6 +316,20 @@ local function prepareAbility(elite, actor)
     if not state.abilities[spellKey] then state.abilities[spellKey] = Records.ability(elite) end
     elite.spellId = state.abilities[spellKey]
 end
+local function applyCombatDurability(elite,actor,dps)
+    if not dps or dps<=0 then return end
+    local hp=types.Actor.stats.dynamic.health(actor).base
+    if not hp or hp<=0 then return end
+    -- First-person Morrowind needs ordinary promoted enemies to fall quickly,
+    -- while a World Boss should anchor a real climax. These targets are
+    -- deliberately expressed in seconds of the player's strongest reliable
+    -- damage profile rather than raw level or tooltip maximum damage.
+    local seconds=elite.worldBoss and 90 or ({6,11,22})[elite.rank or 1]
+    local desired=math.max(hp*elite.healthScale,dps*seconds)
+    local targetScale=desired/hp
+    local ceiling=elite.worldBoss and 1000 or ({4,7,12})[elite.rank or 1]
+    elite.healthScale=math.max(elite.healthScale,math.min(ceiling,targetScale))
+end
 local function getPool()
     if pool then return pool end
     pool = {}
@@ -800,6 +814,7 @@ local function encounter(data)
                 elite.name=rec.name .. ' ' .. R.elites[elite.modifiers[1]].epithet
                 elite.healthScale=({1.2,1.5,1.9})[elite.rank]
             end
+            applyCombatDurability(elite,actor,data.combatDps)
             if elite.worldBoss or elite.rank==3 then
                 elite.family=elite.family or family(rec)
                 elite.biography=biography(actor,elite,rec)
