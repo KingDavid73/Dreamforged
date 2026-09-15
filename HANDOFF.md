@@ -1,6 +1,14 @@
-# Morrowind: Dreamforged handoff — 0.10.19 installed
+# Morrowind: Dreamforged handoff — 0.10.20 installed
 
-**Current installed release: 0.10.19.**
+**Current installed release: 0.10.20.**
+
+0.10.20 replaces the old open-ended promoted-enemy DPS timer with bounded
+charged-hit durability. Champions, Elites, Uniques, and World Bosses target
+roughly 3, 5, 8, and 18 reliable hits respectively, with safety ceilings. The
+player profile uses the strongest high-end weapon or damaging spell at a
+conservative two-second cadence; only one direct-damage weapon proc is counted.
+Pressure no longer multiplies enemy HP. A low-weight saved kill-time signal
+gently corrects future profiles after unusually long or short fights.
 
 0.10.19 makes outdoor World Bosses a deliberate climax. Player-centered
 director placements use a configurable minimum preparation distance (default

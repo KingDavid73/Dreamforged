@@ -1,6 +1,20 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.19 - World Boss preparation and outdoor climax lockout.**
+**Current release: 0.10.20 - Bounded combat durability and adaptive pacing.**
+
+## 0.10.20 Bounded combat durability and adaptive pacing
+
+- Promoted enemy health now uses a bounded charged-hit target instead of an
+  open-ended sustained-DPS timer: roughly 3/5/8 hits for Champion/Elite/Unique
+  enemies and 18 hits for a World Boss, with hard ceilings for safety.
+- Player damage is estimated from the strongest high-end weapon or damaging
+  spell at a conservative two-second cadence. Only the strongest single weapon
+  proc is counted, so several on-hit effects cannot multiply durability.
+- Pressure and gear pressure no longer multiply enemy HP. Pressure continues to
+  control encounter quantity, promotion, and loot pacing; level/gear bands still
+  guide which enemies appear and high-level progression remains uncapped.
+- A slow, saved kill-time feedback signal gently corrects future estimates after
+  unusually long or short fights without recalculating difficulty every frame.
 
 ## 0.10.19 World Boss preparation and outdoor climax lockout
 
@@ -211,7 +225,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.19"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.20"
 content=AshenLoot.omwscripts
 ```
 

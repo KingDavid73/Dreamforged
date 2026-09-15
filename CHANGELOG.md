@@ -1,5 +1,20 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.20 - bounded combat durability and adaptive pacing
+
+- Replaced the promoted-enemy sustained-DPS durability timer with bounded
+  charged-hit targets: approximately 3/5/8 hits for Champion/Elite/Unique and
+  18 hits for World Bosses, with rank-specific safety ceilings.
+- Player combat profiling now uses the strongest high-end weapon or damaging
+  spell at a two-second cadence and a modest reliability allowance. Enchanted
+  weapons contribute only their strongest direct-damage proc instead of summing
+  every effect; fatigue damage is not treated as lethal DPS.
+- Removed gear-pressure multiplication from enemy HP. Pressure remains an
+  encounter/loot pacing signal, while level/gear progression and the uncapped
+  level curve continue to determine enemy power.
+- Added slow persisted kill-time feedback to nudge later durability estimates;
+  one outlier cannot thrash the director.
+
 ## 0.10.19 - World Boss preparation and outdoor climax lockout
 
 - Added configurable World Boss preparation and approach distances. Outdoor

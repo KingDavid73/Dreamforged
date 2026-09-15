@@ -1,5 +1,13 @@
 ﻿# Ashen Loot validation
 
+## 0.10.20 bounded combat durability and adaptive pacing (2026-09-15)
+
+- Isolated v4 and v4-world profiles pass after the combat-profile rewrite.
+- Promoted durability uses fixed charged-hit targets and rank ceilings; gear
+  pressure is no longer applied as an HP multiplier.
+- Weapon proc profiling uses the strongest single direct-damage effect, with a
+  two-second cadence, and persists a low-weight kill-time correction signal.
+
 ## 0.10.19 World Boss preparation and climax lockout (2026-09-14)
 
 - Source and isolated-profile checks cover the two new boss settings, their

@@ -382,7 +382,7 @@ local function update(dt)
                 check(types.Actor.spells(rat[n])[e.spellId],'Promotion ability')
             end
             local wb=state.elites[rat[4].id]
-            check(wb.worldBoss and #wb.modifiers==6 and wb.healthScale==13.5,'World boss gear-pressure profile')
+            check(wb.worldBoss and #wb.modifiers==6 and wb.healthScale==4.5,'World boss bounded base durability profile')
             check(types.Actor.spells(rat[4])[wb.spellId],'World boss ability')
             I.AshenLoot.test.mythicImpact(mythicItems.wild_friend,p,rat[1])
             check(next(state.mythicSummons),'Friendly random-creature mythic staff')

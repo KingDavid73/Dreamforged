@@ -10,7 +10,7 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 31, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 32, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -329,18 +329,23 @@ local function prepareAbility(elite, actor)
     if not state.abilities[spellKey] then state.abilities[spellKey] = Records.ability(elite) end
     elite.spellId = state.abilities[spellKey]
 end
-local function applyCombatDurability(elite,actor,dps)
+local function applyCombatDurability(elite,actor,dps,band)
     if not dps or dps<=0 then return end
     local hp=types.Actor.stats.dynamic.health(actor).base
     if not hp or hp<=0 then return end
     -- First-person Morrowind needs ordinary promoted enemies to fall quickly,
-    -- while a World Boss should anchor a real climax. These targets are
-    -- deliberately expressed in seconds of the player's strongest reliable
-    -- damage profile rather than raw level or tooltip maximum damage.
-    local seconds=elite.worldBoss and 90 or ({6,11,22})[elite.rank or 1]
-    local desired=math.max(hp*elite.healthScale,dps*seconds)
+    -- while a World Boss should anchor a real climax. Use a bounded number of
+    -- charged hits (about two seconds each), not a long sustained-DPS timer.
+    -- This keeps movement, misses, healing, and multiple attackers from being
+    -- converted into runaway HP. Pressure changes encounter quantity/tier,
+    -- never this durability calculation.
+    local hits=elite.worldBoss and 18 or ({3,5,8})[elite.rank or 1] or 3
+    local margin=1.15+math.min(0.10,math.max(0,(tonumber(band) or 1)-1)*0.01)
+    local desired=math.max(hp*elite.healthScale,dps*2*hits*margin)
     local targetScale=desired/hp
-    local ceiling=elite.worldBoss and 1000 or ({4,7,12})[elite.rank or 1]
+    local ceiling=elite.worldBoss and 30 or ({4,6,9})[elite.rank or 1] or 4
+    elite.targetHits=hits
+    elite.combatBand=tonumber(band) or 1
     elite.healthScale=math.max(elite.healthScale,math.min(ceiling,targetScale))
 end
 local function getPool()
@@ -827,17 +832,11 @@ local function encounter(data)
                 elite.name=rec.name .. ' ' .. R.elites[elite.modifiers[1]].epithet
                 elite.healthScale=({1.2,1.5,1.9})[elite.rank]
             end
-            applyCombatDurability(elite,actor,data.combatDps)
+            applyCombatDurability(elite,actor,data.combatDps,data.combatBand)
             if elite.worldBoss or elite.rank==3 then
                 elite.family=elite.family or family(rec)
                 elite.biography=biography(actor,elite,rec)
             end
-            -- Put almost all anti-overgear durability on promoted enemies.
-            -- Champions absorb 25% of the extra pressure, Elites 50%, Uniques
-            -- 75%, and world bosses the full amount.
-            local pressure=math.max(1,tonumber(data.gearPressure) or 1)
-            local weight=elite.worldBoss and 1 or ({0.25,0.5,0.75})[elite.rank]
-            elite.healthScale=elite.healthScale*(1+(pressure-1)*weight)
             elite.itemLevel=Progress.actorLevel(actor)
             elite.effectScale=math.min(elite.worldBoss and 2.5 or 2,1+math.floor(elite.itemLevel/10)*0.15)
             state.elites[key] = elite
@@ -939,6 +938,7 @@ local function death(actor)
     state.rewards[actor.id] = true
     Progress.supplies(actor)
     local elite = state.elites[actor.id]
+    Progress.recordKillTime(actor,elite)
     Progress.victoryRespite(actor,elite)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
@@ -1283,7 +1283,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 31
+            state.version = 32
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },

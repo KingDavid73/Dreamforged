@@ -132,19 +132,23 @@ end
 local function prestigeScale(effectiveLevel)
     -- Preserve the established curve through level 100, then keep uncapped
     -- leveling meaningful as a direct multiplier. Level 500 therefore means
-    -- 5x baseline health/strength before promotion and gear-pressure bonuses.
+    -- 5x baseline health/strength before promotion.
     return math.max(1,effectiveLevel/100)
 end
 local directDamageEffects={damagehealth=true,firedamage=true,frostdamage=true,shockdamage=true,
-    poison=true,damagefatigue=true}
+    poison=true}
 local function effectDamage(effect)
     if not effect or not directDamageEffects[effect.id] then return 0 end
     local low=tonumber(effect.magnitudeMin) or 0
     local high=tonumber(effect.magnitudeMax) or low
-    local amount=math.max(0,(low+high)*0.5)
-    -- Damage-over-time effects contribute their first tick to the reliable
-    -- estimate; counting every tick here would make a proc look like a full
-    -- sustained rotation and overinflate enemy health.
+    -- Use the charged/high end of a single effect, but never sum every proc on
+    -- an item. Morrowind's damage swing is discrete; treating a whole list of
+    -- on-hit effects as simultaneous sustained DPS made promoted health grow
+    -- far beyond what first-person combat can reasonably absorb.
+    local amount=math.max(0,high)
+    -- Damage-over-time effects contribute a small first-tick allowance only;
+    -- later ticks depend on the target staying in range and are not used to
+    -- inflate an encounter's durability target.
     if (tonumber(effect.duration) or 0)>1 then amount=amount*1.15 end
     return amount
 end
@@ -152,18 +156,21 @@ local function enchantmentDamage(enchantId)
     if not enchantId or not core.magic.enchantments.records then return 0 end
     local enchant=core.magic.enchantments.records[enchantId]
     if not enchant then return 0 end
-    local total=0
-    for _,effect in pairs(enchant.effects or {}) do total=total+effectDamage(effect) end
-    return total
+    local best=0
+    for _,effect in pairs(enchant.effects or {}) do best=math.max(best,effectDamage(effect)) end
+    return best
 end
-local function playerCombatDps()
+local function playerDamageProfile()
     local player=world.players[1]
     local director=state and state.director
     local now=core.getSimulationTime()
-    if director and director.playerDpsAt and now-director.playerDpsAt<2 then
-        return director.playerDps or 1
+    if director and director.playerDamageProfileAt and now-director.playerDamageProfileAt<10
+        and director.playerDamageProfile then
+        return director.playerDamageProfile
     end
-    if not player or not player:isValid() then return 1 end
+    if not player or not player:isValid() then
+        return {hit=1,rawHit=1,bestWeapon=1,bestSpell=0,cadence=2,dps=0.5,score=1,band=1}
+    end
     local bestWeapon,bestSpell=0,0
     local seen={}
     local function considerWeapon(item)
@@ -172,14 +179,9 @@ local function playerCombatDps()
         local record=types.Weapon.record(item)
         if not record or record.type>types.Weapon.TYPE.MarksmanCrossbow then return end
         local damage=math.max(record.chopMaxDamage or 0,record.slashMaxDamage or 0,record.thrustMaxDamage or 0)
-        local speed=math.max(0.5,tonumber(record.speed) or 1)
-        -- A Morrowind attack is not a one-second MMO swing. This cadence is
-        -- intentionally conservative and includes a modest miss/fatigue
-        -- allowance, so a tooltip's maximum hit is not treated as sustained
-        -- DPS. It also covers staves/wands and their cast-on-use enchants.
-        local interval=math.min(2.0,math.max(1.25,2.0/speed))
-        local dps=damage*0.72/interval+enchantmentDamage(record.enchant)*0.72/interval
-        bestWeapon=math.max(bestWeapon,dps)
+        -- Physical damage plus the strongest single on-hit effect is one
+        -- charged attack. A second proc is not assumed to stack reliably.
+        bestWeapon=math.max(bestWeapon,damage+enchantmentDamage(record.enchant))
     end
     local inventory=types.Actor.inventory(player)
     if inventory then for _,item in ipairs(inventory:getAll()) do considerWeapon(item) end end
@@ -189,23 +191,39 @@ local function playerCombatDps()
         if spell and spell.id and known[spell.id] then
             local damage=0
             for _,effect in pairs(spell.effects or {}) do damage=damage+effectDamage(effect) end
-            if damage>0 then
-                -- Spells need a little more time than a physical swing for
-                -- selection, animation, and failed casts to settle.
-                bestSpell=math.max(bestSpell,damage*0.65/2.0)
-            end
+            if damage>0 then bestSpell=math.max(bestSpell,damage) end
         end
     end
-    local result=math.max(1,bestWeapon,bestSpell)
-    if director then director.playerDps=result;director.playerDpsAt=now end
-    return result
+    local rawHit=math.max(1,bestWeapon,bestSpell)
+    -- One charged attack/cast is modeled as roughly two seconds. A modest
+    -- reliability factor accounts for misses, fatigue, movement, and healing
+    -- without pretending the player stands still and lands every maximum hit.
+    local feedback=director and director.combat and tonumber(director.combat.killFactor) or 1
+    feedback=math.max(0.75,math.min(1.25,feedback))
+    local reliableHit=math.max(1,rawHit*0.75/math.max(0.75,feedback))
+    local effectiveLevel=gearLevel()
+    -- Ten broad bands keep the director stable. Level/gear remains the main
+    -- signal, while an exceptional weapon can lift a low-level character a
+    -- few bands without making every recalculation snowball.
+    local score=math.max(effectiveLevel,math.ceil(rawHit/12))
+    local band=math.max(1,math.min(10,math.ceil(score/5)))
+    local profile={hit=reliableHit,rawHit=rawHit,bestWeapon=bestWeapon,bestSpell=bestSpell,
+        cadence=2,dps=reliableHit/2,score=score,band=band,feedback=feedback}
+    if director then
+        director.playerDamageProfile=profile
+        director.playerDamageProfileAt=now
+        director.playerDps=profile.dps
+        director.playerDpsAt=now
+    end
+    return profile
+end
+local function playerCombatDps()
+    return playerDamageProfile().dps
 end
 local function gearHealthScale(effectiveLevel,playerLevel,dps)
-    -- Gear already raises the target level. Add a durability response as well,
-    -- because Morrowind weapon damage can outpace ordinary level-based health.
-    -- Damage is deliberately untouched: this is anti-trivialization, not a
-    -- blanket increase to enemy burst damage. DPS is only a gentle nudge;
-    -- promoted actors receive the stronger time-to-kill pass in global.lua.
+    -- Legacy score helper retained for saved/test API compatibility. Promoted
+    -- HP no longer consumes this value; the bounded charged-hit profile in
+    -- global.lua is the sole durability response to player damage.
     local levelScale=math.min(3,1+math.max(0,effectiveLevel-playerLevel)*0.10)
     if not dps then return levelScale end
     local expected=math.max(3,1.7+playerLevel*1.15)
@@ -464,12 +482,39 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.dens=state.director.dens or {}
     state.director.directorCosts=state.director.directorCosts or {}
     state.director.spawnLevels=state.director.spawnLevels or {}
+    -- Lightweight, persisted combat telemetry. It is deliberately slow-moving
+    -- so one unusually long fight cannot make the next encounter trivial.
+    state.director.combat=state.director.combat or {kills=0,avgSeconds=0,killFactor=1}
+    state.director.combat.kills=tonumber(state.director.combat.kills) or 0
+    state.director.combat.avgSeconds=tonumber(state.director.combat.avgSeconds) or 0
+    state.director.combat.killFactor=math.max(0.75,math.min(1.25,tonumber(state.director.combat.killFactor) or 1))
     for _,cellState in pairs(state.director.cells) do
         if cellState.additionalCount==nil then setAdditionalCount(cellState,cellState.count or 0) end
         cellState.count=nil
     end
     pending, pools, gear, itemPools, kindPools, lastPlayerCell, considered = {}, nil, nil, nil, nil, nil, {}
     for id,a in pairs(state.director.actors) do if a.pendingReplacement then state.director.actors[id]=nil end end
+end
+
+-- Record the observed time from a fighting preparation request to death. This
+-- is intentionally a gentle correction signal, not a per-frame difficulty
+-- controller: ordinary movement and one-off outliers should not thrash HP.
+function M.recordKillTime(actor,elite)
+    if not actor or not elite or not state or not state.director then return end
+    local actorState=state.director.actors and state.director.actors[actor.id]
+    local started=actorState and actorState.combatAt
+    if not started then return end
+    local elapsed=math.max(0,core.getSimulationTime()-started)
+    local expected=elite.worldBoss and 45 or ({6,12,20})[elite.rank or 1] or 8
+    local ratio=math.max(0.6,math.min(1.8,elapsed/math.max(4,expected)))
+    local combat=state.director.combat
+    combat.kills=(tonumber(combat.kills) or 0)+1
+    combat.avgSeconds=(tonumber(combat.avgSeconds) or 0)==0 and elapsed
+        or combat.avgSeconds*0.9+elapsed*0.1
+    combat.killFactor=math.max(0.75,math.min(1.25,(tonumber(combat.killFactor) or 1)*0.9+ratio*0.1))
+    actorState.combatAt=nil
+    -- Re-evaluate the profile at the next promotion, not every frame.
+    state.director.playerDamageProfileAt=0
 end
 local function exteriorTown(cell)
     if not C.settlementSuppression then return false end
@@ -869,19 +914,30 @@ function M.prepare(actor, inCombat)
     -- 0.7.4 stored generated actors as boolean true. Reconsider active exterior
     -- members once so an existing save can finish an unspent cell budget.
     local legacyExterior=d.generated[actor.id]==true and actor.cell.isExterior
-    if d.actors[actor.id] and not legacyExterior then return end
+    if d.actors[actor.id] and not legacyExterior then
+        if inCombat and not d.actors[actor.id].combatAt then
+            d.actors[actor.id].combatAt=core.getSimulationTime()
+        end
+        return
+    end
     if legacyExterior then d.generated[actor.id]=1;d.actors[actor.id]=nil end
     local rng = R.rng(actor.id..':progression4')
     local native = math.max(1,types.Actor.stats.level(actor).current)
     local guard=C.guardProgression and isGuard(actor)
     local playerLevel=level()
     local effectiveLevel=gearLevel()
+    local combatProfile=playerDamageProfile()
+    -- Native artifacts and exceptional weapons may not be present in the
+    -- generated-item score table. Let the broad damage score lift the target
+    -- band in that case, without bypassing the normal level window.
+    effectiveLevel=math.max(effectiveLevel,combatProfile.score or effectiveLevel)
     local generated = d.generated[actor.id]
     local target=encounterTarget(native,effectiveLevel,rng(5)-3,types.Creature.objectIsInstance(actor),generated~=nil)
     if d.spawnLevels[actor.id] then target=math.max(1,math.floor(d.spawnLevels[actor.id]+0.5)) end
     if guard then target=math.max(target,math.floor(effectiveLevel*0.8)+4) end
     target = math.max(1,target)
-    d.actors[actor.id]={level=target,cell=actor.cell.id}
+    d.actors[actor.id]={level=target,cell=actor.cell.id,
+        combatAt=inCombat and core.getSimulationTime() or nil}
     local cell = actor.cell
     local ck = cellKey(cell)
     d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
@@ -913,8 +969,8 @@ function M.prepare(actor, inCombat)
             return
         end
     end
-    local combatDps=playerCombatDps()
-    local gearDurability=gearHealthScale(effectiveLevel,playerLevel,combatDps)
+    local combatDps=combatProfile.dps
+    local combatBand=combatProfile.band
     local prestige=prestigeScale(effectiveLevel)
     actor:sendEvent('AshenLoot_Scale',{level=target,nativeLevel=native,health=C.enemyHealth*prestige*(guard and C.guardPower or 1),
         damage=C.enemyDamage*prestige*(guard and C.guardPower or 1),progression=C.progression,
@@ -922,10 +978,10 @@ function M.prepare(actor, inCombat)
     if guard then M.loadout(actor,target+6,2,{guard=true});return end
     if boss or cellState.boss==actor.id then
         promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,
-            worldBossChance=outdoorBossChance,gearPressure=gearDurability,combatDps=combatDps})
+            worldBossChance=outdoorBossChance,combatDps=combatDps,combatBand=combatBand})
     else promote({actor=actor,force=forceOutdoorBoss,worldBoss=forceOutdoorBoss,
-        allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,gearPressure=gearDurability,
-        combatDps=combatDps}) end
+        allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,combatDps=combatDps,
+        combatBand=combatBand}) end
     local elite=state.elites[actor.id]
     if elite and elite.worldBoss and cell.isExterior then
         -- Promotion is the moment the World Boss becomes real. Empty the
@@ -1779,7 +1835,8 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     randomLooseBase=randomLooseBase,looseDungeon=looseDungeon,safeRecord=safeRecord,
     ordinaryCreatureRecord=ordinaryCreatureRecord,populationAnchor=populationAnchor,
     safeInventoryRecord=safeInventoryRecord,
-    gearLevel=gearLevel,combatDps=playerCombatDps,gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,
+    gearLevel=gearLevel,combatDps=playerCombatDps,damageProfile=playerDamageProfile,
+    gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,recordKillTime=M.recordKillTime,
     additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory,
      enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax,safeSleep=M.safeSleep}
 return M
