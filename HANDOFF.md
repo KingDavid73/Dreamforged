@@ -1,6 +1,10 @@
-# Morrowind: Dreamforged handoff — 0.10.22 installed
+# Morrowind: Dreamforged handoff — 0.10.23 installed
 
-**Current installed release: 0.10.22.**
+**Current installed release: 0.10.23.**
+
+0.10.23 reduces idle Lua work: attached actors update once per second with
+cached availability checks, inventory polls run once per second, and temporary
+director bookkeeping is pruned during long sessions.
 
 0.10.22 makes the outdoor director responsive by default (5-second rolls),
 adds two bounded placement retries, favors several ordinary enemies at low

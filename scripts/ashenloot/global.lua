@@ -909,7 +909,9 @@ local function spellTomeActivate(book,actor) return learnSpellTome(book,actor) e
 local tomePickupElapsed=0
 local function updateSpellTomePickup(dt)
     tomePickupElapsed=tomePickupElapsed+dt
-    if tomePickupElapsed<0.2 then return end
+    -- Inventory pickup is not combat-critical.  Polling five times per second
+    -- made every active save pay for a full book scan even when standing still.
+    if tomePickupElapsed<1 then return end
     tomePickupElapsed=0
     local player=world.players[1]
     if not player then return end
@@ -1020,7 +1022,9 @@ local function refreshAutoSalvageBaseline(player)
 end
 local function updateAutoSalvage(dt)
     autoSalvageElapsed=autoSalvageElapsed+dt
-    if autoSalvageElapsed<0.25 then return end
+    -- A one-second poll keeps newly acquired loot responsive while avoiding a
+    -- repeated full-inventory scan on every quarter-second frame.
+    if autoSalvageElapsed<1 then return end
     autoSalvageElapsed=0
     local player=world.players[1]
     if not player then return end

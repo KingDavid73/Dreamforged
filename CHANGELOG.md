@@ -1,5 +1,14 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.23 - Lua idle-path performance pass
+
+- Attached actor scripts now cache availability/follower checks for one second
+  and run their promotion/boss-wave update at a one-second cadence.
+- Auto-salvage and spell-tome pickup now poll once per second, avoiding repeated
+  full-inventory scans while the player is standing still.
+- Periodic director maintenance removes expired consideration tokens, detached
+  den state, and orphaned scheduler metadata from long-running sessions.
+
 ## 0.10.22 - responsive outdoor director and den fixes
 
 - Outdoor director rolls now default to every 5 seconds. Terrain/navmesh

@@ -1,6 +1,16 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.22 - Responsive outdoor director and den fixes.**
+**Current release: 0.10.23 - Lua idle-path performance pass.**
+
+## 0.10.23 Lua idle-path performance pass
+
+- Attached actor scripts now evaluate availability and follower status at most
+  once per second, and their update work is throttled to a one-second cadence.
+- Auto-salvage and spell-tome pickup polls now run once per second instead of
+  repeatedly scanning the full inventory every fraction of a second.
+- Expired director consideration tokens, detached den state, and orphaned
+  scheduler metadata are pruned periodically so long play sessions do not
+  accumulate unnecessary Lua state.
 
 ## 0.10.22 Responsive outdoor director and den fixes
 

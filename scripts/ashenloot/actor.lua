@@ -10,6 +10,8 @@ local hasRandomizer = core.contentFiles.has('morrowind_world_randomizer.omwscrip
 local randomizer = hasRandomizer and storage.globalSection('MWR_By_Diject')
 local data = {checked = false, applied = false, deathSent = false, witnessed = false}
 local timer, quiet, pendingAge = 0, 0, 0
+local availabilityAt, availabilityValue = -math.huge, false
+local followerAt, followerValue = -math.huge, false
 local pending, deferred, lastBase = false, nil, nil
 local function clearDenVfx()
     if not data.den or data.denVfxCleared then return end
@@ -26,21 +28,36 @@ local function clearDenVfx()
     data.denVfxCleared=true
 end
 local function isFollower()
+    local now=core.getSimulationTime()
+    if now-followerAt<1 then return followerValue end
     local follower = false
     I.AI.forEachPackage(function(package)
         if package.type == 'Follow' or package.type == 'Escort' then follower = true end
     end)
+    followerAt,followerValue=now,follower
     return follower
 end
+local function invalidateAvailability()
+    availabilityAt=-math.huge
+    followerAt=-math.huge
+end
 local function available()
+    local now=core.getSimulationTime()
+    if now-availabilityAt<1 then return availabilityValue end
     local rec = self.type.record(self)
     if not C.unsafeContent then
-        for _, offered in pairs(rec.servicesOffered or {}) do if offered then return false end end
+        for _, offered in pairs(rec.servicesOffered or {}) do
+            if offered then availabilityAt,availabilityValue=now,false;return false end
+        end
     end
-    if types.NPC.objectIsInstance(self) and not (C.npcProgression or (C.allowRespawningNPCs and rec.isRespawning)) then return false end
-    return C.enabled and self.enabled and self.scale >= 0.001 and (C.unsafeContent or not isFollower())
+    if types.NPC.objectIsInstance(self) and not (C.npcProgression or (C.allowRespawningNPCs and rec.isRespawning)) then
+        availabilityAt,availabilityValue=now,false;return false
+    end
+    availabilityValue=C.enabled and self.enabled and self.scale >= 0.001 and (C.unsafeContent or not isFollower())
         and (C.unsafeContent or not (C.protectQuestActors and
             (rec.isEssential or (rec.mwscript and (not types.Creature.objectIsInstance(self) or not rec.isRespawning)))))
+    availabilityAt=now
+    return availabilityValue
 end
 local function request(refresh)
     if not available() or (data.checked and not refresh) or pending then return end
@@ -101,7 +118,11 @@ local function update(dt)
         pendingAge = pendingAge + dt
         if pendingAge > C.settleSeconds + 3 then pending = false end
     end
-    if timer < 0.25 then return end
+    -- Actor scripts are attached to every eligible active creature/NPC.  A
+    -- one-second cadence is sufficient for promotion and boss-wave work while
+    -- avoiding a per-quarter-second Lua allocation/update storm in populated
+    -- exterior cells.
+    if timer < 1 then return end
     timer = 0
     -- Some engine versions mark a corpse disabled before the normal
     -- availability check.  Clean up den visuals first so the effect never
@@ -164,10 +185,10 @@ return {
             current = types.Actor.stats.dynamic.health(self).current, dead = types.Actor.isDead(self)}
     end},
     engineHandlers = {
-        onActive = function() quiet, lastBase, pending, deferred = 0, nil, false, nil end,
+        onActive = function() quiet, lastBase, pending, deferred = 0, nil, false, nil;invalidateAvailability() end,
         onUpdate = update,
         onSave = function() return data end,
-        onLoad = function(saved) data = saved or data; pending = false; quiet = 0; lastBase = nil end,
+        onLoad = function(saved) data = saved or data; pending = false; quiet = 0; lastBase = nil;invalidateAvailability() end,
     },
     eventHandlers = {
         AshenLoot_Consider = function()
@@ -222,6 +243,7 @@ return {
         end,
         AshenLoot_DenSpawned = function(event)
             data.den=true
+            invalidateAvailability()
             data.denVfxId=(event and event.vfxId) or ('dreamforged_den:'..self.id)
             I.AI.removePackages()
             types.Actor.stats.ai.fight(self).base=0

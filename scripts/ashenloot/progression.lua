@@ -8,6 +8,7 @@ local state, loot, promote, eligible
 local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
 local genericCreatureIds
 local timer, considered, lastPlayerCell = 0, {}, nil
+local maintenanceAt=0
 local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
 local function additionalCount(cellState)
     return math.max(0,math.floor(tonumber(cellState and cellState.additionalCount) or 0))
@@ -1815,10 +1816,50 @@ local function updateOutdoorDirector(player)
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
     end
 end
+-- Keep short-lived scheduler tables from growing for the entire session.  The
+-- director intentionally preserves generated actor metadata across cell
+-- changes, but expired consideration tokens and detached den bookkeeping do
+-- not need to survive indefinitely.
+local function maintenance(now)
+    if now-maintenanceAt<60 then return end
+    maintenanceAt=now
+    for id,untilTime in pairs(considered) do
+        if untilTime<=now then considered[id]=nil end
+    end
+    local d=state.director
+    local active={}
+    for _,actor in ipairs(world.activeActors) do active[actor.id]=true end
+    for id,denState in pairs(d.dens) do
+        if denState.dead and not active[id] then
+            d.dens[id]=nil
+            d.generated[id]=nil
+            d.directorCosts[id]=nil
+            d.spawnLevels[id]=nil
+            d.actors[id]=nil
+        end
+    end
+    for bossId,adds in pairs(d.bossAdds) do
+        if not active[bossId] then
+            d.bossAdds[bossId]=nil
+        else
+            local live={}
+            for _,id in ipairs(adds) do if active[id] then live[#live+1]=id end end
+            d.bossAdds[bossId]=live
+        end
+    end
+    for id in pairs(d.directorCosts) do
+        if not d.generated[id] then d.directorCosts[id]=nil end
+    end
+    for id in pairs(d.spawnLevels) do
+        if not d.generated[id] then d.spawnLevels[id]=nil end
+    end
+end
 function M.update(dt)
     timer=timer+dt
     if timer<1 or not C.enabled or not world.players[1] then return end
     timer=0
+    local now=core.getSimulationTime()
+    maintenance(now)
     updateCellState(world.players[1])
     for itemId,loose in pairs(state.director.loose) do
         if type(loose)=='table' and (not loose.item or not loose.item:isValid() or loose.item.parentContainer) then

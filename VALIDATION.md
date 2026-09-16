@@ -1,5 +1,13 @@
 ﻿# Ashen Loot validation
 
+## 0.10.23 Lua idle-path performance pass (2026-09-15)
+
+- Lua parser validation passed for the modified actor, global, and progression
+  scripts.
+- The existing isolated OpenMW run loaded the updated scripts without Lua
+  errors; its unrelated fixture assertion still reports the pre-existing
+  `Bow spell is not ranged` failure.
+
 ## 0.10.22 responsive outdoor director and den fixes (2026-09-15)
 
 - Lua parser validation passed for the modified actor, progression, global,
