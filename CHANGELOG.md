@@ -1,10 +1,17 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.21 - tuned promoted hit targets
+
+- Raised the bounded pre-affix durability targets to approximately 4/6/9
+  charged hits for Champion/Elite/Unique enemies. World Bosses remain at 18
+  hits; promotion health affixes still apply afterward.
+
 ## 0.10.20 - bounded combat durability and adaptive pacing
 
 - Replaced the promoted-enemy sustained-DPS durability timer with bounded
-  charged-hit targets: approximately 3/5/8 hits for Champion/Elite/Unique and
-  18 hits for World Bosses, with rank-specific safety ceilings.
+  charged-hit targets: approximately 4/6/9 base-health hits for
+  Champion/Elite/Unique and 18 hits for World Bosses, with rank-specific safety
+  ceilings. Promotion health affixes are applied afterward.
 - Player combat profiling now uses the strongest high-end weapon or damaging
   spell at a two-second cadence and a modest reliability allowance. Enchanted
   weapons contribute only their strongest direct-damage proc instead of summing

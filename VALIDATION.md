@@ -1,10 +1,18 @@
 ﻿# Ashen Loot validation
 
+## 0.10.21 tuned promoted hit targets (2026-09-15)
+
+- Source tuning raises the fixed promoted targets to 4/6/9/18 hits while
+  preserving rank ceilings and pressure-independent durability.
+- The prior isolated v4 and v4-world runs passed against the same 0.10.20
+  combat-profile code; this patch changes only the hit-count constants.
+
 ## 0.10.20 bounded combat durability and adaptive pacing (2026-09-15)
 
 - Isolated v4 and v4-world profiles pass after the combat-profile rewrite.
-- Promoted durability uses fixed charged-hit targets and rank ceilings; gear
-  pressure is no longer applied as an HP multiplier.
+- Promoted durability uses fixed 4/6/9/18 charged-hit targets and rank
+  ceilings; promotion health affixes apply afterward and gear pressure is no
+  longer an HP multiplier.
 - Weapon proc profiling uses the strongest single direct-damage effect, with a
   two-second cadence, and persists a low-weight kill-time correction signal.
 

@@ -505,7 +505,7 @@ function M.recordKillTime(actor,elite)
     local started=actorState and actorState.combatAt
     if not started then return end
     local elapsed=math.max(0,core.getSimulationTime()-started)
-    local expected=elite.worldBoss and 45 or ({6,12,20})[elite.rank or 1] or 8
+    local expected=elite.worldBoss and 45 or ({8,12,18})[elite.rank or 1] or 8
     local ratio=math.max(0.6,math.min(1.8,elapsed/math.max(4,expected)))
     local combat=state.director.combat
     combat.kills=(tonumber(combat.kills) or 0)+1

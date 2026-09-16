@@ -1,12 +1,19 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.20 - Bounded combat durability and adaptive pacing.**
+**Current release: 0.10.21 - Tuned promoted hit targets.**
+
+## 0.10.21 Tuned promoted hit targets
+
+- Raised the bounded pre-affix durability targets to roughly 4/6/9 charged hits
+  for Champion/Elite/Unique enemies. World Bosses remain at 18 hits with the
+  same safety ceiling and pressure-independent scaling.
 
 ## 0.10.20 Bounded combat durability and adaptive pacing
 
 - Promoted enemy health now uses a bounded charged-hit target instead of an
-  open-ended sustained-DPS timer: roughly 3/5/8 hits for Champion/Elite/Unique
-  enemies and 18 hits for a World Boss, with hard ceilings for safety.
+  open-ended sustained-DPS timer: roughly 4/6/9 base-health hits for
+  Champion/Elite/Unique enemies and 18 hits for a World Boss, with hard
+  ceilings for safety. Promotion affixes add their own health afterward.
 - Player damage is estimated from the strongest high-end weapon or damaging
   spell at a conservative two-second cadence. Only the strongest single weapon
   proc is counted, so several on-hit effects cannot multiply durability.

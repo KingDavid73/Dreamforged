@@ -336,10 +336,12 @@ local function applyCombatDurability(elite,actor,dps,band)
     -- First-person Morrowind needs ordinary promoted enemies to fall quickly,
     -- while a World Boss should anchor a real climax. Use a bounded number of
     -- charged hits (about two seconds each), not a long sustained-DPS timer.
+    -- These are pre-affix base-health targets; promotion abilities such as
+    -- Juggernaut/Life-Drinker add their health afterward.
     -- This keeps movement, misses, healing, and multiple attackers from being
     -- converted into runaway HP. Pressure changes encounter quantity/tier,
     -- never this durability calculation.
-    local hits=elite.worldBoss and 18 or ({3,5,8})[elite.rank or 1] or 3
+    local hits=elite.worldBoss and 18 or ({4,6,9})[elite.rank or 1] or 4
     local margin=1.15+math.min(0.10,math.max(0,(tonumber(band) or 1)-1)*0.01)
     local desired=math.max(hp*elite.healthScale,dps*2*hits*margin)
     local targetScale=desired/hp
