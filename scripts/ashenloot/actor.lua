@@ -11,6 +11,20 @@ local randomizer = hasRandomizer and storage.globalSection('MWR_By_Diject')
 local data = {checked = false, applied = false, deathSent = false, witnessed = false}
 local timer, quiet, pendingAge = 0, 0, 0
 local pending, deferred, lastBase = false, nil, nil
+local function clearDenVfx()
+    if not data.den or data.denVfxCleared then return end
+    -- Den VFX are attached through the AddVfx event.  Keep a per-den id so
+    -- removing one dead den cannot clear another den in the same cell.  The
+    -- legacy id is also removed for saves created before ids were unique.
+    local vfxId=data.denVfxId or ('dreamforged_den:'..self.id)
+    animation.removeVfx(self,vfxId)
+    core.sendGlobalEvent('RemoveVfx',vfxId)
+    if not data.denVfxId then
+        animation.removeVfx(self,'dreamforged_den')
+        core.sendGlobalEvent('RemoveVfx','dreamforged_den')
+    end
+    data.denVfxCleared=true
+end
 local function isFollower()
     local follower = false
     I.AI.forEachPackage(function(package)
@@ -89,6 +103,10 @@ local function update(dt)
     end
     if timer < 0.25 then return end
     timer = 0
+    -- Some engine versions mark a corpse disabled before the normal
+    -- availability check.  Clean up den visuals first so the effect never
+    -- survives the spawner's death.
+    if types.Actor.isDead(self) then clearDenVfx() end
     if not available() then return end
     if data.den then
         I.AI.removePackages()
@@ -98,10 +116,7 @@ local function update(dt)
     if lastBase and hp.base ~= lastBase then quiet = 0 end
     lastBase = hp.base
     if types.Actor.isDead(self) then
-        if data.den and not data.denVfxCleared then
-            animation.removeVfx(self,'dreamforged_den')
-            data.denVfxCleared=true
-        end
+        clearDenVfx()
         -- A fast kill still earns ordinary loot; never promote a corpse or a disabled parent.
         if (data.checked or data.witnessed) and not data.deathSent then
             data.deathSent = true
@@ -156,6 +171,9 @@ return {
     },
     eventHandlers = {
         AshenLoot_Consider = function()
+            -- A den is a director object, not an encounter target.  It must
+            -- remain a quiet spawn anchor and never consume a promotion roll.
+            if data.den then return end
             if available() and not types.Actor.isDead(self) then
                 local active=I.AI.getActivePackage()
                 core.sendGlobalEvent(active and active.type=='Combat' and 'AshenLoot_PrepareFighting' or 'AshenLoot_Prepare',self)
@@ -204,12 +222,13 @@ return {
         end,
         AshenLoot_DenSpawned = function(event)
             data.den=true
+            data.denVfxId=(event and event.vfxId) or ('dreamforged_den:'..self.id)
             I.AI.removePackages()
             types.Actor.stats.ai.fight(self).base=0
             if event and event.model then
                 self:sendEvent('AddVfx',{model=event.model,
                     options={particleTextureOverride=event.particle,loop=true,useAmbientLight=false,
-                        vfxId='dreamforged_den'}})
+                        vfxId=data.denVfxId}})
             end
         end,
         AshenLoot_MythicAttack=function(target)

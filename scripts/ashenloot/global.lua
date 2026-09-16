@@ -797,7 +797,21 @@ local function encounter(data)
         return
     end
     if state.elites[key] == nil or (data.force and (not state.elites[key] or data.rank)) then
-        if data.force or R.rng(key .. ':elite')() < C.eliteChance then
+        local actorState=state.director and state.director.actors and state.director.actors[key]
+        local directorActor=state.director and state.director.generated
+            and state.director.generated[key]=='director'
+        local directorPressure=directorActor and math.max(0,math.min(100,
+            tonumber(actorState and actorState.directorPressure) or 0)) or 0
+        -- A low-pressure group should mostly remain ordinary fodder.  As the
+        -- director's appetite rises, more members may enter the promotion
+        -- ladder, but the chance remains bounded so a single group cannot turn
+        -- into a stack of bosses.
+        local promotionChance=C.eliteChance
+        if directorActor then
+            promotionChance=math.max(0.05,math.min(0.85,
+                promotionChance*(0.65+directorPressure/100*1.35)))
+        end
+        if data.force or R.rng(key .. ':elite')() < promotionChance then
             local rec = actor.type.record(actor)
             local elite = R.elite(key, rec.name, family(rec))
             local random = R.rng(key .. ':rank4')
@@ -806,8 +820,14 @@ local function encounter(data)
             -- being force-promoted as a dungeon leader).
             local bossChance=math.max(0,math.min(100,tonumber(data.worldBossChance) or 3))
             local worldBoss=data.worldBoss or (data.allowWorldBoss and random(100)<=bossChance)
-            elite.rank = worldBoss and 3 or (data.rank or (random(100)<=C.uniquePercent and 3
-                or (random(100)<=C.eliteTierPercent and 2 or 1)))
+            local uniqueChance=tonumber(C.uniquePercent) or 0
+            local eliteChance=tonumber(C.eliteTierPercent) or 0
+            if directorActor then
+                uniqueChance=math.min(80,uniqueChance+directorPressure*0.22)
+                eliteChance=math.min(95,eliteChance+directorPressure*0.38)
+            end
+            elite.rank = worldBoss and 3 or (data.rank or (random(100)<=uniqueChance and 3
+                or (random(100)<=eliteChance and 2 or 1)))
             elite.tier = elite.rank >= 2 and 2 or 1
             elite.modifiers = {elite.modifiers[1]}
             -- Exclude fatigue-drain modifiers from new procedural encounters.

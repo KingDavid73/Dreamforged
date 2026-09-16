@@ -1,6 +1,15 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.21 - Tuned promoted hit targets.**
+**Current release: 0.10.22 - Responsive outdoor director and den fixes.**
+
+## 0.10.22 Responsive outdoor director and den fixes
+
+- Outdoor director rolls now default to every 5 seconds, with terrain/navmesh
+  placement getting two bounded retries instead of silently losing a group.
+- Low-pressure wilderness rolls favor groups of several ordinary enemies;
+  promotion odds rise with pressure so only some members climb the ladder.
+- Kwama-queen creature dens perform a prompt first wave, keep their cycles when
+  temporary capacity is full, and clean up their visual effect on death.
 
 ## 0.10.21 Tuned promoted hit targets
 

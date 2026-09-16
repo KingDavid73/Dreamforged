@@ -1,6 +1,10 @@
-# Morrowind: Dreamforged handoff — 0.10.21 installed
+# Morrowind: Dreamforged handoff — 0.10.22 installed
 
-**Current installed release: 0.10.21.**
+**Current installed release: 0.10.22.**
+
+0.10.22 makes the outdoor director responsive by default (5-second rolls),
+adds two bounded placement retries, favors several ordinary enemies at low
+pressure, and fixes kwama-queen den first-wave/cycle/VFX cleanup behavior.
 
 0.10.21 is a small tuning patch: promoted enemies now target roughly 4, 6, 9,
 and 18 base-health hits for Champion, Elite, Unique, and World Boss tiers.

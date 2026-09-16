@@ -1,5 +1,17 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.22 - responsive outdoor director and den fixes
+
+- Outdoor director rolls now default to every 5 seconds. Terrain/navmesh
+  placement gets two bounded retries, reducing dropped groups without creating
+  a tight retry loop.
+- Low-pressure wilderness rolls favor several ordinary enemies; pressure now
+  gently increases promotion odds and higher promotion tiers for director
+  groups instead of producing one strong enemy too early.
+- Kwama-queen creature dens perform a prompt first wave, preserve unspent
+  cycles when capacity is temporarily full, and remove their VFX reliably when
+  the den dies.
+
 ## 0.10.21 - tuned promoted hit targets
 
 - Raised the bounded pre-affix durability targets to approximately 4/6/9

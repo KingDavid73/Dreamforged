@@ -515,7 +515,12 @@ return {
                         or (event.denWave and math.min(650,spawnMax) or spawnMax)
                     for attempt=1,attempts do
                         if #positions>=event.count then break end
-                        local relaxed=C.directorIntensity>=2.5 and attempt>strictAttempts
+                        -- Director groups get a bounded relaxed pass after the
+                        -- strict navmesh samples at every intensity. Hills and
+                        -- modded terrain are common; waiting for maximum
+                        -- intensity here made ordinary defaults silently lose
+                        -- most of their requested group.
+                        local relaxed=event.director and attempt>strictAttempts
                         local pos=nearby.findRandomPointAroundCircle(center,radius,options)
                         -- At maximum density, fall back to a deterministic
                         -- landscape probe if the local navmesh sampler cannot

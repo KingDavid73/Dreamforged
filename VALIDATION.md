@@ -1,5 +1,13 @@
 ﻿# Ashen Loot validation
 
+## 0.10.22 responsive outdoor director and den fixes (2026-09-15)
+
+- Lua parser validation passed for the modified actor, progression, global,
+  player, and config scripts.
+- OpenMW 0.51 isolated v4-world profile passed all WORLD4 checks, including
+  real navmesh spawns, bounded director additions, dungeon reruns, and save /
+  reload preservation after the director changes.
+
 ## 0.10.21 tuned promoted hit targets (2026-09-15)
 
 - Source tuning raises the fixed promoted targets to 4/6/9/18 hits while

@@ -936,9 +936,14 @@ function M.prepare(actor, inCombat)
     if d.spawnLevels[actor.id] then target=math.max(1,math.floor(d.spawnLevels[actor.id]+0.5)) end
     if guard then target=math.max(target,math.floor(effectiveLevel*0.8)+4) end
     target = math.max(1,target)
-    d.actors[actor.id]={level=target,cell=actor.cell.id,
-        combatAt=inCombat and core.getSimulationTime() or nil}
     local cell = actor.cell
+    d.actors[actor.id]={level=target,cell=actor.cell.id,
+        combatAt=inCombat and core.getSimulationTime() or nil,
+        -- Outdoor director actors retain the pressure at the moment they are
+        -- prepared.  The promotion ladder can then favor ordinary members at
+        -- low pressure and reserve higher tiers for a rising encounter arc.
+        directorPressure=(cell and cell.isExterior and generated=='director')
+            and math.max(0,math.min(100,tonumber(d.outdoor.pressure) or 0)) or nil}
     local ck = cellKey(cell)
     d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
     local cellState=d.cells[ck]
@@ -1082,13 +1087,20 @@ local function createDen(request,pos)
     state.director.generated[den.id]='den'
     state.director.directorCosts[den.id]=request.cost or 2
     state.director.actors[den.id]={level=request.level,cell=request.cell,den=true}
-    state.director.dens[den.id]={family=request.family,tier=request.tier,cycles=request.cycles,
-        nextWave=core.getSimulationTime()+5,cell=request.cell,level=request.level,dead=false}
+    local now=core.getSimulationTime()
+    state.director.dens[den.id]={family=request.family,tier=request.tier,cycles=math.max(1,tonumber(request.cycles) or 1),
+        -- The first wave is deliberately prompt.  Later cycles use the
+        -- configured interval, but a newly discovered den should visibly do
+        -- its job before the player has forgotten it exists.
+        nextWave=now+math.max(1,math.min(5,tonumber(C.creatureDenWaveInterval) or 5)),
+        cell=request.cell,level=request.level,dead=false,
+        vfxId='dreamforged_den:'..den.id}
     den:sendEvent('AshenLoot_Scale',{level=request.level,nativeLevel=native,health=health,
         damage=0.25,progression=true,allowDownscale=true})
     local effect=core.magic.effects.records[(denThemes[request.family] or denThemes.beast).effect]
     local static=effect and effect.castStatic and types.Static.record(effect.castStatic)
-    den:sendEvent('AshenLoot_DenSpawned',{model=static and static.model,particle=effect and effect.particle})
+    den:sendEvent('AshenLoot_DenSpawned',{model=static and static.model,particle=effect and effect.particle,
+        vfxId='dreamforged_den:'..den.id})
     return den
 end
 function M.spawnResult(event)
@@ -1143,28 +1155,31 @@ function M.spawnResult(event)
         -- the placement sampler one bounded retry after a short delay. This
         -- keeps a single awkward hillside from silently deleting a director
         -- group, without creating a tight retry loop every frame.
-        if (request.terrainRetries or 0)<1 and player and player:isValid()
+        -- Retry a bad navmesh/terrain sample twice (three placement passes in
+        -- total).  The retry is bounded and delayed, so a cliff or bad cell
+        -- cannot turn into a tight per-frame spawn loop.
+        if (request.terrainRetries or 0)<2 and player and player:isValid()
             and actor and actor:isValid() and actor.cell and actor.cell.id==request.cell then
             local retry={}
             for key,value in pairs(request) do retry[key]=value end
             retry.count=missing
             retry.created=now
             retry.terrainRetries=(request.terrainRetries or 0)+1
-            local token=request.cell..':director-retry:'..tostring(now)..':'..tostring(retry.terrainRetries)
+            local token=(actor and actor.id or request.cell)..':director-retry:'..tostring(now)..':'..tostring(retry.terrainRetries)
             pending[token]=retry
             local eventData={token=token,actor=actor,count=missing,director=true,
                 den=retry.den,denWave=retry.denWave,dirX=retry.dirX,dirY=retry.dirY}
             player:sendEvent('AshenLoot_FindSpawn',eventData)
-            local interval=math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
+            local interval=math.max(5,tonumber(C.outdoorDirectorInterval) or 5)
             state.director.outdoor.nextRoll=now+math.min(5,interval)
             state.director.outdoor.distance=150
             print('[AshenLoot] director placement retry '..missing..' in '..request.cell)
         else
             -- Persistent placement failure contributes a small amount of
-            -- appetite so the next ten-second batch is not suppressed forever.
+            -- appetite so the next five-second batch is not suppressed forever.
             local outdoor=state.director.outdoor
             outdoor.pressure=math.min(100,(outdoor.pressure or 0)+5*C.directorIntensity)
-            outdoor.nextRoll=now+math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
+            outdoor.nextRoll=now+math.max(5,tonumber(C.outdoorDirectorInterval) or 5)
             outdoor.distance=0
             print('[AshenLoot] director placement failed '..missing..' in '..request.cell)
         end
@@ -1633,10 +1648,18 @@ end
 local function updateDens(player)
     local now=core.getSimulationTime()
     for id,denState in pairs(state.director.dens) do
+        denState.tier=math.max(1,math.min(3,tonumber(denState.tier) or 1))
+        denState.cycles=math.max(0,tonumber(denState.cycles) or 0)
+        denState.level=math.max(1,tonumber(denState.level) or gearLevel())
         local den
         for _,actor in ipairs(world.activeActors) do if actor.id==id then den=actor;break end end
         if den and den:isValid() and types.Actor.isDead(den) and not denState.dead then
             denState.dead=true
+            local vfxId=denState.vfxId or ('dreamforged_den:'..id)
+            -- Global removal is a backstop for cases where the actor script
+            -- was detached/disabled on the same frame as death.
+            core.sendGlobalEvent('RemoveVfx',vfxId)
+            if not denState.vfxId then core.sendGlobalEvent('RemoveVfx','dreamforged_den') end
             local outdoor=state.director.outdoor
             outdoor.safeCell=den.cell.id;outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+30)
             enterOutdoorRelax(outdoor,now,C.directorIntensity,30)
@@ -1651,14 +1674,19 @@ local function updateDens(player)
             local rng=R.rng(id..':den-wave:'..denState.cycles)
             local wanted=denState.tier+rng(2)-1
             local count=math.min(wanted,math.max(0,math.floor((cap-threat)/cost)))
-            denState.cycles=denState.cycles-1
-            denState.nextWave=now+math.max(5,18/C.directorIntensity)
             if count>0 then
+                denState.cycles=denState.cycles-1
+                denState.nextWave=now+math.max(5,tonumber(C.creatureDenWaveInterval) or 5)
                 local token=id..':den-wave:'..tostring(denState.cycles)
                 pending[token]={actor=den,level=denState.level,count=count,cell=den.cell.id,
                     created=now,director=true,denWave=true,family=denState.family,cost=cost,
                     dirX=0,dirY=0}
                 player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=den,count=count,denWave=true})
+            else
+                -- No capacity is not a spent cycle.  Keep the den alive and
+                -- try again on the next director tick once nearby enemies
+                -- have been cleared.
+                denState.nextWave=now+5
             end
         end
     end
@@ -1670,10 +1698,10 @@ local function updateOutdoorDirector(player)
     local outdoor=d.outdoor
     local now=core.getSimulationTime()
     local intensity=C.directorIntensity
-    -- Director decisions are intentionally batched. A ten-second floor keeps
-    -- one-off nearby creatures from causing constant rolls while still
-    -- maintaining the intended pressure cadence during active travel.
-    local interval=math.max(10,tonumber(C.outdoorDirectorInterval) or 10)
+    -- Director decisions are intentionally batched.  Five seconds is the
+    -- responsive default: frequent enough to keep wilderness pressure alive,
+    -- still bounded so terrain sampling never runs every frame.
+    local interval=math.max(5,tonumber(C.outdoorDirectorInterval) or 5)
     local current={x=player.position.x,y=player.position.y,z=player.position.z}
     if outdoor.cell~=cell.id then
         outdoor.cell=cell.id;outdoor.last=current;outdoor.distance=0
@@ -1737,14 +1765,23 @@ local function updateOutdoorDirector(player)
     end
     if live>=cap or hostiles>=math.max(8,cap) or healthRatio<=0.35 then return end
     local rng=R.rng(cell.id..':outdoor-director:'..math.floor(now/interval))
-    local baseChance=math.max(15,math.min(80,35+(intensity-1)*25))
+    local configuredChance=tonumber(C.outdoorDirectorChance)
+    local baseChance=configuredChance and math.max(0,math.min(95,configuredChance))
+        or math.max(15,math.min(80,35+(intensity-1)*25))
     local chance=math.min(95,baseChance+(outdoor.pressure or 0))
     if rng(100)>chance then
         outdoor.pressure=math.min(100,(outdoor.pressure or 0)+(tonumber(C.outdoorPressureGain) or 15)*intensity)
         return
     end
-    local low=math.max(1,math.floor(intensity+0.25))
-    local high=math.max(low,math.ceil(3*intensity))
+    -- At low pressure, spend the roll on a visible group of weaker enemies;
+    -- rising pressure keeps the group size but lets the promotion ladder move
+    -- one or two members into higher tiers.  Respect the exposed group bounds
+    -- while making the shipped default (2--4) feel consistently inhabited.
+    local pressure01=math.max(0,math.min(1,(outdoor.pressure or 0)/100))
+    local groupMin=math.max(1,math.floor(tonumber(C.exteriorGroupMin) or 1))
+    local groupMax=math.max(groupMin,math.floor(tonumber(C.exteriorGroupMax) or 3))
+    local low=math.min(groupMax,groupMin+math.floor((1-pressure01)*math.min(2,groupMax-groupMin)+0.5))
+    local high=groupMax
     local power=gearLevel()
     local target=math.max(1,math.floor(power*(0.54+rng(61)/100)+0.5))
     local cost=math.max(0.35,math.min(1.5,target/power))
@@ -1757,7 +1794,7 @@ local function updateOutdoorDirector(player)
     local token=cell.id..':director:'..tostring(now)
     local denActive=false
     for _,denState in pairs(d.dens) do if denState.cell==cell.id and not denState.dead then denActive=true;break end end
-    local denChance=math.min(35,12*math.sqrt(intensity))
+    local denChance=math.min(50,math.max(0,tonumber(C.creatureDenChance) or 12))
     if not denActive and rng(100)<=denChance and live+2<=cap then
         local families={'beast','undead','daedra','construct'}
         local family=families[rng(#families)]
