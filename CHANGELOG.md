@@ -1,5 +1,11 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.24 - director voices
+
+- Added 78 original, lore-flavored caption templates for the Dream and Dagoth Ur, selected from outdoor pressure, successful group/den spawns, dungeon travel, boss, kill, and reward states. Enemy/item names fill in at runtime.
+- Added a tunable 0-100 voice frequency (0 disables it), per-category repeat spacing, and priority handling for World Boss events.
+- Added a compact HUD caption above the World Boss bar; it hides in menus and expires automatically.
+
 ## 0.10.23 - Lua idle-path performance pass
 
 - Attached actor scripts now cache availability/follower checks for one second

@@ -1,6 +1,7 @@
 local core,types,world=require('openmw.core'),require('openmw.types'),require('openmw.world')
 local I,R,Records=require('openmw.interfaces'),require('scripts.ashenloot.rules'),require('scripts.ashenloot.records')
 local Advancement=require('scripts.ashenloot.advancement')
+local Narration=require('scripts.ashenloot.narration')
 local Config=require('scripts.ashenloot.config')
 local util=require('openmw.util')
 local settings={}
@@ -16,6 +17,25 @@ local function update(dt)
         if not p then return end
         if stage==0 and elapsed>2 then
             stage=1
+            local lineCount=0
+            for _,pool in pairs(Narration.lines) do lineCount=lineCount+#pool end
+            check(lineCount==78,'Director voice template count changed unexpectedly')
+            local rendered=Narration.render('boss','test',{enemy='Ash Vampire'},nil)
+            check(rendered and rendered.text:find('Ash Vampire',1,true),'Director voice failed ad-lib substitution')
+            local heard={}
+            local listener={isValid=function() return true end,
+                sendEvent=function(_,name,payload) heard[#heard+1]={name=name,payload=payload} end}
+            local voiceState={}
+            check(not Narration.emit(voiceState,{enabled=true,directorVoiceFrequency=0},listener,100,'boss',
+                {enemy='Ash Vampire'},true),'Voice frequency 0 did not disable captions')
+            check(Narration.emit(voiceState,{enabled=true,directorVoiceFrequency=60},listener,100,'boss',
+                {enemy='Ash Vampire'},true),'Priority boss caption did not dispatch')
+            check(#heard==1 and heard[1].name=='AshenLoot_DirectorVoice','Director voice event missing')
+            check(not Narration.emit(voiceState,{enabled=true,directorVoiceFrequency=60},listener,101,'boss',
+                {enemy='Ash Vampire'},true),'Director voice cooldown did not apply')
+            p:sendEvent('AshenLoot_DirectorVoice',{speaker='The Dream',
+                text='A test voice rises from the ash.',duration=3})
+            pass('director voice templates, ad-libs, off setting and cooldown')
             p:sendEvent('AshenLoot_TestFreezeAI')
             settings:set('extraEncounters',false)
             settings:set('creatureVariety',0)
@@ -373,7 +393,7 @@ local function update(dt)
             I.AshenLoot.progression.prepare(npc)
             I.AshenLoot.test.snapshot()
             p:sendEvent('AshenLoot_TestUI')
-        elseif stage==2 and elapsed>8 then
+        elseif stage==2 and elapsed>12 then
             stage=3
             local state=I.AshenLoot.getState()
             for n=1,3 do
@@ -383,6 +403,12 @@ local function update(dt)
             end
             local wb=state.elites[rat[4].id]
             check(wb.worldBoss and #wb.modifiers==6 and wb.healthScale==4.5,'World boss bounded base durability profile')
+            if not types.Actor.spells(rat[4])[wb.spellId] then
+                print('[AshenLoot V4] DIAG boss spell missing id='..tostring(wb.spellId)
+                    ..' dead='..tostring(types.Actor.isDead(rat[4]))
+                    ..' valid='..tostring(rat[4]:isValid())
+                    ..' record='..tostring(rat[4].recordId))
+            end
             check(types.Actor.spells(rat[4])[wb.spellId],'World boss ability')
             I.AshenLoot.test.mythicImpact(mythicItems.wild_friend,p,rat[1])
             check(next(state.mythicSummons),'Friendly random-creature mythic staff')
@@ -404,7 +430,7 @@ local function update(dt)
             settings:set('groundDrops',true)
             rat[1]:sendEvent('AshenLoot_TestKill')
             pass('three ranks, NPC progression/loadout, repeated processing stable')
-        elseif stage==3 and elapsed>11 then
+        elseif stage==3 and elapsed>15 then
             stage=4
             local state=I.AshenLoot.getState()
             check(state.rewards[rat[1].id],'Death reward')

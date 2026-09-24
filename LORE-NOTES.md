@@ -2,6 +2,10 @@
 
 Research pass: September 8, 2026. Names are newly invented enchantment traditions and encounter epithets. They do not turn ordinary creatures into canonical named characters or assert that a prince personally blessed every rat. The target card retains the base creature name and tells you what the epithet does.
 
+## Director voices (September 24, 2026)
+
+The new voice called **The Dream** is Dreamforged's interpretation of the dream imagery in Vivec's [Sermon Eleven](https://mmillar-bolis.github.io/The-36-Lessons-of-Vivec/documents/tes3-official/english/markdown/sermon_11.html), not a canonical claim that the Godhead is a person who narrates combat or collaborates with Dagoth Ur. Dagoth Ur's courtly address, old-friend language, and divine-dream imagery draw from the in-game [Message from Dagoth Ur](https://newtfire.github.io/Elder_Scrolls_Morrowind/librarium/morrowind_msg_Dagoth_Ur.html). All caption lines are new writing. Their implied partnership is intentional alternate fiction for this overhaul, not a statement of TES lore. The captions avoid modern game terminology and do not assume the character is canonically Nerevar reborn.
+
 ## Published game lore
 
 The main anchor is Morrowind's religious vocabulary, interpreted as enchantments that people in that world might name. The mechanics below are this mod's design choices, not effects prescribed by the books.

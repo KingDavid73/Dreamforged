@@ -47,7 +47,8 @@ local function safeSleepCell(cell)
     end
     return true
 end
-local book, forgeWindow, targetCard, bossCard
+local book, forgeWindow, targetCard, bossCard, voiceCard
+local voiceMessage,voiceUntil
 local page, lastTarget, elapsed = 0, nil, 0
 local forgePage=1
 local function color(tier)
@@ -210,6 +211,25 @@ end
 local function clearBossCard()
     if bossCard then bossCard:destroy();bossCard=nil end
 end
+local function clearVoiceCard()
+    if voiceCard then voiceCard:destroy();voiceCard=nil end
+end
+local function updateVoiceCard()
+    if not C.enabled or C.directorVoiceFrequency<=0 or I.UI.getMode()
+        or not voiceMessage or core.getSimulationTime()>=(voiceUntil or 0) then
+        clearVoiceCard()
+        return
+    end
+    if voiceCard then return end
+    local speakerColor=voiceMessage.speaker=='Dagoth Ur'
+        and util.color.rgb(0.82,0.58,0.38) or util.color.rgb(0.67,0.79,0.92)
+    local lines={{type=ui.TYPE.Text,template=I.MWUI.templates.textNormal,
+        props={text=voiceMessage.speaker,textColor=speakerColor}}}
+    wrapped(lines,voiceMessage.text)
+    local layout=panel(lines,0.5,0.78)
+    layout.props.anchor=util.vector2(0.5,1)
+    voiceCard=ui.create(layout)
+end
 local function updateBossCard()
     clearBossCard()
     if not C.worldBosses or I.UI.getMode() then return end
@@ -291,7 +311,7 @@ local function frame(dt)
             end
         end
     end
-    if not C.enabled then closeBook();closeForge(); clearTarget();clearBossCard(); return end
+    if not C.enabled then closeBook();closeForge(); clearTarget();clearBossCard();clearVoiceCard(); return end
     advancementElapsed=advancementElapsed+dt
     if advancementElapsed>=1 and types.Player.isCharGenFinished(self) then
         advancementElapsed=0
@@ -308,10 +328,11 @@ local function frame(dt)
                 level=playerLevel,specialty=specialty,skills=values})
         end
     end
-    if not C.enabled or I.UI.getMode() then clearTarget();clearBossCard(); return end
+    if not C.enabled or I.UI.getMode() then clearTarget();clearBossCard();clearVoiceCard(); return end
     elapsed = elapsed + dt
     if elapsed < 0.15 then return end
     elapsed = 0
+    updateVoiceCard()
     updateBossCard()
     if not C.showTargetCard then clearTarget();return end
     local origin = camera.getPosition()
@@ -462,10 +483,17 @@ return {
             classKitGranted = data and data.classKitGranted or false
             classAttributes = data and data.classAttributes or nil
             lastAdvancementSignature='';advancementElapsed=0
-            closeBook();closeForge(); clearTarget();clearBossCard()
+            closeBook();closeForge(); clearTarget();clearBossCard();clearVoiceCard();voiceMessage=nil;voiceUntil=nil
         end,
     },
     eventHandlers = {
+        AshenLoot_DirectorVoice = function(event)
+            if not event or not event.speaker or not event.text then return end
+            voiceMessage={speaker=tostring(event.speaker),text=tostring(event.text)}
+            voiceUntil=core.getSimulationTime()+math.max(3,math.min(12,tonumber(event.duration) or 7))
+            clearVoiceCard()
+            updateVoiceCard()
+        end,
         UiModeChanged = function(data)
             if not data then return end
             local entering=isRestMode(data.newMode)

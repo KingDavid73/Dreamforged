@@ -1,6 +1,12 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.23 - Lua idle-path performance pass.**
+**Current release: 0.10.24 - Director voices.**
+
+## 0.10.24 Director voices
+
+- The Dream and Dagoth Ur offer short, original remarks as the outdoor director builds pressure or spawns encounters, a world boss appears or falls, and encounters yield notable loot (or none). Enemy and item names are filled in from the encounter; indoor exploration has its own lines.
+- The Interface settings group now has a 0-100 voice-frequency control. Default 60 aims for occasional dialogue during active play; 0 disables it. Boss moments can interrupt ordinary chatter. Captions appear above the World Boss health bar and hide while another menu is open.
+- This is a speculative dream-voice interpretation, not a claim that the Godhead is a canonical speaking character or that Dagoth Ur literally controls Dreamforged's encounters.
 
 ## 0.10.23 Lua idle-path performance pass
 
@@ -251,7 +257,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.20"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.24"
 content=AshenLoot.omwscripts
 ```
 

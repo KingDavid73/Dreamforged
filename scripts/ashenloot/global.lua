@@ -9,8 +9,9 @@ local R = require('scripts.ashenloot.rules')
 local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
+local Narration = require('scripts.ashenloot.narration')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 32, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 33, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -33,6 +34,7 @@ for _,def in ipairs(mythicDefinitions) do
     if not def.kind then def.kind='weapon';def.effects={{'restorehealth',1,1,core.magic.RANGE.Target}} end
 end
 local enrollmentTimer, lastCoverage = 0, ''
+local voiceElapsed=0
 local settingsResetPending = false
 local beastHandlerRegistered = false
 local projectileHandlerRegistered = false
@@ -862,6 +864,10 @@ local function encounter(data)
             elite.itemLevel=Progress.actorLevel(actor)
             elite.effectScale=math.min(elite.worldBoss and 2.5 or 2,1+math.floor(elite.itemLevel/10)*0.15)
             state.elites[key] = elite
+            if elite.worldBoss then
+                Narration.emit(state,C,world.players[1],core.getSimulationTime(),'boss',
+                    {enemy=elite.name,kind=rec.name},true)
+            end
         else state.elites[key] = false end
     end
     if state.elites[key] then prepareAbility(state.elites[key], actor) end
@@ -972,11 +978,19 @@ local function death(actor)
     -- literal equipment chance for every scrib. Crawler's 35% becomes roughly
     -- 12% at level one; promoted enemies always resolve a reward budget.
     local ordinaryChance=math.min(35,C.normalDropChance*35+math.min(10,Progress.actorLevel(actor)*0.15))
-    if rank==0 and rng(100)>ordinaryChance then return end
+    local player=world.players[1]
+    local enemyName=elite and elite.name or actor.type.record(actor).name
+    local enemyKind=actor.type.record(actor).name
+    local now=core.getSimulationTime()
+    if rank==0 and rng(100)>ordinaryChance then
+        Narration.emit(state,C,player,now,'commonKill',{enemy=enemyName,kind=enemyKind})
+        return
+    end
     local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank)+directorSpend,mythicChance())
     settleRewardHunger(rewardDirector,rank,tiers)
     local profile=lootProfile();local magicProfile=profile and
         (profile.key=='magic' or profile.key=='warmage' or profile.key=='conjurer')
+    local bestTier,bestName=0,nil
     for attempt,tier in ipairs(tiers) do
         local familyRoll=rng(100)
         local family=familyRoll<=50 and 'weapon' or (familyRoll<=90 and 'armor'
@@ -986,9 +1000,26 @@ local function death(actor)
             and rng(100)<=tomeChance and giveSpellTome(actor,true,attempt)
         if not madeTome then
             local seed=actor.id..':budget-loot:'..attempt..':'..tier
-            if tier==7 then giveMythic(actor,seed,attempt)
-            else giveLoot(actor,seed,1,nil,tier,nil,nil,family,0,attempt) end
+            local id
+            if tier==7 then id=giveMythic(actor,seed,attempt)
+            else id=giveLoot(actor,seed,1,nil,tier,nil,nil,family,0,attempt) end
+            if id and tier>bestTier then
+                bestTier=tier
+                bestName=state.records[id] and state.records[id].name
+            end
         end
+    end
+    local values={enemy=enemyName,kind=enemyKind,item=bestName}
+    if worldBoss then
+        Narration.emit(state,C,player,now,'bossVictory',values,true)
+    elseif bestTier>=5 and bestName then
+        Narration.emit(state,C,player,now,'prize',values)
+    elseif rank>0 and #tiers==0 then
+        Narration.emit(state,C,player,now,'barren',values)
+    elseif rank>0 then
+        Narration.emit(state,C,player,now,'victory',values)
+    else
+        Narration.emit(state,C,player,now,'commonKill',values)
     end
 end
 Progress.bind(state,giveLoot,encounter,eligible)
@@ -1199,6 +1230,24 @@ return {
             end
             local ok,err=pcall(Progress.update,dt)
             if not ok then print('[AshenLoot] ERROR director: '..tostring(err)) end
+            voiceElapsed=voiceElapsed+dt
+            if voiceElapsed>=15 then
+                voiceElapsed=0
+                local player=world.players[1]
+                if player and player:isValid() and not types.Actor.isDead(player) then
+                    local outdoor=state.director and state.director.outdoor
+                    local kind
+                    if player.cell and not player.cell.isExterior then kind='dungeon'
+                    elseif outdoor and not outdoor.activeBossId and not outdoor.inTown then
+                        local progress=math.max(tonumber(outdoor.pressure) or 0,tonumber(outdoor.bossProgress) or 0)
+                        kind=progress>=72 and 'imminent' or (progress>=32 and 'rising' or 'roam')
+                    end
+                    if kind then
+                        local voiceOk,voiceErr=pcall(Narration.emit,state,C,player,core.getSimulationTime(),kind)
+                        if not voiceOk then print('[AshenLoot] ERROR director voice: '..tostring(voiceErr)) end
+                    end
+                end
+            end
             local salvageOk,salvageErr=pcall(updateAutoSalvage,dt)
             if not salvageOk then print('[AshenLoot] ERROR auto-salvage: '..tostring(salvageErr)) end
             local tomeOk,tomeErr=pcall(updateSpellTomePickup,dt)
@@ -1223,7 +1272,7 @@ return {
         end,
         onSave = function() return state end,
         onLoad = function(data)
-            state = data or state; pool = nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0
+            state = data or state; pool = nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0;voiceElapsed=0
             local oldVersion=state.version or 1
             state.procs, state.cooldowns = state.procs or {}, state.cooldowns or {}
             state.itemSpells,state.itemCooldowns,state.itemProcRoll=state.itemSpells or {},state.itemCooldowns or {},state.itemProcRoll or 0
@@ -1309,7 +1358,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 32
+            state.version = 33
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },
@@ -1319,12 +1368,19 @@ return {
         AshenLoot_Reforge = guard(reforge),
         AshenLoot_CombineForgeCoins = guard(combineForgeCoins),
         AshenLoot_PrepareFighting = guard(function(actor) Progress.prepare(actor,true) end),
-        AshenLoot_SpawnResult = guard(Progress.spawnResult),
+        AshenLoot_SpawnResult = guard(function(event)
+            local made,director,den=Progress.spawnResult(event)
+            if director and made and made>0 then
+                Narration.emit(state,C,world.players[1],core.getSimulationTime(),den and 'den' or 'group',
+                    {count=made})
+            end
+        end),
         AshenLoot_BossWave = guard(Progress.bossWave),
         AshenLoot_ReplacementResult = guard(Progress.replaceResult),
         AshenLoot_Scavenge = guard(Progress.scavenge),
         AshenLoot_SafeSleep = guard(function(event)
             Progress.safeSleep(event and event.player or world.players[1])
+            Narration.emit(state,C,world.players[1],core.getSimulationTime(),'sleep',nil,true)
         end),
         AshenLoot_AlignGroundDropResult = guard(function(event)
             local loose=event and state.director and state.director.loose and state.director.loose[event.id]

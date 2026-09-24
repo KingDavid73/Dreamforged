@@ -11,12 +11,12 @@ for _,key in ipairs({'interiorBudget','rerunnableDungeons','dungeonResetHours','
 for _,key in ipairs({'worldBosses','worldBossCadenceMinutes','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide'}) do keyGroups[key]=groupKeys.bosses end
 for _,key in ipairs({'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic'}) do keyGroups[key]=groupKeys.loot end
 for _,key in ipairs({'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense'}) do keyGroups[key]=groupKeys.npcs end
-for _,key in ipairs({'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}) do keyGroups[key]=groupKeys.interface end
+for _,key in ipairs({'showTargetCard','directorVoiceFrequency','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}) do keyGroups[key]=groupKeys.interface end
 local function groupKey(key) return keyGroups[key] or 'SettingsAshenLoot' end
 local defaults = {
     enabled = true, preset = 'Crawler', elitePercent = 25, dropPercent = 35, resetAllSettings = false,
     settleSeconds = 2, protectQuestActors = true, allowRespawningNPCs = false, unsafeContent = false,
-    showTargetCard = true, inventoryKey = 'F8', forgeKey = 'F7', pageSize = 4, maxGeneratedItems = 2000,
+    showTargetCard = true, directorVoiceFrequency = 60, inventoryKey = 'F8', forgeKey = 'F7', pageSize = 4, maxGeneratedItems = 2000,
     abilityControllerModifier = 'RightShoulder', abilityControllerCycle = 'DPadLeft',
     abilityControllerUse = 'DPadRight',
     progression = true, levelScaling = 0.6, gearLevelInfluence = 0.5, enemyHealth = 1, enemyDamage = 1,

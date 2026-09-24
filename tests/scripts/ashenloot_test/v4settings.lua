@@ -7,7 +7,7 @@ local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','pro
     'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide',
     'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
     'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense',
-    'showTargetCard','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
+    'showTargetCard','directorVoiceFrequency','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
 local calls,controls={},nil
 local done=false
 local resetRequested=false

@@ -1192,6 +1192,7 @@ function M.spawnResult(event)
     end
     refund(missing)
     print('[AshenLoot] encounter placement '..made..'/'..request.count..' in '..request.cell)
+    return made,request.director,request.den
 end
 local scrollRecipes={
     {name='Embers',effect='firedamage',secondary='weaknesstofire'},
@@ -1719,7 +1720,8 @@ local function updateOutdoorDirector(player)
         end
         outdoor.last=current
     end
-    if exteriorTown(cell) then
+    outdoor.inTown=exteriorTown(cell)
+    if outdoor.inTown then
         -- Settlements are a pause, not a reset. Preserve the pressure and
         -- World Boss arc so simply brushing a town boundary cannot erase the
         -- journey's accumulated appetite. A deliberate safe sleep sends the

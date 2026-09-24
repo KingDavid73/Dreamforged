@@ -1,6 +1,8 @@
-# Morrowind: Dreamforged handoff — 0.10.23 installed
+# Morrowind: Dreamforged handoff — 0.10.24 installed
 
-**Current installed release: 0.10.23.**
+**Current installed release: 0.10.24.**
+
+0.10.24 adds state-aware caption voices for the Dream and Dagoth Ur. The Interface settings group controls frequency from 0 (off) to 100; 60 is the default. World Boss arrivals and victories have priority. The Dream's status as a speaking voice and its implied collaboration with Dagoth are alternate mod fiction rather than established game canon.
 
 0.10.23 reduces idle Lua work: attached actors update once per second with
 cached availability checks, inventory polls run once per second, and temporary

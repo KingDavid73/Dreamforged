@@ -211,6 +211,8 @@ showTargetCardDescription: "Show every hostile crosshair target's name and healt
 inventoryKey: "Loot browser key"
 inventoryKeyDescription: "Use the arrows to choose F6-F11. Press that key to open or advance pages; Shift plus the key closes the browser. Choose a key unused by other mods."
 forgeKey: "Reforging exchange key"
+directorVoiceFrequency: "Director voice frequency (0-100)"
+directorVoiceFrequencyDescription: "How often the Dream and Dagoth Ur comment on encounters, prizes and the director's rising pressure. Default 60: roughly one or two short captions per minute during active play. 0 turns the voice off; 100 is more talkative. Major boss moments have priority."
 forgeKeyDescription: "Opens the Dreamforged salvage and reforging exchange. Default F7 avoids OpenMW's F2 shader, F3/F4 performance/debug, F5 quick-save, F9 quick-load, and F10 Lua debug bindings. Equipped items are never offered for salvage."
 F2: "F2"
 F3: "F3"

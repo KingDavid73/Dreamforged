@@ -1,5 +1,11 @@
 ﻿# Ashen Loot validation
 
+## 0.10.24 Director voices (2026-09-24)
+
+- Lua parser accepted narration, global, player, settings and config scripts.
+- Fresh isolated OpenMW v4 run passed all 72 native settings controls and the director-voice template, ad-lib, off-setting, cooldown and live player HUD event checks. Existing item, encounter and save/reload checks passed; no Lua runtime errors were logged.
+- In-game feel, caption placement with other HUD mods, and the chosen frequency remain player-playtest items.
+
 ## 0.10.23 Lua idle-path performance pass (2026-09-15)
 
 - Lua parser validation passed for the modified actor, global, and progression
