@@ -6,7 +6,7 @@ local groupKeys={
 local keyGroups={}
 for _,key in ipairs({'resetAllSettings'}) do keyGroups[key]=groupKeys.reset end
 for _,key in ipairs({'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove'}) do keyGroups[key]=groupKeys.scaling end
-for _,key in ipairs({'creatureVariety','creaturePoolMode','extraEncounters','directorIntensity','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','specialEncounterChance','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorTriggerMin','exteriorTriggerRange','exteriorAnchorChance','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours'}) do keyGroups[key]=groupKeys.encounters end
+for _,key in ipairs({'creatureVariety','creaturePoolMode','extraEncounters','directorIntensity','encounterDensity','excludeExtraCliffRacers','exteriorBudget','outdoorDirectorInterval','outdoorDirectorChance','outdoorPressureGain','specialEncounterChance','townRestPressureDecay','creatureDenChance','creatureDenWaveInterval','creatureDenMinCycles','creatureDenMaxCycles','exteriorTriggerMin','exteriorTriggerRange','exteriorAnchorChance','exteriorGroupMin','exteriorGroupMax','exteriorSpawnMin','exteriorSpread','settlementSuppression','rerunnableWilderness','wildernessResetHours'}) do keyGroups[key]=groupKeys.encounters end
 for _,key in ipairs({'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses'}) do keyGroups[key]=groupKeys.dungeons end
 for _,key in ipairs({'worldBosses','worldBossCadenceMinutes','worldBossChance','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossAddInitialDelay','worldBossAddInterval','worldBossAddMin','worldBossAddMax','worldBossAddCap','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide'}) do keyGroups[key]=groupKeys.bosses end
 for _,key in ipairs({'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic'}) do keyGroups[key]=groupKeys.loot end
@@ -22,7 +22,7 @@ local defaults = {
     progression = true, levelScaling = 0.6, gearLevelInfluence = 0.5, enemyHealth = 1, enemyDamage = 1,
     npcProgression = true, creatureVariety = 50, extraEncounters = true,
     directorIntensity = 1, exteriorBudget = 6, outdoorDirectorInterval = 5, outdoorDirectorChance = 35,
-    outdoorPressureGain = 15, specialEncounterChance = 55,
+    outdoorPressureGain = 15, specialEncounterChance = 33, townRestPressureDecay = 15,
     creatureDenChance = 12, creatureDenWaveInterval = 18, creatureDenMinCycles = 1, creatureDenMaxCycles = 3,
     exteriorTriggerMin = 300, exteriorTriggerRange = 2200, exteriorAnchorChance = 65,
     exteriorGroupMin = 2, exteriorGroupMax = 4, exteriorSpawnMin = 1200,
@@ -65,7 +65,7 @@ return setmetatable({defaults = defaults,groupKey=groupKey,groups=groupKeys,keyG
     if key == 'settleSeconds' then return math.max(0.5, math.min(10, tonumber(get(key)) or 2)) end
     local bounds = {levelScaling={0,2}, gearLevelInfluence={0,1}, enemyHealth={0.25,3}, enemyDamage={0.25,3}, encounterDensity={0.5,3},guardPower={1,2.5},
         directorIntensity={0.25,3}, exteriorBudget={0,30}, outdoorDirectorInterval={5,60}, outdoorDirectorChance={0,100},
-        outdoorPressureGain={0,50}, specialEncounterChance={0,100}, creatureDenChance={0,100}, creatureDenWaveInterval={5,120},
+        outdoorPressureGain={0,50}, specialEncounterChance={0,100}, townRestPressureDecay={0,100}, creatureDenChance={0,100}, creatureDenWaveInterval={5,120},
         creatureDenMinCycles={1,6}, creatureDenMaxCycles={1,6}, exteriorTriggerMin={100,2000}, exteriorTriggerRange={600,8000}, exteriorAnchorChance={0,100},
         exteriorGroupMin={1,10}, exteriorGroupMax={1,10}, exteriorSpawnMin={100,3000},
         interiorBudget={0,8}, creatureVariety={0,100},

@@ -1,5 +1,20 @@
 ﻿# Ashen Loot validation
 
+## 0.10.26 pressure milestones and skill-aware combat estimates (2026-09-24)
+
+- The Lua 5.1 parser bundled with OpenMW 0.50 accepted all seven changed Lua
+  modules; `git diff --check` passed.
+- Event-voice paths were checked against the shipped 60-point frequency
+  default: ordinary packs 25%; promoted spawns/kills 25/40/60% by tier;
+  Relic 50%; Mythic and World Boss arrivals/victories 100%. The shared voice
+  control scales these chances and zero mutes them. Prince-origin groups keep
+  their Prince caption instead of receiving overlapping Dagoth promotion text.
+- Player inventory/spell damage profiling is cached for 60 seconds, with the
+  existing combat telemetry invalidation retained.
+- OpenMW 0.51 runtime integration and in-game playtesting were not run for this
+  working-tree change. Verify town Rest detection, pressure carry-over from
+  dungeon kills, milestone captions, and weapon/spell skill weighting in game.
+
 ## 0.10.25 Prince and Vivec director encounters (2026-09-24)
 
 - The isolated OpenMW 0.51 v4 profile passed all 73 settings controls and the

@@ -1,6 +1,35 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.25 - Prince and Vivec director encounters.**
+**Current version: 0.10.26 - pressure milestones and skill-aware pacing.**
+
+Director voice rolls are now tied to events: a 25% chance per ordinary pack,
+increasing chances for higher promoted tiers, 50% for Relic loot, and guaranteed
+Mythic/World Boss remarks at the default voice setting. The Interface voice
+frequency still scales these odds and mutes captions at zero. Prince encounter
+lines have distinct original, lore-themed voices. Combat inventory/spell scans
+now refresh once per minute.
+
+## 0.10.26 Pressure milestones and skill-aware pacing
+
+- The Dream now gives cryptic status warnings as pressure crosses 25%, 50%,
+  and 75%. Dagoth Ur's optional remarks are event-driven: successful spawns,
+  promotions, boss arrivals/victories, and Relic-or-Mythic loot. Ordinary
+  common kills no longer trigger chatter. The voice-frequency setting at 0
+  silences both voices.
+- Special encounter opportunities are offset at 15%, 30%, 45%, 60%, 75%, and
+  90% of the World Boss cycle. Default chance is 33%; up to three can succeed
+  in a cycle. A missed opportunity keeps the regular group and slightly nudges
+  its promotion/rank odds upward.
+- Dungeon kills contribute to the persistent overworld pressure and World
+  Boss cycle. Ordinary victories and short lulls do not reduce pressure. A
+  World Boss resets the pressure arc; a Rest-menu sleep of at least one game
+  minute in a recognized settlement interior eases it by 15 points per hour.
+  Wilderness and dungeon sleep do not qualify, and town rest preserves the
+  longer World Boss-cycle progress.
+- Combat-power estimates now weight each weapon by its governing skill and
+  damaging spells by Destruction. Carried but unpracticed weapons therefore
+  have less influence on promoted-enemy durability than the mage's practiced
+  spell damage.
 
 ## 0.10.25 Prince and Vivec director encounters
 
@@ -82,10 +111,10 @@
 ## 0.10.18 Deliberate recovery and batched outdoor pacing
 
 - Entering a settlement now pauses outdoor director rolls without clearing the
-  accumulated pressure or World Boss arc. The arc resets only after a genuine
-  safe sleep in a sleep-enabled interior (or the existing World Boss victory
-  reset); simply crossing a town boundary or using ordinary waiting no longer
-  erases the journey.
+  accumulated pressure or World Boss arc. Only a World Boss appearance resets
+  the pressure arc; a town-bed rest eases pressure gradually according to the
+  current setting. Ordinary waiting, wilderness beds, and dungeon beds do not
+  reduce pressure, and town rest preserves World Boss-cycle progress.
 - Outdoor director decisions are batched at a minimum ten-second cadence. A
   failed roll raises pressure using the configured gain, while a terrain or
   navmesh placement failure receives one bounded retry before contributing a
@@ -96,9 +125,10 @@
   present without preventing a nearby director encounter.
 
 OpenMW 0.51 does not expose a dedicated Lua sleep-completed callback. Dreamforged
-therefore recognizes the native Rest UI closing after meaningful game-time
-advance in a non-`NoSleep` interior as the safe-sleep reset signal; wilderness
-waiting and no-sleep cells never clear pressure.
+therefore recognizes the native Rest UI closing after game-time advance in a
+non-`NoSleep` interior whose cell name matches a known settlement prefix. The
+duration scales the configured pressure easing; wilderness and dungeon sleep
+do not reduce it.
 
 ## 0.10.17 Cadence correction
 

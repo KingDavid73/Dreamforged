@@ -1,5 +1,36 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.26 - pressure milestones and skill-aware combat estimates
+
+- Director voice odds are now event-specific: 25% per ordinary spawn pack;
+  promoted spawn/kill captions start at 25% for Champions and rise by tier;
+  Relic finds are 50%, while Mythic finds and World Boss arrivals/victories
+  are guaranteed at the default voice setting. The voice-frequency option
+  still scales these odds and can mute all captions.
+- Rewrote the Daedric/Vivec encounter lines as distinct original voices
+  grounded in their spheres and Morrowind religious roles. Prince encounters
+  no longer get an unrelated Dagoth Ur pack/promotion caption layered over them.
+- Combat inventory/spell damage profiling now refreshes at most once per
+  minute instead of every ten seconds; combat telemetry can still invalidate
+  it when a meaningful correction is needed.
+- Added cryptic Dream status warnings at 25%, 50%, and 75% pressure. Dagoth
+  Ur's optional chatter is now tied to successful groups, promotions, boss
+  arrivals/victories, and Relic-or-better loot instead of periodic exploration
+  messages or ordinary common kills.
+- Special-encounter opportunities now occur at 15/30/45/60/75/90% of the
+  World Boss cycle, defaulting to 33% each and capped at three successful
+  interventions per cycle. A missed roll keeps the regular group and gives it
+  a modest promotion/upper-rank nudge.
+- Dungeon kills now add to the persistent overworld pressure and World Boss
+  cycle. Ordinary fights and encounter lulls no longer reduce pressure; the
+  World Boss climax resets it, while town-bed rest eases pressure by 15 points
+  per game hour by default. Wilderness and dungeon beds do not qualify.
+- Added a resettable town-rest pressure-decay setting. Safe-town sleep does not
+  rewind World Boss-cycle progress or special-opportunity stages.
+- Enemy combat-power estimates now scale weapon damage by the matching weapon
+  skill and spell damage by Destruction, so an unused high-damage weapon does
+  not outweigh a mage's practiced spells.
+
 ## 0.10.25 - Prince and Vivec director encounters
 
 - Added a cycle-paced special-encounter bucket with one themed encounter and

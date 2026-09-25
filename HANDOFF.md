@@ -1,6 +1,35 @@
-# Morrowind: Dreamforged handoff — 0.10.25 installed
+# Morrowind: Dreamforged handoff — 0.10.26 working tree
 
-**Current installed release: 0.10.25.**
+**Latest installed release: 0.10.26.** Installed at
+`C:\Users\super\Documents\MorrowindMods\Dreamforged-0.10.26`; the active
+OpenMW config points to this folder and lists one Dreamforged script plus its
+optional classes plugin. The prior 0.10.25 folder remains on disk but is no
+longer active. A pre-install config backup is at
+`C:\Users\super\Documents\My Games\OpenMW\openmw.cfg.before-Dreamforged-0.10.26-20260924`.
+
+0.10.26 changes the outdoor arc to provide cryptic Dream warnings at 25/50/75%
+pressure, with Dagoth Ur's optional remarks focused on spawn, promotion, boss,
+and top-tier loot events. Voice rolls are 25% per ordinary pack; 25/40/60% for
+promoted spawn/kill by tier; 50% for Relic; and 100% for Mythic and World Boss
+arrivals/victories at the default voice frequency. The frequency option scales
+these odds and mutes all captions at zero. Special-encounter lines are now
+distinct and original to each Prince/Vivec. Combat inventory/spell profiling
+refreshes once per minute. Special opportunities are spaced at 15/30/45/60/75/
+90% of the World Boss cycle, with a 33% default and a maximum of three
+successful interventions. A missed special preserves the regular group and
+slightly favors promotion.
+
+Interior dungeon kills now build the persistent overworld pressure. Ordinary
+victories and lulls do not lower it. World Bosses reset the arc; only sleep in
+a recognized settlement interior can otherwise ease pressure, by a configurable
+number of points per game hour (default 15). The World Boss-cycle progress is
+preserved through town rest. Combat-power estimation now weights carried
+weapons and damaging spells by Long Blade/other weapon skill or Destruction.
+The changed Lua modules passed the Lua 5.1 parser and `git diff --check`. The
+current OpenMW 0.51 in-game run is still a playtest item; no runtime session was
+launched during this update. The matching 0.10.26 ZIP is packaged and installed.
+
+The prior 0.10.25 release baseline:
 
 0.10.25 adds a cycle-paced special wilderness encounter bucket: up to three
 opportunities at 15%, 45%, and 75% World Boss-cycle progress, default 55% per

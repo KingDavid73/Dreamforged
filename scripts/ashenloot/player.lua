@@ -47,6 +47,23 @@ local function safeSleepCell(cell)
     end
     return true
 end
+local townInteriorPrefixes={
+    "ald'ruhn",'akamora','andothren','balmora','bal oyra','blacklight','caldera',
+    'dagon fel','ebonheart','firewatch','gnaar mok','gnisis','hla oad','helnim',
+    'kragenmoor','khuul','maar gan','molag mar','mournhold','narsis','necrom',
+    'old ebonheart','pelagiad','port telvannis','raven rock','sadrith mora',
+    'seyda neen','silgrad tower','suran','tel aruhn','tel branora','tel mora',
+    'vivec','vos','wolverine hall','baan malur','glenpoint',
+}
+local function townSleepCell(cell)
+    if not safeSleepCell(cell) then return false end
+    local name=(tostring(cell.name or '')..' '..tostring(cell.id or '')):lower():gsub('^%s+','')
+    for _,prefix in ipairs(townInteriorPrefixes) do
+        if name==prefix or name:sub(1,#prefix+1)==prefix..','
+            or name:sub(1,#prefix+1)==prefix..' ' then return true end
+    end
+    return false
+end
 local book, forgeWindow, targetCard, bossCard, voiceCard
 local voiceMessage,voiceUntil
 local page, lastTarget, elapsed = 0, nil, 0
@@ -506,10 +523,11 @@ return {
                 -- OpenMW currently exposes no sleep-completed Lua event. The
                 -- native Rest UI does expose its mode transition; combining
                 -- that with a meaningful game-time advance and a cell that
-                -- permits sleep gives us a conservative safe-sleep signal.
-                -- Wilderness waiting and NoSleep cells never clear pressure.
-                if elapsed>=60 and cell==restSession.cell and safeSleepCell(cell) then
-                    core.sendGlobalEvent('AshenLoot_SafeSleep',{player=self,duration=elapsed})
+                -- permits sleep gives us a conservative signal. Then require a
+                -- known settlement interior; wilderness camps and remote
+                -- dungeons may restore health, but do not ease world pressure.
+                if elapsed>=60 and cell==restSession.cell and townSleepCell(cell) then
+                    core.sendGlobalEvent('AshenLoot_SafeSleep',{player=self,duration=elapsed,town=true})
                 end
                 restSession=nil
             end

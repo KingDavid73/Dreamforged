@@ -168,7 +168,9 @@ local function playerDamageProfile()
     local player=world.players[1]
     local director=state and state.director
     local now=core.getSimulationTime()
-    if director and director.playerDamageProfileAt and now-director.playerDamageProfileAt<10
+    -- Inventory/spell capability barely changes during ordinary play. Keep
+    -- this full scan to once a minute; kill-time feedback can invalidate it.
+    if director and director.playerDamageProfileAt and now-director.playerDamageProfileAt<60
         and director.playerDamageProfile then
         return director.playerDamageProfile
     end
@@ -176,7 +178,25 @@ local function playerDamageProfile()
         return {hit=1,rawHit=1,bestWeapon=1,bestSpell=0,cadence=2,dps=0.5,score=1,band=1}
     end
     local bestWeapon,bestSpell=0,0
+    local bestWeaponRaw,bestSpellRaw=0,0
+    local weaponSkillUsed,spellSkillUsed=0,0
     local seen={}
+    local weaponSkills = {
+        [0]='shortblade',[1]='longblade',[2]='longblade',[3]='bluntweapon',
+        [4]='bluntweapon',[5]='bluntweapon',[6]='spear',[7]='axe',[8]='axe',
+        [9]='marksman',[10]='marksman',
+    }
+    local function skillValue(name)
+        if not name or not types.NPC.objectIsInstance(player) then return 0 end
+        local ok,stat=pcall(function() return types.NPC.stats.skills[name](player) end)
+        if not ok or not stat then return 0 end
+        return math.max(0,tonumber(stat.modified or stat.base) or 0)
+    end
+    local function skillWeight(skill)
+        -- Low-skill weapons/spells still count as an option, but shouldn't
+        -- dominate encounter power merely because the player carries them.
+        return math.min(1.25,0.25+0.75*math.max(0,tonumber(skill) or 0)/100)
+    end
     local function considerWeapon(item)
         if not item or seen[item.id] or not types.Weapon.objectIsInstance(item) then return end
         seen[item.id]=true
@@ -185,7 +205,12 @@ local function playerDamageProfile()
         local damage=math.max(record.chopMaxDamage or 0,record.slashMaxDamage or 0,record.thrustMaxDamage or 0)
         -- Physical damage plus the strongest single on-hit effect is one
         -- charged attack. A second proc is not assumed to stack reliably.
-        bestWeapon=math.max(bestWeapon,damage+enchantmentDamage(record.enchant))
+        local raw=damage+enchantmentDamage(record.enchant)
+        local skill=skillValue(weaponSkills[record.type])
+        local effective=raw*skillWeight(skill)
+        if effective>bestWeapon then
+            bestWeapon=effective;bestWeaponRaw=raw;weaponSkillUsed=skill
+        end
     end
     local inventory=types.Actor.inventory(player)
     if inventory then for _,item in ipairs(inventory:getAll()) do considerWeapon(item) end end
@@ -195,7 +220,13 @@ local function playerDamageProfile()
         if spell and spell.id and known[spell.id] then
             local damage=0
             for _,effect in pairs(spell.effects or {}) do damage=damage+effectDamage(effect) end
-            if damage>0 then bestSpell=math.max(bestSpell,damage) end
+            if damage>0 then
+                local skill=skillValue('destruction')
+                local effective=damage*skillWeight(skill)
+                if effective>bestSpell then
+                    bestSpell=effective;bestSpellRaw=damage;spellSkillUsed=skill
+                end
+            end
         end
     end
     local rawHit=math.max(1,bestWeapon,bestSpell)
@@ -212,7 +243,8 @@ local function playerDamageProfile()
     local score=math.max(effectiveLevel,math.ceil(rawHit/12))
     local band=math.max(1,math.min(10,math.ceil(score/5)))
     local profile={hit=reliableHit,rawHit=rawHit,bestWeapon=bestWeapon,bestSpell=bestSpell,
-        cadence=2,dps=reliableHit/2,score=score,band=band,feedback=feedback}
+        bestWeaponRaw=bestWeaponRaw,bestSpellRaw=bestSpellRaw,weaponSkill=weaponSkillUsed,
+        spellSkill=spellSkillUsed,cadence=2,dps=reliableHit/2,score=score,band=band,feedback=feedback}
     if director then
         director.playerDamageProfile=profile
         director.playerDamageProfileAt=now
@@ -467,10 +499,11 @@ local function buildGear()
 end
 function M.bind(s, giveLoot, encounter, isEligible)
     state, loot, promote, eligible = s, giveLoot, encounter, isEligible
-    state.director = state.director or {actors={},cells={},generated={},cache={},supplies={},loose={},containers={},randomizedContainers={},npcLoot={},looseCells={},bossAdds={}}
-    for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds'}) do
+    state.director = state.director or {actors={},cells={},generated={},cache={},supplies={},loose={},containers={},randomizedContainers={},npcLoot={},looseCells={},bossAdds={},specialActors={}}
+    for _, key in ipairs({'actors','cells','generated','cache','supplies','loose','containers','randomizedContainers','npcLoot','looseCells','bossAdds','specialActors'}) do
         state.director[key] = state.director[key] or {}
     end
+    state.director.promotionBonuses=state.director.promotionBonuses or {}
     state.director.outdoor=state.director.outdoor or {pressure=0,bossProgress=0,nextRoll=0}
     state.director.outdoor.pressure=state.director.outdoor.pressure or 0
     state.director.outdoor.bossProgress=state.director.outdoor.bossProgress or 0
@@ -481,6 +514,12 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor.distance=state.director.outdoor.distance or 0
     state.director.outdoor.terrainRetries=state.director.outdoor.terrainRetries or 0
     state.director.outdoor.specialStage=state.director.outdoor.specialStage or 0
+    if state.director.outdoor.specialCount==nil then
+        state.director.outdoor.specialCount=math.min(3,state.director.outdoor.specialStage)
+    end
+    if state.director.outdoor.pressureVoiceStage==nil then
+        state.director.outdoor.pressureVoiceStage=Narration.pressureStage(state.director.outdoor.pressure)
+    end
     -- A living outdoor World Boss owns the current climax. Its actor script
     -- continues to request reinforcement waves while the director remains
     -- paused until the boss's death event clears this id.
@@ -556,7 +595,8 @@ end
 -- Wilderness combat is feedback for the director. Ordinary kills and lower
 -- promotions mean the player is engaging, so they build pressure instead of
 -- granting a lull. Only major victories create meaningful breathing room.
-local function applyOutdoorVictory(outdoor,elite,now,intensity)
+local function applyOutdoorVictory(outdoor,elite,now,intensity,isExterior)
+    if isExterior==nil then isExterior=true end
     if not elite then
         outdoor.pressure=math.min(100,(outdoor.pressure or 0)+4*intensity)
         outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+1.5*intensity)
@@ -566,30 +606,37 @@ local function applyOutdoorVictory(outdoor,elite,now,intensity)
         local rank=math.max(1,math.min(3,elite.rank or 1))
         outdoor.pressure=math.min(100,(outdoor.pressure or 0)+({5,7,9})[rank]*intensity)
         outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+({4,8,12})[rank]*intensity)
+        if not isExterior then return end
         local seconds=({3,8,15})[rank]
         outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+seconds)
         return
     end
-    local seconds=elite.worldBoss and 180 or 25
-    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+seconds)
-    outdoor.pressure=0
     if elite.worldBoss then
-        outdoor.bossProgress=0
-        outdoor.lastBossAt=now
-        outdoor.phase='build';outdoor.peakUntil=0;outdoor.relaxUntil=0
-    else
-        outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+15*intensity)
+        outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+180)
+        return
     end
+    outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+25)
+    outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+15*intensity)
 end
 function M.victoryRespite(actor,elite)
-    if not actor or not actor.cell or not actor.cell.isExterior then return end
+    if not actor or not actor.cell then return end
     local outdoor=state.director.outdoor
     local now=core.getSimulationTime()
-    outdoor.safeCell=actor.cell.id -- retained for old-save diagnostics
-    if elite and elite.worldBoss and outdoor.activeBossId==actor.id then
-        outdoor.activeBossId=false
+    local isExterior=actor.cell.isExterior
+    if isExterior then outdoor.safeCell=actor.cell.id end -- retained for old-save diagnostics
+    -- The spawn event already released pressure and cycle progress. Freeze
+    -- ordinary/add deaths during the boss lock, then give the player the
+    -- established victory respite without performing a second pressure reset.
+    if outdoor.activeBossId then
+        if elite and elite.worldBoss and outdoor.activeBossId==actor.id then
+            outdoor.activeBossId=false
+            outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+180)
+        end
+        return
     end
-    applyOutdoorVictory(outdoor,elite,now,C.directorIntensity)
+    applyOutdoorVictory(outdoor,elite,now,C.directorIntensity,isExterior)
+    if elite and elite.worldBoss then return end
+    if not isExterior then return end
     -- Native kills continue to build pressure. A generated outdoor group gets
     -- one L4D-style relax window only after its last member dies; this avoids
     -- pausing the director after every rat while still giving a hard-fought
@@ -603,23 +650,23 @@ end
 -- lulls leave the pressure arc intact so the next wilderness leg still has a
 -- destination. The player script sends this event after the native Rest UI
 -- closes following a game-time advance in a cell that permits sleep.
-function M.safeSleep(player)
+function M.safeSleep(player,duration)
     if player and not player:isValid() then return end
     local outdoor=state.director.outdoor
     local now=core.getSimulationTime()
-    outdoor.pressure=0
-    outdoor.bossProgress=0
-    outdoor.specialStage=0
-    outdoor.phase='build'
-    outdoor.peakUntil=0
-    outdoor.relaxUntil=0
+    local hours=math.max(0,tonumber(duration) or 0)/3600
+    local decay=math.max(0,math.min(100,tonumber(C.townRestPressureDecay) or 15))
+    outdoor.pressure=math.max(0,(tonumber(outdoor.pressure) or 0)-decay*hours)
+    outdoor.pressureVoiceStage=Narration.pressureStage(outdoor.pressure)
+    outdoor.phase='build';outdoor.peakUntil=0;outdoor.relaxUntil=0
     outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+10)
     outdoor.nextRoll=now+10
     outdoor.distance=0
     outdoor.terrainRetries=0
     outdoor.lastSafeSleep=core.getGameTime()
     outdoor.safeCell=player and player.cell and player.cell.id or outdoor.safeCell
-    print('[AshenLoot] safe sleep reset outdoor pressure')
+    print('[AshenLoot] town rest eased outdoor pressure to '..math.floor(outdoor.pressure+0.5)
+        ..' after '..string.format('%.2f',hours)..' game hours')
 end
 function M.bossWave(actor)
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
@@ -939,6 +986,8 @@ function M.prepare(actor, inCombat)
     -- band in that case, without bypassing the normal level window.
     effectiveLevel=math.max(effectiveLevel,combatProfile.score or effectiveLevel)
     local generated = d.generated[actor.id]
+    local promotionBonus=math.max(0,math.min(0.25,tonumber(d.promotionBonuses[actor.id]) or 0))
+    d.promotionBonuses[actor.id]=nil
     local target=encounterTarget(native,effectiveLevel,rng(5)-3,types.Creature.objectIsInstance(actor),generated~=nil)
     if d.spawnLevels[actor.id] then target=math.max(1,math.floor(d.spawnLevels[actor.id]+0.5)) end
     if guard then target=math.max(target,math.floor(effectiveLevel*0.8)+4) end
@@ -950,7 +999,8 @@ function M.prepare(actor, inCombat)
         -- prepared.  The promotion ladder can then favor ordinary members at
         -- low pressure and reserve higher tiers for a rising encounter arc.
         directorPressure=(cell and cell.isExterior and generated=='director')
-            and math.max(0,math.min(100,tonumber(d.outdoor.pressure) or 0)) or nil}
+            and math.max(0,math.min(100,tonumber(d.outdoor.pressure) or 0)) or nil,
+        promotionBonus=promotionBonus}
     local ck = cellKey(cell)
     d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
     local cellState=d.cells[ck]
@@ -1001,7 +1051,7 @@ function M.prepare(actor, inCombat)
         -- carry the encounter until its death event releases the lock.
         d.outdoor.bossProgress=0
         d.outdoor.pressure=0
-        d.outdoor.specialStage=0
+        d.outdoor.specialStage=0;d.outdoor.specialCount=0;d.outdoor.pressureVoiceStage=0
         d.outdoor.activeBossId=actor.id
         d.outdoor.phase='build';d.outdoor.peakUntil=0;d.outdoor.relaxUntil=0
         d.outdoor.safeUntil=0
@@ -1143,10 +1193,14 @@ function M.spawnResult(event)
                 and state.director.generated[actor.id] or 0
             state.director.generated[spawn.id]=request.bossWave and 'bossAdd'
                 or (request.director and 'director' or (parentGeneration+1))
+            if request.special then state.director.specialActors[spawn.id]=request.special end
             if request.specialFriendly then state.director.generated[spawn.id]='specialAlly' end
             if request.director and not request.specialFriendly then
                 state.director.directorCosts[spawn.id]=request.cost or 1
                 state.director.spawnLevels[spawn.id]=request.level
+                if (request.promotionBonus or 0)>0 then
+                    state.director.promotionBonuses[spawn.id]=request.promotionBonus
+                end
             end
             if request.bossWave then
                 local adds=state.director.bossAdds[actor.id] or {}
@@ -1214,7 +1268,7 @@ function M.spawnResult(event)
     end
     refund(missing)
     print('[AshenLoot] encounter placement '..made..'/'..request.count..' in '..request.cell)
-    return made,request.director,request.den
+    return made,request.director,request.den,request.special
 end
 local scrollRecipes={
     {name='Embers',effect='firedamage',secondary='weaknesstofire'},
@@ -1755,8 +1809,6 @@ local function updateOutdoorDirector(player)
     if outdoor.activeBossId then
         -- A living World Boss is the outdoor climax. Do not spend pressure or
         -- roll another player-centered group while its add waves are active.
-        outdoor.pressure=0
-        outdoor.bossProgress=0
         outdoor.nextRoll=now+interval
         outdoor.distance=0
         return
@@ -1812,10 +1864,15 @@ local function updateOutdoorDirector(player)
     local cost=math.max(0.35,math.min(1.5,target/power))
     local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
     if count<=0 then return end
-    local special
+    local special,specialOpportunity,specialMiss
     if C.worldBosses and C.specialEncounterChance>0 then
-        special=SpecialEncounters.tryOpportunity(outdoor,outdoor.bossProgress,C.specialEncounterChance,rng)
+        special,specialOpportunity,specialMiss=SpecialEncounters.tryOpportunity(
+            outdoor,outdoor.bossProgress,C.specialEncounterChance,rng)
     end
+    -- If the special opportunity passes by, let the ordinary group carry a
+    -- small extra chance of promotion and a modest nudge toward higher ranks.
+    -- It remains an ordinary creature group; this is only a little overspend.
+    local promotionBonus=specialMiss and 0.10 or 0
     -- Spending a director group does not erase appetite. The player is still
     -- out in the wilderness and the arc should keep trending upward until a
     -- World Boss victory or a deliberate safe sleep.
@@ -1829,7 +1886,6 @@ local function updateOutdoorDirector(player)
         -- the same already-computed population budget. Every prince currently
         -- contributes one themed family encounter; selection remains extensible.
         local specialCount=special.friendly and 1 or count
-        local specialCount=special.friendly and 1 or count
         pending[token]={actor=player,level=target,count=specialCount,cell=cell.id,created=now,
             director=true,cost=cost,special=special.id,specialFamily=special.family,
             specialName=special.name,specialLine=special.line,
@@ -1837,7 +1893,7 @@ local function updateOutdoorDirector(player)
             dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=specialCount,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
-    elseif not denActive and rng(100)<=denChance and live+2<=cap then
+    elseif not specialMiss and not denActive and rng(100)<=denChance and live+2<=cap then
         local families={'beast','undead','daedra','construct'}
         local family=families[rng(#families)]
         local maxTier=power>=25 and 3 or (power>=10 and 2 or 1)
@@ -1851,7 +1907,7 @@ local function updateOutdoorDirector(player)
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
     else
         pending[token]={actor=player,level=target,count=count,cell=cell.id,
-            created=now,director=true,cost=cost,
+            created=now,director=true,cost=cost,promotionBonus=promotionBonus,
             dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
@@ -1893,6 +1949,12 @@ local function maintenance(now)
     end
     for id in pairs(d.spawnLevels) do
         if not d.generated[id] then d.spawnLevels[id]=nil end
+    end
+    for id in pairs(d.promotionBonuses) do
+        if not d.generated[id] then d.promotionBonuses[id]=nil end
+    end
+    for id in pairs(d.specialActors) do
+        if not active[id] then d.specialActors[id]=nil end
     end
 end
 function M.update(dt)

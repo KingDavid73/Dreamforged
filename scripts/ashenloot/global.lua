@@ -11,7 +11,7 @@ local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local Narration = require('scripts.ashenloot.narration')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 33, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 34, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -804,6 +804,8 @@ local function encounter(data)
             and state.director.generated[key]=='director'
         local directorPressure=directorActor and math.max(0,math.min(100,
             tonumber(actorState and actorState.directorPressure) or 0)) or 0
+        local overspendBonus=directorActor and math.max(0,math.min(0.25,
+            tonumber(actorState and actorState.promotionBonus) or 0)) or 0
         -- A low-pressure group should mostly remain ordinary fodder.  As the
         -- director's appetite rises, more members may enter the promotion
         -- ladder, but the chance remains bounded so a single group cannot turn
@@ -811,7 +813,7 @@ local function encounter(data)
         local promotionChance=C.eliteChance
         if directorActor then
             promotionChance=math.max(0.05,math.min(0.85,
-                promotionChance*(0.65+directorPressure/100*1.35)))
+                promotionChance*(0.65+directorPressure/100*1.35)+overspendBonus))
         end
         if data.force or R.rng(key .. ':elite')() < promotionChance then
             local rec = actor.type.record(actor)
@@ -820,13 +822,14 @@ local function encounter(data)
             -- World Boss is the top rung of the promotion ladder. This roll is
             -- conditional on the actor first passing the promotion roll (or
             -- being force-promoted as a dungeon leader).
-            local bossChance=math.max(0,math.min(100,tonumber(data.worldBossChance) or 3))
+            local bossChance=math.max(0,math.min(100,(tonumber(data.worldBossChance) or 3)
+                +overspendBonus*25))
             local worldBoss=data.worldBoss or (data.allowWorldBoss and random(100)<=bossChance)
             local uniqueChance=tonumber(C.uniquePercent) or 0
             local eliteChance=tonumber(C.eliteTierPercent) or 0
             if directorActor then
-                uniqueChance=math.min(80,uniqueChance+directorPressure*0.22)
-                eliteChance=math.min(95,eliteChance+directorPressure*0.38)
+                uniqueChance=math.min(80,uniqueChance+directorPressure*0.22+overspendBonus*40)
+                eliteChance=math.min(95,eliteChance+directorPressure*0.38+overspendBonus*60)
             end
             elite.rank = worldBoss and 3 or (data.rank or (random(100)<=uniqueChance and 3
                 or (random(100)<=eliteChance and 2 or 1)))
@@ -864,9 +867,16 @@ local function encounter(data)
             elite.itemLevel=Progress.actorLevel(actor)
             elite.effectScale=math.min(elite.worldBoss and 2.5 or 2,1+math.floor(elite.itemLevel/10)*0.15)
             state.elites[key] = elite
-            if elite.worldBoss then
-                Narration.emit(state,C,world.players[1],core.getSimulationTime(),'boss',
-                    {enemy=elite.name,kind=rec.name},true)
+            local princeActor=state.director and state.director.specialActors
+                and state.director.specialActors[key]
+            if elite.worldBoss and not princeActor then
+                Narration.emitChance(state,C,world.players[1],core.getSimulationTime(),'boss',
+                    {enemy=elite.name,kind=rec.name},100)
+            elseif not princeActor then
+                local tierNames={'Champion','Elite','Unique'}
+                local tierChance=({25,40,60})[elite.rank] or 25
+                Narration.emitChance(state,C,world.players[1],core.getSimulationTime(),'promotion',
+                    {enemy=elite.name,tier=tierNames[elite.rank] or 'Champion',kind=rec.name},tierChance)
             end
         else state.elites[key] = false end
     end
@@ -982,10 +992,7 @@ local function death(actor)
     local enemyName=elite and elite.name or actor.type.record(actor).name
     local enemyKind=actor.type.record(actor).name
     local now=core.getSimulationTime()
-    if rank==0 and rng(100)>ordinaryChance then
-        Narration.emit(state,C,player,now,'commonKill',{enemy=enemyName,kind=enemyKind})
-        return
-    end
+    if rank==0 and rng(100)>ordinaryChance then return end
     local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank)+directorSpend,mythicChance())
     settleRewardHunger(rewardDirector,rank,tiers)
     local profile=lootProfile();local magicProfile=profile and
@@ -1010,16 +1017,19 @@ local function death(actor)
         end
     end
     local values={enemy=enemyName,kind=enemyKind,item=bestName}
-    if worldBoss then
-        Narration.emit(state,C,player,now,'bossVictory',values,true)
-    elseif bestTier>=5 and bestName then
-        Narration.emit(state,C,player,now,'prize',values)
-    elseif rank>0 and #tiers==0 then
-        Narration.emit(state,C,player,now,'barren',values)
+    if worldBoss and bestTier==7 and bestName then
+        Narration.emitChance(state,C,player,now,'bossMythic',values,100)
+    elseif worldBoss then
+        Narration.emitChance(state,C,player,now,'bossVictory',values,100)
+    elseif bestTier==7 and bestName then
+        Narration.emitChance(state,C,player,now,'mythicPrize',values,100)
+    elseif bestTier==6 and bestName then
+        Narration.emitChance(state,C,player,now,'relicPrize',values,50)
     elseif rank>0 then
-        Narration.emit(state,C,player,now,'victory',values)
-    else
-        Narration.emit(state,C,player,now,'commonKill',values)
+        local tierNames={'Champion','Elite','Unique'}
+        local tierChance=({25,40,60})[math.min(3,rank)] or 25
+        Narration.emitChance(state,C,player,now,'promotedKill',
+            {enemy=enemyName,kind=enemyKind,tier=tierNames[math.min(3,rank)] or 'Champion'},tierChance)
     end
 end
 Progress.bind(state,giveLoot,encounter,eligible)
@@ -1231,20 +1241,28 @@ return {
             local ok,err=pcall(Progress.update,dt)
             if not ok then print('[AshenLoot] ERROR director: '..tostring(err)) end
             voiceElapsed=voiceElapsed+dt
-            if voiceElapsed>=15 then
+            if voiceElapsed>=5 then
                 voiceElapsed=0
                 local player=world.players[1]
                 if player and player:isValid() and not types.Actor.isDead(player) then
                     local outdoor=state.director and state.director.outdoor
-                    local kind
-                    if player.cell and not player.cell.isExterior then kind='dungeon'
-                    elseif outdoor and not outdoor.activeBossId and not outdoor.inTown then
-                        local progress=math.max(tonumber(outdoor.pressure) or 0,tonumber(outdoor.bossProgress) or 0)
-                        kind=progress>=72 and 'imminent' or (progress>=32 and 'rising' or 'roam')
-                    end
-                    if kind then
-                        local voiceOk,voiceErr=pcall(Narration.emit,state,C,player,core.getSimulationTime(),kind)
-                        if not voiceOk then print('[AshenLoot] ERROR director voice: '..tostring(voiceErr)) end
+                    if outdoor then
+                        local pressure=tonumber(outdoor.pressure) or 0
+                        local targetStage=Narration.pressureStage(pressure)
+                        local shown=tonumber(outdoor.pressureVoiceStage) or 0
+                        if targetStage<shown then
+                            outdoor.pressureVoiceStage=targetStage
+                        elseif targetStage>shown then
+                            -- Preserve each crossed status tier if pressure
+                            -- jumps over more than one threshold in a single
+                            -- encounter. The shared voice cooldown will pace
+                            -- the backlog across later director ticks.
+                            local stage=shown+1
+                            local voiceOk,voiceErr=pcall(Narration.emitPressure,state,C,player,
+                                core.getSimulationTime(),pressure,stage)
+                            if voiceOk and voiceErr then outdoor.pressureVoiceStage=stage end
+                            if not voiceOk then print('[AshenLoot] ERROR pressure voice: '..tostring(voiceErr)) end
+                        end
                     end
                 end
             end
@@ -1358,7 +1376,7 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 33
+            state.version = 34
             Progress.bind(state,giveLoot,encounter,eligible)
         end,
     },
@@ -1369,18 +1387,25 @@ return {
         AshenLoot_CombineForgeCoins = guard(combineForgeCoins),
         AshenLoot_PrepareFighting = guard(function(actor) Progress.prepare(actor,true) end),
         AshenLoot_SpawnResult = guard(function(event)
-            local made,director,den=Progress.spawnResult(event)
-            if director and made and made>0 then
-                Narration.emit(state,C,world.players[1],core.getSimulationTime(),den and 'den' or 'group',
-                    {count=made})
+            local made,director,den,special=Progress.spawnResult(event)
+            if director and made and made>0 and not special then
+                local now=core.getSimulationTime()
+                if den then
+                    Narration.emit(state,C,world.players[1],now,'den',{count=made})
+                else
+                    Narration.emitChance(state,C,world.players[1],now,'group',
+                        {count=made},25)
+                end
             end
         end),
         AshenLoot_BossWave = guard(Progress.bossWave),
         AshenLoot_ReplacementResult = guard(Progress.replaceResult),
         AshenLoot_Scavenge = guard(Progress.scavenge),
         AshenLoot_SafeSleep = guard(function(event)
-            Progress.safeSleep(event and event.player or world.players[1])
-            Narration.emit(state,C,world.players[1],core.getSimulationTime(),'sleep',nil,true)
+            if event and event.town then
+                Progress.safeSleep(event.player or world.players[1],event.duration)
+                Narration.emit(state,C,world.players[1],core.getSimulationTime(),'sleep',nil,true)
+            end
         end),
         AshenLoot_AlignGroundDropResult = guard(function(event)
             local loose=event and state.director and state.director.loose and state.director.loose[event.id]
