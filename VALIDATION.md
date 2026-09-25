@@ -1,5 +1,17 @@
 ﻿# Ashen Loot validation
 
+## 0.10.29 World Boss tracker synchronization (2026-09-25)
+
+- The packaged build loaded in OpenMW 0.51. The focused world-profile
+  regression passed: an unresolved saved World Boss ID clears the director
+  lock and actor reference so wilderness rolls can resume.
+- The world profile then stopped at its later `Scavenging transfer` assertion.
+  That test path is outside the World Boss changes in this release; no
+  Dreamforged Lua runtime error was reported before the assertion. The full
+  world-profile suite therefore is not recorded as passing.
+- `git diff --check` passed. Visual confirmation of the boss bar/distance
+  while a real boss is distant remains an in-game playtest item.
+
 ## 0.10.28 Lua cadence and scan cleanup (2026-09-25)
 
 - The OpenMW 0.51 Lua 5.1 parser accepted all 26 Lua source/test modules;

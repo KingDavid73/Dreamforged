@@ -270,6 +270,7 @@ local function demoteInvalidWorldBoss(actor)
         -- If an invalid/non-aggressive actor is demoted before death, release
         -- the outdoor climax lock so the director cannot remain paused forever.
         director.outdoor.activeBossId=false
+        director.outdoor.activeBossActor=false
     end
     local actorState=director and director.actors and director.actors[actor.id]
     if actorState and actorState.bossOriginalScale then actor:setScale(actorState.bossOriginalScale)
@@ -282,7 +283,7 @@ local function demoteInvalidWorldBoss(actor)
     end
     actor:sendEvent('AshenLoot_EncounterResult',{elite=false})
     local player=world.players[1]
-    if player then player:sendEvent('AshenLoot_Elite',{id=actor.id,metadata=false}) end
+    if player then player:sendEvent('AshenLoot_Elite',{id=actor.id,metadata=false,actor=actor}) end
 end
 local function attach(actor)
     if actor and actor:isValid() then demoteInvalidWorldBoss(actor) end
@@ -290,10 +291,11 @@ local function attach(actor)
     -- Old saves can contain a living outdoor World Boss created before the
     -- climax lock existed. Rehydrate the lock when that actor becomes active;
     -- the first boss remains authoritative if an unusual save has several.
-    if elite and elite.worldBoss and actor.cell and actor.cell.isExterior
+    if elite and elite.worldBoss and actor.cell and actor.cell.isExterior and actor.enabled
         and state.director and state.director.outdoor
         and not state.director.outdoor.activeBossId then
         state.director.outdoor.activeBossId=actor.id
+        state.director.outdoor.activeBossActor=actor
     end
     local requiredNameVersion=types.NPC.objectIsInstance(actor) and 3 or 2
     if elite and elite.worldBoss and elite.nameVersion~=requiredNameVersion then
@@ -301,15 +303,15 @@ local function attach(actor)
         elite.family=family(rec)
         elite.name=bossName(actor,rec)
         elite.nameVersion=requiredNameVersion
-        local player=world.players[1]
-        if player then player:sendEvent('AshenLoot_Elite',{id=actor.id,metadata=elite}) end
     end
     if elite and (elite.worldBoss or elite.rank==3) and not elite.biography then
         local rec=actor.type.record(actor)
         elite.family=elite.family or family(rec)
         elite.biography=biography(actor,elite,rec)
+    end
+    if elite and elite.worldBoss then
         local player=world.players[1]
-        if player then player:sendEvent('AshenLoot_Elite',{id=actor.id,metadata=elite}) end
+        if player then player:sendEvent('AshenLoot_Elite',{id=actor.id,metadata=elite,actor=actor}) end
     end
     if eligible(actor) and not actor:hasScript(script) then actor:addScript(script) end
 end
@@ -1446,7 +1448,7 @@ return {
         AshenLoot_Promoted = guard(function(actor)
             if not actor or not actor:isValid() or not eligible(actor) then return end
             local elite, player = state.elites[actor.id], world.players[1]
-            if player and elite then player:sendEvent('AshenLoot_Elite', {id = actor.id, metadata = elite}) end
+            if player then player:sendEvent('AshenLoot_Elite', {id = actor.id, metadata = elite,actor=actor}) end
         end),
         AshenLoot_Request = guard(function() snapshot() end),
         AshenLoot_StartingKit = guard(startingKit),

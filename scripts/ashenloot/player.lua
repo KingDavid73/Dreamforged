@@ -14,6 +14,7 @@ local A = require('scripts.ashenloot.advancement')
 local whiteTexture=ui.texture {path='white'}
 I.Settings.registerPage {key = 'AshenLoot', l10n = 'AshenLoot', name = 'page', description = 'pageDescription'}
 local records, elites, fresh, forgePoints = {}, {}, {}, {0,0,0,0,0,0}
+local trackedWorldBosses={}
 local classBoosted = false
 local classKitGranted = false
 local classElapsed = 0
@@ -279,14 +280,31 @@ local function updateVoiceCard()
     voiceCard=ui.create(layout)
 end
 local function updateBossCard()
-    if not C.worldBosses or I.UI.getMode() then clearBossCard();return end
+    if not C.enabled or I.UI.getMode() then clearBossCard();return end
     local nearest,meta,distance
+    local function consider(actor,boss,ignoreRange)
+        if boss and boss.worldBoss and actor and actor:isValid() and actor.enabled and not types.Actor.isDead(actor) then
+            local d=(actor.position-self.position):length()
+            if (ignoreRange or d<=C.worldBossRange) and (not distance or d<distance) then
+                nearest,meta,distance=actor,boss,d
+            end
+        end
+    end
+    -- The global director passes the actual actor handle when a World Boss is
+    -- registered. Keep that reference so distance/health tracking does not
+    -- depend on nearby.actors returning an actor at the configured range.
+    for id,actor in pairs(trackedWorldBosses) do
+        local boss=elites[id]
+        if not boss or not boss.worldBoss or not actor or not actor:isValid() or not actor.enabled
+            or types.Actor.isDead(actor) then
+            trackedWorldBosses[id]=nil
+        else
+            consider(actor,boss,true)
+        end
+    end
     for _,actor in ipairs(nearby.actors) do
         local boss=elites[actor.id]
-        if boss and boss.worldBoss and actor:isValid() and not types.Actor.isDead(actor) then
-            local d=(actor.position-self.position):length()
-            if d<=C.worldBossRange and (not distance or d<distance) then nearest,meta,distance=actor,boss,d end
-        end
+        consider(actor,boss,false)
     end
     if not nearest then clearBossCard();return end
     local displayName=meta.name
@@ -670,7 +688,15 @@ return {
         end,
         AshenLoot_ForgeResult=function(data) if data and data.message then ui.showMessage(data.message) end end,
         AshenLoot_Record = function(data) records[data.id] = data.metadata end,
-        AshenLoot_Elite = function(data) elites[data.id] = data.metadata end,
+        AshenLoot_Elite = function(data)
+            if not data or not data.id then return end
+            elites[data.id]=data.metadata
+            if data.metadata and data.metadata.worldBoss and data.actor and data.actor:isValid() and data.actor.enabled then
+                trackedWorldBosses[data.id]=data.actor
+            else
+                trackedWorldBosses[data.id]=nil
+            end
+        end,
         AshenLoot_AdvancementList=function(data)
             activeAbilities=data or {};if activeIndex>#activeAbilities then activeIndex=0 end
         end,

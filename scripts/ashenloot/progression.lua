@@ -13,6 +13,7 @@ local genericCreatureIds
 local timer, considered, lastPlayerCell = 0, {}, nil
 local maintenanceAt=0
 local debugSentAt=-math.huge
+local lastBossHudId,lastBossHudAt=nil,-math.huge
 local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
 local function additionalCount(cellState)
     return math.max(0,math.floor(tonumber(cellState and cellState.additionalCount) or 0))
@@ -516,6 +517,7 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor.distance=state.director.outdoor.distance or 0
     state.director.outdoor.terrainRetries=state.director.outdoor.terrainRetries or 0
     state.director.outdoor.specialStage=state.director.outdoor.specialStage or 0
+    state.director.outdoor.activeBossActor=state.director.outdoor.activeBossActor or false
     if state.director.outdoor.specialCount==nil then
         state.director.outdoor.specialCount=math.min(3,state.director.outdoor.specialStage)
     end
@@ -607,6 +609,66 @@ local function setDirectorDebug(status,detail)
 end
 M.debugAction=setDirectorDebug
 
+-- Keep the outdoor climax lock tied to a live actor, not only a persisted ID.
+-- Actor references survive normal save/load and let the HUD track a boss even
+-- when it is outside the nearby-actor query. Older saves only have the ID, so
+-- recover it from active actors once, or release the stale lock if it no
+-- longer resolves to a living World Boss.
+local function isLiveOutdoorBoss(actor,id)
+    if not actor or not actor:isValid() or actor.id~=id or types.Actor.isDead(actor)
+        or not actor.enabled or not actor.cell or not actor.cell.isExterior then return false end
+    local elite=state.elites[id]
+    return elite and elite.worldBoss or false
+end
+local function publishOutdoorBoss(actor,id,now)
+    if lastBossHudId==id and now-lastBossHudAt<10 then return end
+    local player=world.players[1]
+    local elite=state.elites[id]
+    if player and player:isValid() and elite and elite.worldBoss then
+        player:sendEvent('AshenLoot_Elite',{id=id,metadata=elite,actor=actor})
+        lastBossHudId,lastBossHudAt=id,now
+    end
+end
+local function reconcileOutdoorBoss(now,activeActors)
+    local outdoor=state and state.director and state.director.outdoor
+    if not outdoor then return nil end
+    local id=outdoor.activeBossId
+    local actor=outdoor.activeBossActor
+    if id and isLiveOutdoorBoss(actor,id) then
+        publishOutdoorBoss(actor,id,now)
+        return actor
+    end
+    if not id then
+        outdoor.activeBossActor=false
+        return nil
+    end
+    -- The reference may be missing in older saves or after an interrupted
+    -- promotion. Search active actors to reattach a real boss before deciding
+    -- that the persisted lock is stale.
+    for _,candidate in ipairs(activeActors or world.activeActors) do
+        local elite=state.elites[candidate.id]
+        if elite and elite.worldBoss and candidate.cell and candidate.cell.isExterior
+            and candidate.enabled and candidate:isValid() and not types.Actor.isDead(candidate) then
+            outdoor.activeBossId=candidate.id
+            outdoor.activeBossActor=candidate
+            publishOutdoorBoss(candidate,candidate.id,now)
+            return candidate
+        end
+    end
+    outdoor.activeBossId=false
+    outdoor.activeBossActor=false
+    outdoor.phase='build'
+    outdoor.peakUntil=0
+    outdoor.relaxUntil=0
+    outdoor.nextRoll=math.min(tonumber(outdoor.nextRoll) or now,now+5)
+    setDirectorDebug('Boss lock cleared','The tracked World Boss no longer exists; outdoor pressure can resume.')
+    local player=world.players[1]
+    if player and player:isValid() then
+        player:sendEvent('AshenLoot_Elite',{id=id,metadata=false})
+    end
+    return nil
+end
+
 -- Wilderness combat is feedback for the director. Ordinary kills and lower
 -- promotions mean the player is engaging, so they build pressure instead of
 -- granting a lull. Only major victories create meaningful breathing room.
@@ -645,6 +707,7 @@ function M.victoryRespite(actor,elite)
     if outdoor.activeBossId then
         if elite and elite.worldBoss and outdoor.activeBossId==actor.id then
             outdoor.activeBossId=false
+            outdoor.activeBossActor=false
             outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+180)
             setDirectorDebug('World Boss defeated','Pressure released; victory respite for 180 seconds.')
         end
@@ -1062,7 +1125,7 @@ function M.prepare(actor, inCombat)
         allowWorldBoss=allowWorldBoss,worldBossChance=outdoorBossChance,combatDps=combatDps,
         combatBand=combatBand}) end
     local elite=state.elites[actor.id]
-    if elite and elite.worldBoss and cell.isExterior then
+    if elite and elite.worldBoss and cell.isExterior and valid(actor) then
         -- Promotion is the moment the World Boss becomes real. Empty the
         -- outdoor pressure arc immediately and let the boss's own add waves
         -- carry the encounter until its death event releases the lock.
@@ -1070,9 +1133,11 @@ function M.prepare(actor, inCombat)
         d.outdoor.pressure=0
         d.outdoor.specialStage=0;d.outdoor.specialCount=0;d.outdoor.pressureVoiceStage=0
         d.outdoor.activeBossId=actor.id
+        d.outdoor.activeBossActor=actor
         d.outdoor.phase='build';d.outdoor.peakUntil=0;d.outdoor.relaxUntil=0
         d.outdoor.safeUntil=0
         d.outdoor.lastBossAt=core.getSimulationTime()
+        publishOutdoorBoss(actor,actor.id,core.getSimulationTime())
     end
     if elite and elite.worldBoss and not d.actors[actor.id].bossScaleFactor then
         d.actors[actor.id].bossOriginalScale=actor.scale
@@ -2026,6 +2091,7 @@ function M.update(dt)
     timer=0
     local now=core.getSimulationTime()
     local player=world.players[1]
+    reconcileOutdoorBoss(now)
     if not C.enabled then
         setDirectorDebug('Disabled','Dreamforged is turned off.')
         if C.directorDebugView and now-debugSentAt>=2 then
@@ -2101,6 +2167,7 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     pickNpcReinforcement=pickNpcReinforcement,randomizeInventory=randomizeInventory,
     randomBase=randomBase,isGuard=isGuard,isAggressive=isAggressive,worldBossScale=worldBossScale,
     activeWorldBosses=activeWorldBosses,
+    reconcileOutdoorBoss=reconcileOutdoorBoss,
     estimatedLevel=estimatedLevel,encounterTarget=encounterTarget,pickDungeonCreature=pickDungeonCreature,
     randomBroadBase=randomBroadBase,randomNativeEnchanted=randomNativeEnchanted,
     randomSimilarEnchanted=randomSimilarEnchanted,

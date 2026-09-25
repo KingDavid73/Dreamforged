@@ -1,5 +1,16 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.29 - World Boss tracker synchronization
+
+- The outdoor director now stores and validates the actual living World Boss
+  actor, not just its ID. Stale, dead, disabled, demoted, or unresolved bosses
+  release the director pause instead of leaving the encounter stuck.
+- The World Boss HUD receives that actor reference directly, so its name,
+  health bar, and distance remain visible even when `nearby.actors` omits a
+  boss that is still in the active world. The configured range remains the
+  discovery radius for other nearby bosses.
+- Added an isolated regression check for stale World Boss lock cleanup.
+
 ## 0.10.28 - paced Lua update work
 
 - Reduced target-card raycasts to 4 Hz. World Boss discovery/HUD refresh runs

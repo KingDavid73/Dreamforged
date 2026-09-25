@@ -155,7 +155,7 @@ worldBossCellCapDescription: "Hard ceiling on living World Bosses in one active 
 worldBossMinLevel: "Minimum player level for world bosses — max 50"
 worldBossMinLevelDescription: "Promoted enemies encountered below this player level cannot become World Bosses. Default 5."
 worldBossRange: "World boss health-bar range — max 10000"
-worldBossRangeDescription: "Shows the persistent boss name and health bar while its living boss is this many units away in the active cell. Default 5000."
+worldBossRangeDescription: "Discovery radius for nearby living World Bosses. A boss tracked by the outdoor director stays visible with its distance until defeated. Default 5000."
 worldBossSpawnMinDistance: "World Boss preparation distance — max 3000"
 worldBossSpawnMinDistanceDescription: "Minimum distance used for player-centered outdoor director placements, ensuring a promoted World Boss has room to prepare before it reaches you. Default 1200 world units."
 worldBossDistanceHide: "Hide boss distance within — max 3000"

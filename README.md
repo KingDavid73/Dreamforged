@@ -1,6 +1,15 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.28 - paced Lua update work.**
+**Current release: 0.10.29 - World Boss tracker synchronization.**
+
+## 0.10.29 World Boss tracker synchronization
+
+- The director now validates the actual living World Boss actor behind its
+  outdoor pause. Dead, disabled, demoted, missing, or unresolved bosses clear
+  the stale lock so outdoor encounters can resume.
+- The HUD tracks the actor directly for name, health, and distance instead of
+  relying only on the limited nearby-actor query. This keeps the boss tracker
+  and director lock synchronized.
 
 ## 0.10.28 Paced Lua update work
 

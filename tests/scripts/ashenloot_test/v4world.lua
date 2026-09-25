@@ -59,6 +59,12 @@ return {engineHandlers={onUpdate=function(dt)
             cacheBefore=#types.Container.content(cache):getAll()
         elseif stage==1 and time>5 then
             stage=2
+            d.outdoor.activeBossId='stale-world-boss-test'
+            d.outdoor.activeBossActor=false
+            progress.test.reconcileOutdoorBoss(core.getSimulationTime(),{})
+            check(d.outdoor.activeBossId==false and d.outdoor.activeBossActor==false,
+                'Director retained an unresolved World Boss lock')
+            pass('stale World Boss lock releases when no living actor resolves it')
             check(spawnPos,'No navmesh fixture location')
             set('randomizeContainers',true)
             progress.containerLoot(p.cell,rat,30)
@@ -84,6 +90,9 @@ return {engineHandlers={onUpdate=function(dt)
             check(d.outdoor.pressure>pressureBefore and d.outdoor.bossProgress>progressBefore,
                 'A non-boss high-tier victory incorrectly cleared the outdoor director arc')
             pass('non-boss victories build pressure without clearing the outdoor arc')
+            -- The pressure and boss cycle are cleared when the World Boss
+            -- spawns; its death only starts the recovery window.
+            d.outdoor.pressure=0;d.outdoor.bossProgress=0
             progress.test.applyOutdoorVictory(d.outdoor,{rank=3,worldBoss=true},core.getSimulationTime(),1)
             check(d.outdoor.pressure==0 and d.outdoor.bossProgress==0
                 and (d.outdoor.safeUntil or 0)>core.getSimulationTime(),
