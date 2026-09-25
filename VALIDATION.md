@@ -1,5 +1,14 @@
 ﻿# Ashen Loot validation
 
+## 0.10.25 Prince and Vivec director encounters (2026-09-24)
+
+- The isolated OpenMW 0.51 v4 profile passed all 73 settings controls and the
+  full v4 regression, including all 19 roster entries, the three cycle gates,
+  default one-to-two pacing, caption delivery, and save/reload. The v4 settings
+  test also verified the new chance resets to its shipped default.
+- In-game cadence, actual follower behavior, regional feel of themed pools,
+  and caption overlap still need playtesting.
+
 ## 0.10.24 Director voices (2026-09-24)
 
 - Lua parser accepted narration, global, player, settings and config scripts.

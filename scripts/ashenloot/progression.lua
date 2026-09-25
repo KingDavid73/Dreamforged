@@ -3,6 +3,9 @@ local core, types, world = require('openmw.core'), require('openmw.types'), requ
 local util = require('openmw.util')
 local C, R = require('scripts.ashenloot.config'), require('scripts.ashenloot.rules')
 local Records = require('scripts.ashenloot.records')
+local SpecialEncounters = require('scripts.ashenloot.special_encounters')
+local Narration = require('scripts.ashenloot.narration')
+local ACTOR_SCRIPT = 'scripts/ashenloot/actor.lua'
 local M = {}
 local state, loot, promote, eligible
 local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
@@ -428,6 +431,7 @@ end
 local function pickFamilyCreature(familyName,target,rng)
     buildPools()
     local source=pools[familyName] or pools.all
+    if #source==0 then source=pools.all end
     local candidates={}
     for _,entry in ipairs(source) do
         if entry.level>=math.max(1,target-C.encounterLevelBelow)
@@ -476,6 +480,7 @@ function M.bind(s, giveLoot, encounter, isEligible)
     state.director.outdoor.nextRoll=state.director.outdoor.nextRoll or 0
     state.director.outdoor.distance=state.director.outdoor.distance or 0
     state.director.outdoor.terrainRetries=state.director.outdoor.terrainRetries or 0
+    state.director.outdoor.specialStage=state.director.outdoor.specialStage or 0
     -- A living outdoor World Boss owns the current climax. Its actor script
     -- continues to request reinforcement waves while the director remains
     -- paused until the boss's death event clears this id.
@@ -604,6 +609,7 @@ function M.safeSleep(player)
     local now=core.getSimulationTime()
     outdoor.pressure=0
     outdoor.bossProgress=0
+    outdoor.specialStage=0
     outdoor.phase='build'
     outdoor.peakUntil=0
     outdoor.relaxUntil=0
@@ -995,6 +1001,7 @@ function M.prepare(actor, inCombat)
         -- carry the encounter until its death event releases the lock.
         d.outdoor.bossProgress=0
         d.outdoor.pressure=0
+        d.outdoor.specialStage=0
         d.outdoor.activeBossId=actor.id
         d.outdoor.phase='build';d.outdoor.peakUntil=0;d.outdoor.relaxUntil=0
         d.outdoor.safeUntil=0
@@ -1125,7 +1132,8 @@ function M.spawnResult(event)
                 if createDen(request,pos) then made=made+1 end
                 break
             end
-            local id=request.denWave and pickFamilyCreature(request.family,request.level,rng)
+            local id=request.specialFamily and pickFamilyCreature(request.specialFamily,request.level,rng)
+                or (request.denWave and pickFamilyCreature(request.family,request.level,rng))
                 or (request.director and pickDungeonCreature(actor.cell,request.level,rng))
                 or (types.Creature.objectIsInstance(actor) and pickCreature(actor,request.level,rng,true) or actor.recordId)
             -- NPC copies are forbidden: use varied level-aware creature allies instead.
@@ -1135,7 +1143,8 @@ function M.spawnResult(event)
                 and state.director.generated[actor.id] or 0
             state.director.generated[spawn.id]=request.bossWave and 'bossAdd'
                 or (request.director and 'director' or (parentGeneration+1))
-            if request.director then
+            if request.specialFriendly then state.director.generated[spawn.id]='specialAlly' end
+            if request.director and not request.specialFriendly then
                 state.director.directorCosts[spawn.id]=request.cost or 1
                 state.director.spawnLevels[spawn.id]=request.level
             end
@@ -1144,7 +1153,16 @@ function M.spawnResult(event)
                 adds[#adds+1]=spawn.id;state.director.bossAdds[actor.id]=adds
             end
             spawn:teleport(actor.cell,pos)
-            spawn:sendEvent('AshenLoot_Spawned')
+            if request.specialFriendly then
+                -- Azura's intervention is temporary assistance, not another
+                -- hostile target. Reuse the existing mythic summon/follower
+                -- lifetime and AI path.
+                state.director.actors[spawn.id]={level=request.level,cell=request.cell,specialAlly=true}
+                state.mythicSummons=state.mythicSummons or {}
+                state.mythicSummons[spawn.id]=core.getSimulationTime()+120
+                if not spawn:hasScript(ACTOR_SCRIPT) then spawn:addScript(ACTOR_SCRIPT) end
+                spawn:sendEvent('AshenLoot_MythicFollow',actor)
+            else spawn:sendEvent('AshenLoot_Spawned') end
             made=made+1
         end
     end
@@ -1189,6 +1207,10 @@ function M.spawnResult(event)
         if request.director and made>0 then
             enterOutdoorPeak(state.director.outdoor,core.getSimulationTime(),C.directorIntensity)
         end
+    end
+    if request.special and made>0 then
+        Narration.emitSpecial(state,C,world.players[1],core.getSimulationTime(),
+            {id=request.special,name=request.specialName,line=request.specialLine})
     end
     refund(missing)
     print('[AshenLoot] encounter placement '..made..'/'..request.count..' in '..request.cell)
@@ -1790,6 +1812,10 @@ local function updateOutdoorDirector(player)
     local cost=math.max(0.35,math.min(1.5,target/power))
     local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
     if count<=0 then return end
+    local special
+    if C.worldBosses and C.specialEncounterChance>0 then
+        special=SpecialEncounters.tryOpportunity(outdoor,outdoor.bossProgress,C.specialEncounterChance,rng)
+    end
     -- Spending a director group does not erase appetite. The player is still
     -- out in the wilderness and the arc should keep trending upward until a
     -- World Boss victory or a deliberate safe sleep.
@@ -1798,7 +1824,20 @@ local function updateOutdoorDirector(player)
     local denActive=false
     for _,denState in pairs(d.dens) do if denState.cell==cell.id and not denState.dead then denActive=true;break end end
     local denChance=math.min(50,math.max(0,tonumber(C.creatureDenChance) or 12))
-    if not denActive and rng(100)<=denChance and live+2<=cap then
+    if special then
+        -- A special roll replaces the ordinary group/den selection but spends
+        -- the same already-computed population budget. Every prince currently
+        -- contributes one themed family encounter; selection remains extensible.
+        local specialCount=special.friendly and 1 or count
+        local specialCount=special.friendly and 1 or count
+        pending[token]={actor=player,level=target,count=specialCount,cell=cell.id,created=now,
+            director=true,cost=cost,special=special.id,specialFamily=special.family,
+            specialName=special.name,specialLine=special.line,
+            specialFriendly=special.friendly,
+            dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
+        player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=specialCount,
+            director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+    elseif not denActive and rng(100)<=denChance and live+2<=cap then
         local families={'beast','undead','daedra','construct'}
         local family=families[rng(#families)]
         local maxTier=power>=25 and 3 or (power>=10 and 2 or 1)
@@ -1918,5 +1957,6 @@ M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,reru
     gearLevel=gearLevel,combatDps=playerCombatDps,damageProfile=playerDamageProfile,
     gearHealthScale=gearHealthScale,prestigeScale=prestigeScale,recordKillTime=M.recordKillTime,
     additionalCount=additionalCount,applyOutdoorVictory=applyOutdoorVictory,
-     enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax,safeSleep=M.safeSleep}
+     enterOutdoorPeak=enterOutdoorPeak,enterOutdoorRelax=enterOutdoorRelax,safeSleep=M.safeSleep,
+     specialEncounters=SpecialEncounters.roster,trySpecialOpportunity=SpecialEncounters.tryOpportunity}
 return M

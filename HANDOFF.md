@@ -1,6 +1,16 @@
-# Morrowind: Dreamforged handoff — 0.10.24 installed
+# Morrowind: Dreamforged handoff — 0.10.25 installed
 
-**Current installed release: 0.10.24.**
+**Current installed release: 0.10.25.**
+
+0.10.25 adds a cycle-paced special wilderness encounter bucket: up to three
+opportunities at 15%, 45%, and 75% World Boss-cycle progress, default 55% per
+opportunity. Each successful event replaces the regular group selection with a
+family-themed group and one original line from one of 18 Daedric Princes or
+Vivec. The Dunmer "Good Daedra" are a religious category, not a moral promise.
+Azura can send one temporary follower; other events are hostile in this first
+pass. It shares safe creature pools, placement, budget, promotions, and loot.
+The release was installed and packaged; in-game cadence and follower behavior
+still need playtesting.
 
 0.10.24 adds state-aware caption voices for the Dream and Dagoth Ur. The Interface settings group controls frequency from 0 (off) to 100; 60 is the default. World Boss arrivals and victories have priority. The Dream's status as a speaking voice and its implied collaboration with Dagoth are alternate mod fiction rather than established game canon.
 

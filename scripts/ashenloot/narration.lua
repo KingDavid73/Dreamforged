@@ -149,5 +149,21 @@ function M.emit(state, config, player, now, kind, values, important)
     return true
 end
 
+-- A special encounter already passed its own director roll, so do not put a
+-- second random gate or ordinary chatter cooldown between that event and its
+-- line. The existing frequency switch still cleanly silences all captions.
+function M.emitSpecial(state, config, player, now, encounter)
+    local frequency=math.max(0,math.min(100,tonumber(config.directorVoiceFrequency) or 0))
+    if not config.enabled or frequency<=0 or not player or not player:isValid()
+        or not encounter or not encounter.name or not encounter.line then return false end
+    local voice=state.voice or {lastAt=-1000,lastByKind={},lastIndex={},serial=0}
+    state.voice=voice
+    voice.lastAt=now
+    voice.lastByKind.special=now
+    player:sendEvent('AshenLoot_DirectorVoice',{
+        speaker=encounter.name,text=encounter.line,duration=8})
+    return true
+end
+
 M.lines=lines
 return M

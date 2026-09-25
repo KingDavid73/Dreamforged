@@ -31,6 +31,7 @@ local groups={
     {key=C.groups.encounters,name='encounterSettings',description='encounterSettingsDescription',order=30,settings={
         option('extraEncounters', 'checkbox'),
         option('directorIntensity', 'number', {min=0.25,max=3}),
+        option('specialEncounterChance', 'number', {min=0,max=100,integer=true}),
         option('creaturePoolMode', 'select', {l10n='AshenLoot', items={'Similar','Random'}}),
         option('creatureVariety', 'number', {min=0,max=100,integer=true}),
         option('excludeExtraCliffRacers', 'checkbox'),

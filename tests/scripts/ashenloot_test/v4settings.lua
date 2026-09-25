@@ -2,7 +2,7 @@ local I,storage,core,menu=require('openmw.interfaces'),require('openmw.storage')
 local C=require('scripts.ashenloot.config')
 local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','protectQuestActors','allowRespawningNPCs','unsafeContent',
     'progression','levelScaling','gearLevelInfluence','enemyHealth','enemyDamage','encounterLevelBelow','encounterLevelAbove',
-    'extraEncounters','directorIntensity','creaturePoolMode','creatureVariety','excludeExtraCliffRacers','settlementSuppression','rerunnableWilderness','wildernessResetHours',
+    'extraEncounters','directorIntensity','specialEncounterChance','creaturePoolMode','creatureVariety','excludeExtraCliffRacers','settlementSuppression','rerunnableWilderness','wildernessResetHours',
     'interiorBudget','rerunnableDungeons','dungeonResetHours','dungeonBosses',
     'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide',
     'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
@@ -12,6 +12,9 @@ local calls,controls={},nil
 local done=false
 local resetRequested=false
 local finished=false
+local function control(key)
+    for index,name in ipairs(keys) do if name==key then return controls[index] end end
+end
 require('scripts.omw.settings.renderers')(function(name,render)
     I.Settings.registerRenderer(name,function(value,set,argument)
         calls[#calls+1]={value=value,set=set}
@@ -34,9 +37,10 @@ return {engineHandlers={onFrame=function()
             end
             -- Exercise the same deferred event used by the menu button. The
             -- next frame must restore a deliberately changed value.
-            controls[4].set(0)
-            controls[17].set(3)
-            controls[29].set(60)
+            control('dropPercent').set(0)
+            control('directorIntensity').set(3)
+            control('worldBossCadenceMinutes').set(60)
+            control('specialEncounterChance').set(0)
             core.sendGlobalEvent('Dreamforged_ResetSettings')
             resetRequested=true
             return
@@ -47,6 +51,8 @@ return {engineHandlers={onFrame=function()
             'Deferred all-settings reset did not restore directorIntensity')
         assert(storage.globalSection(C.groupKey('worldBossCadenceMinutes')):get('worldBossCadenceMinutes')==C.defaults.worldBossCadenceMinutes,
             'Deferred all-settings reset did not restore worldBossCadenceMinutes')
+        assert(storage.globalSection(C.groupKey('specialEncounterChance')):get('specialEncounterChance')==C.defaults.specialEncounterChance,
+            'Deferred all-settings reset did not restore specialEncounterChance')
         local registered=storage.globalSection('OmwSettingGroups'):asTable()
         local encounterGroup=registered[C.groups.encounters]
         assert(encounterGroup and not encounterGroup.settings.outdoorDirectorInterval,

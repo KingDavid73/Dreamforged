@@ -2,6 +2,7 @@ local core,types,world=require('openmw.core'),require('openmw.types'),require('o
 local I,R,Records=require('openmw.interfaces'),require('scripts.ashenloot.rules'),require('scripts.ashenloot.records')
 local Advancement=require('scripts.ashenloot.advancement')
 local Narration=require('scripts.ashenloot.narration')
+local SpecialEncounters=require('scripts.ashenloot.special_encounters')
 local Config=require('scripts.ashenloot.config')
 local util=require('openmw.util')
 local settings={}
@@ -33,9 +34,55 @@ local function update(dt)
             check(#heard==1 and heard[1].name=='AshenLoot_DirectorVoice','Director voice event missing')
             check(not Narration.emit(voiceState,{enabled=true,directorVoiceFrequency=60},listener,101,'boss',
                 {enemy='Ash Vampire'},true),'Director voice cooldown did not apply')
+            check(Narration.emitSpecial(voiceState,{enabled=true,directorVoiceFrequency=60},listener,102,
+                {name='Azura',line='A test omen approaches.'}),'Special encounter line did not dispatch')
+            check(heard[#heard].payload.speaker=='Azura' and heard[#heard].payload.text=='A test omen approaches.',
+                'Special encounter voice payload changed')
+            check(not Narration.emitSpecial({}, {enabled=true,directorVoiceFrequency=0},listener,103,
+                {name='Azura',line='A muted omen.'}),'Voice frequency 0 did not silence special captions')
+            local roster=SpecialEncounters.roster
+            check(#roster==19,'Special encounter roster should include 18 Princes plus Vivec')
+            local ids,traditions={},{}
+            for _,prince in ipairs(roster) do
+                check(not ids[prince.id],'Duplicate special encounter identity: '..prince.id)
+                ids[prince.id]=true
+                check(#prince.encounters==1 and prince.encounters[1].line~='',
+                    'Expected one voiced first-pass encounter for '..prince.name)
+                check(({all=true,beast=true,construct=true,daedra=true,undead=true})[prince.encounters[1].family],
+                    'Unsupported special creature family for '..prince.name)
+                if prince.tradition then traditions[prince.id]=prince.tradition end
+            end
+            check(traditions.azura=='Good Daedra' and traditions.boethiah=='Good Daedra'
+                and traditions.mephala=='Good Daedra','Dunmer Good Daedra tradition labels')
+            check(SpecialEncounters.get('azura').friendly
+                and not SpecialEncounters.get('boethiah').friendly
+                and not SpecialEncounters.get('mephala').friendly,
+                'Religious Good Daedra category was incorrectly treated as an alignment')
+            local stages={15,45,75}
+            local cycle={specialStage=0}
+            local certain=function(max) return 1 end
+            local special,opportunity=SpecialEncounters.tryOpportunity(cycle,14,100,certain)
+            check(not special and not opportunity and cycle.specialStage==0,'Special roll happened before its first cycle gate')
+            for index,threshold in ipairs(stages) do
+                special,opportunity=SpecialEncounters.tryOpportunity(cycle,threshold,100,certain)
+                check(special and opportunity and cycle.specialStage==index,'Cycle special opportunity failed at stage '..index)
+            end
+            special,opportunity=SpecialEncounters.tryOpportunity(cycle,100,100,certain)
+            check(not special and not opportunity and cycle.specialStage==3,'More than three cycle special opportunities were allowed')
+            local total=0
+            for sample=1,1000 do
+                local sampleCycle={specialStage=0};local count=0
+                for _,threshold in ipairs(stages) do
+                    local rng=R.rng('special-cycle:'..sample..':'..threshold)
+                    if SpecialEncounters.tryOpportunity(sampleCycle,threshold,55,rng) then count=count+1 end
+                end
+                check(count<=3,'Special events exceeded the cycle cap')
+                total=total+count
+            end
+            check(total/1000>1.5 and total/1000<1.8,'Special-event default no longer averages one to two per cycle')
             p:sendEvent('AshenLoot_DirectorVoice',{speaker='The Dream',
                 text='A test voice rises from the ash.',duration=3})
-            pass('director voice templates, ad-libs, off setting and cooldown')
+            pass('director voice templates, 19 themed special encounters, three cycle gates and one-to-two-event pacing')
             p:sendEvent('AshenLoot_TestFreezeAI')
             settings:set('extraEncounters',false)
             settings:set('creatureVariety',0)

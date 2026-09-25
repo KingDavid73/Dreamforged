@@ -1,5 +1,19 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.25 - Prince and Vivec director encounters
+
+- Added a cycle-paced special-encounter bucket with one themed encounter and
+  original in-world line for each of the 18 Daedric Princes and Vivec.
+- Up to three opportunities occur at 15%, 45%, and 75% World Boss-cycle
+  progress. The default 55% chance targets one or two specials per cycle; a
+  special replaces the regular group selection and spends the same spawn
+  budget, using the existing safe creature pool and promotion systems.
+- Added a resettable encounter setting for special-event chance. The three
+  Dunmer "Good Daedra" entries are labeled by religious tradition, not treated
+  as morally benevolent by default.
+- Azura can send one temporary Daedric follower as aid for her own purposes;
+  other special events remain hostile challenges in this first pass.
+
 ## 0.10.24 - director voices
 
 - Added 78 original, lore-flavored caption templates for the Dream and Dagoth Ur, selected from outdoor pressure, successful group/den spawns, dungeon travel, boss, kill, and reward states. Enemy/item names fill in at runtime.

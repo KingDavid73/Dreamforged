@@ -1,6 +1,22 @@
 ﻿# Morrowind: Dreamforged
 
-**Current release: 0.10.24 - Director voices.**
+**Current release: 0.10.25 - Prince and Vivec director encounters.**
+
+## 0.10.25 Prince and Vivec director encounters
+
+- The outdoor director can replace a normal group with a rare, themed special
+  encounter voiced by one of the 18 Daedric Princes or Vivec. Each currently
+  has one encounter; its family uses the existing safe loaded-creature pool,
+  placement, population budget, promotions, and loot systems.
+- Azura may instead lend one temporary follower; this is a self-interested
+  intervention, not a blanket “good Daedra” alignment. Other special events
+  are hostile challenges in this first pass.
+- The special chance is tested at up to three progress gates (15%, 45%, 75%)
+  during a World Boss cycle. Default 55% aims for one or two special encounters
+  per completed cycle, capped at three. It is configurable in **Options →
+  Scripts → Morrowind: Dreamforged → Wilderness encounters**. Setting the
+  director voice frequency to 0 silences the captions without disabling the
+  encounter itself.
 
 ## 0.10.24 Director voices
 
@@ -257,7 +273,7 @@ Morrowind: Dreamforged requires **OpenMW 0.51 or newer**. It has no required dep
 Add the extracted folder and required Lua entry to your OpenMW configuration, replacing the example path with the real location:
 
 ```ini
-data="C:/Games/OpenMWMods/Dreamforged-0.10.24"
+data="C:/Games/OpenMWMods/Dreamforged-0.10.25"
 content=AshenLoot.omwscripts
 ```
 
