@@ -4,7 +4,7 @@ local storage=require('openmw.storage')
 local C=require('scripts.ashenloot.config')
 local function set(key,value) storage.globalSection(C.groupKey(key)):set(key,value) end
 set('randomizeContainers',false)
-local stage,time,rat,npc,item,owned,origin,generated,loaded=0,0,nil,nil,nil,nil,nil,0,false
+local stage,time,rat,npc,item,owned,looseDrop,origin,generated,loaded=0,0,nil,nil,nil,nil,nil,nil,0,false
 local spawnPos,replaced,downscaled,downscaledHealth,cache,cacheBefore
 local function check(c,s) assert(c,s) end
 local function pass(s) print('[AshenLoot WORLD4] PASS: '..s) end
@@ -96,10 +96,14 @@ return {engineHandlers={onUpdate=function(dt)
             progress.prepare(rat)
             progress.scavenge({actor=npc,item=owned})
             check(not owned.parentContainer,'Owned item stolen')
+            looseDrop=world.createObject('ingred_bonemeal_01',1)
+            looseDrop:teleport(p.cell,origin+util.vector3(250,0,0))
+            progress.scavenge({actor=npc,item=looseDrop,playerDrop=true})
             progress.scavenge({actor=npc,item=item})
         elseif stage==21 and time>12 then
             stage=3
             check(item.parentContainer==npc,'Scavenging transfer')
+            check(looseDrop.parentContainer==npc,'Player-dropped non-equipment item not collected')
             check(d.randomizedContainers[cache.id]==true,'Dungeon container was not selected')
             check(#types.Container.content(cache):getAll()>=cacheBefore+1,'Selected cache did not gain a prize')
             local generatedPrize=false
@@ -124,7 +128,7 @@ return {engineHandlers={onUpdate=function(dt)
             progress.prepare(rat)
             check(d.cells[p.cell.id].additionalCount==before and count(d.generated)==generated,'Repeated spawn')
             pass('level-30 actor scaling, real navmesh spawns, cell budget and repeat protection')
-            pass('unowned item transferred and wielded; owned equipment protected')
+            pass('better equipment and player-dropped supplies transferred; owned equipment protected')
             set('creatureVariety',100)
             replaced=world.createObject('rat',1)
             replaced:teleport(p.cell,spawnPos)
@@ -152,12 +156,12 @@ return {engineHandlers={onUpdate=function(dt)
         elseif stage==3 and loaded and time>13 then
             stage=4
             check(count(d.generated)>=generated,'Spawn persistence')
-            check(item.parentContainer==npc,'Scavenged item persistence')
+            check(item.parentContainer==npc and looseDrop.parentContainer==npc,'Scavenged item persistence')
             pass('save/reload preserves spawned encounters and scavenged equipment')
             core.quit()
         elseif time>35 then error('World test timed out') end
     end)
     if not ok then print('[AshenLoot WORLD4] FAIL: '..tostring(err));core.quit() end
-end,onSave=function() return {stage=stage,time=time,rat=rat,npc=npc,item=item,owned=owned,origin=origin,generated=generated} end,
-onLoad=function(d) stage,time,rat,npc,item,owned,origin,generated=d.stage,d.time,d.rat,d.npc,d.item,d.owned,d.origin,d.generated;loaded=true end},
+end,onSave=function() return {stage=stage,time=time,rat=rat,npc=npc,item=item,owned=owned,looseDrop=looseDrop,origin=origin,generated=generated} end,
+onLoad=function(d) stage,time,rat,npc,item,owned,looseDrop,origin,generated=d.stage,d.time,d.rat,d.npc,d.item,d.owned,d.looseDrop,d.origin,d.generated;loaded=true end},
 eventHandlers={AshenLoot_TestWorldPosition=function(d) spawnPos=d.position;print('[AshenLoot WORLD4] nav fixture distance '..d.distance) end}}

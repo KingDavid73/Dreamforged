@@ -1,6 +1,32 @@
 ﻿# Morrowind: Dreamforged
 
-**Current version: 0.10.26 - pressure milestones and skill-aware pacing.**
+**Current release: 0.10.28 - paced Lua update work.**
+
+## 0.10.28 Paced Lua update work
+
+- Reduced the crosshair target scan cadence from about 6-7 times per second
+  to 4 times per second. World Boss discovery/health updates run twice per
+  second, and the bar is rebuilt only when displayed values change.
+- Throttled chargen class sampling and removed the per-frame active-actor scan
+  for temporary Mythic summon expiry. Expiry is checked once per second, and
+  actors are searched only when a summon actually expires.
+- Includes the previously unshipped 0.10.27 director debug view and staggered
+  NPC scavenging update.
+
+OpenMW dispatches frame/update callbacks each frame; Dreamforged's substantial
+scans and game logic are timer-gated. See CHANGELOG.md and VALIDATION.md.
+
+## 0.10.27 Director diagnostics and NPC scavenging
+
+- Added an off-by-default **Show encounter director debug view** option. The
+  compact HUD shows wilderness pressure and boss-cycle progress, phase, current
+  major state, and the last meaningful director action/result.
+- Idle eligible NPCs now stagger loose-item scans to roughly once every ten
+  seconds and can travel farther to collect likely player-dropped items. They
+  equip a weapon or armor piece only when it improves their current slot;
+  generated Dreamforged rewards remain protected until the player collects
+  them. This uses a conservative loose-item heuristic because OpenMW 0.51 does
+  not expose a general Lua item-drop callback.
 
 Director voice rolls are now tied to events: a 25% chance per ordinary pack,
 increasing chances for higher promoted tiers, 50% for Relic loot, and guaranteed

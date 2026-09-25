@@ -12,6 +12,7 @@ local pools, gear, itemPools, kindPools, pending = nil, nil, nil, nil, {}
 local genericCreatureIds
 local timer, considered, lastPlayerCell = 0, {}, nil
 local maintenanceAt=0
+local debugSentAt=-math.huge
 local function valid(a) return a and a:isValid() and a.enabled and not types.Actor.isDead(a) end
 local function additionalCount(cellState)
     return math.max(0,math.floor(tonumber(cellState and cellState.additionalCount) or 0))
@@ -505,6 +506,7 @@ function M.bind(s, giveLoot, encounter, isEligible)
     end
     state.director.promotionBonuses=state.director.promotionBonuses or {}
     state.director.outdoor=state.director.outdoor or {pressure=0,bossProgress=0,nextRoll=0}
+    state.director.outdoor.debug=state.director.outdoor.debug or {status='Starting',detail='Waiting for director tick.'}
     state.director.outdoor.pressure=state.director.outdoor.pressure or 0
     state.director.outdoor.bossProgress=state.director.outdoor.bossProgress or 0
     state.director.outdoor.phase=state.director.outdoor.phase or 'build'
@@ -591,6 +593,19 @@ local function liveOutdoorDirectorGroup(cell,except)
     end
     return false
 end
+local function setDirectorDebug(status,detail)
+    if not state or not state.director or not state.director.outdoor then return end
+    local outdoor=state.director.outdoor
+    outdoor.debug=outdoor.debug or {}
+    outdoor.debug.status=tostring(status or 'Waiting')
+    outdoor.debug.detail=tostring(detail or '')
+    outdoor.debug.updatedAt=core.getSimulationTime()
+    if status~='Waiting' and status~='Paused' and status~='Lull'
+        and status~='Interior' and status~='Disabled' and status~='Encounter peak' then
+        outdoor.debug.lastAction=outdoor.debug.status..(outdoor.debug.detail~='' and ': '..outdoor.debug.detail or '')
+    end
+end
+M.debugAction=setDirectorDebug
 
 -- Wilderness combat is feedback for the director. Ordinary kills and lower
 -- promotions mean the player is engaging, so they build pressure instead of
@@ -631,6 +646,7 @@ function M.victoryRespite(actor,elite)
         if elite and elite.worldBoss and outdoor.activeBossId==actor.id then
             outdoor.activeBossId=false
             outdoor.safeUntil=math.max(outdoor.safeUntil or 0,now+180)
+            setDirectorDebug('World Boss defeated','Pressure released; victory respite for 180 seconds.')
         end
         return
     end
@@ -665,6 +681,7 @@ function M.safeSleep(player,duration)
     outdoor.terrainRetries=0
     outdoor.lastSafeSleep=core.getGameTime()
     outdoor.safeCell=player and player.cell and player.cell.id or outdoor.safeCell
+    setDirectorDebug('Resting','Settlement sleep eased pressure to '..math.floor(outdoor.pressure+0.5)..'%.')
     print('[AshenLoot] town rest eased outdoor pressure to '..math.floor(outdoor.pressure+0.5)
         ..' after '..string.format('%.2f',hours)..' game hours')
 end
@@ -1246,6 +1263,7 @@ function M.spawnResult(event)
             local interval=math.max(5,tonumber(C.outdoorDirectorInterval) or 5)
             state.director.outdoor.nextRoll=now+math.min(5,interval)
             state.director.outdoor.distance=150
+            setDirectorDebug('Retrying placement','Trying another safe position for '..missing..' remaining enemy(s).')
             print('[AshenLoot] director placement retry '..missing..' in '..request.cell)
         else
             -- Persistent placement failure contributes a small amount of
@@ -1254,12 +1272,14 @@ function M.spawnResult(event)
             outdoor.pressure=math.min(100,(outdoor.pressure or 0)+5*C.directorIntensity)
             outdoor.nextRoll=now+math.max(5,tonumber(C.outdoorDirectorInterval) or 5)
             outdoor.distance=0
+            setDirectorDebug('Placement failed','No safe location found after retries; pressure was retained.')
             print('[AshenLoot] director placement failed '..missing..' in '..request.cell)
         end
     end
     if missing==0 or not request.director or (request.terrainRetries or 0)>=1 then
         if request.director and made>0 then
             enterOutdoorPeak(state.director.outdoor,core.getSimulationTime(),C.directorIntensity)
+            setDirectorDebug('Spawned','Placed '..made..' director enemy(s); promotion rolls follow on activation.')
         end
     end
     if request.special and made>0 then
@@ -1598,11 +1618,14 @@ function M.scavenge(event)
     local actor,item=event.actor,event.item
     if not C.enabled or not C.scavenge or not valid(actor) or not item or not item:isValid() then return end
     if item.parentContainer or actor.cell~=item.cell or (actor.position-item.position):length()>240 then return end
-    if not types.Weapon.objectIsInstance(item) and not types.Armor.objectIsInstance(item) then return end
+    local playerDrop=event.playerDrop==true
+    local equipment=types.Weapon.objectIsInstance(item) or types.Armor.objectIsInstance(item)
+    if not equipment and not playerDrop then return end
     local ok,rec=pcall(function() return item.type.record(item) end)
     if not ok or not rec then return end
     local owner= item.owner
-    if rec.mwscript or (owner and (owner.recordId or owner.factionId)) then return end
+    local playerOwned=owner and owner.recordId and tostring(owner.recordId):lower()=='player'
+    if rec.mwscript or (owner and (owner.factionId or (owner.recordId and not (playerDrop or playerOwned)))) then return end
     local loose=state.director.loose[item.id]
     if type(loose)=='table' and loose.protected then return end
     local grace=type(loose)=='table' and loose.grace or loose
@@ -1804,6 +1827,7 @@ local function updateOutdoorDirector(player)
         -- reset event above.
         outdoor.nextRoll=now+interval
         outdoor.distance=0
+        setDirectorDebug('Paused','Settlement nearby; pressure is preserved.')
         return
     end
     if outdoor.activeBossId then
@@ -1811,22 +1835,43 @@ local function updateOutdoorDirector(player)
         -- roll another player-centered group while its add waves are active.
         outdoor.nextRoll=now+interval
         outdoor.distance=0
+        setDirectorDebug('Paused','A World Boss is active; its add waves own the encounter.')
         return
     end
     -- Recovery follows the player across arbitrary exterior-cell borders.
-    if now<(outdoor.safeUntil or 0) then return end
+    if now<(outdoor.safeUntil or 0) then
+        setDirectorDebug('Lull','Recovery window: '..math.ceil(outdoor.safeUntil-now)..' seconds remain.')
+        return
+    end
     if outdoor.phase=='peak' then
-        if now<(outdoor.peakUntil or 0) then return end
+        if now<(outdoor.peakUntil or 0) then
+            setDirectorDebug('Encounter peak','Waiting for the current group to settle.')
+            return
+        end
         outdoor.phase='build';outdoor.peakUntil=0
     elseif outdoor.phase=='relax' then
-        if now<(outdoor.relaxUntil or 0) then return end
+        if now<(outdoor.relaxUntil or 0) then
+            setDirectorDebug('Lull','Group respite: '..math.ceil(outdoor.relaxUntil-now)..' seconds remain.')
+            return
+        end
         outdoor.phase='build';outdoor.relaxUntil=0
     end
     local directorPending=false
     for _,request in pairs(pending) do
         if request.director and request.cell==cell.id then directorPending=true;break end
     end
-    if directorPending or now<(outdoor.nextRoll or 0) or (outdoor.distance or 0)<150 then return end
+    if directorPending then
+        setDirectorDebug('Attempting spawn','Waiting for safe placement results.')
+        return
+    end
+    if now<(outdoor.nextRoll or 0) then
+        setDirectorDebug('Waiting','Next encounter batch in '..math.ceil(outdoor.nextRoll-now)..' seconds.')
+        return
+    end
+    if (outdoor.distance or 0)<150 then
+        setDirectorDebug('Waiting','Moving through the wilderness; '..math.max(0,math.floor(150-(outdoor.distance or 0)))..' units to next check.')
+        return
+    end
     outdoor.nextRoll=now+interval
     outdoor.distance=0
     local live,hostiles=liveDirectorThreat(player)
@@ -1840,7 +1885,18 @@ local function updateOutdoorDirector(player)
         local cadence=math.max(120,C.worldBossCadenceMinutes*60)
         outdoor.bossProgress=math.min(100,(outdoor.bossProgress or 0)+100*interval/cadence)
     end
-    if live>=cap or hostiles>=math.max(8,cap) or healthRatio<=0.35 then return end
+    if live>=cap then
+        setDirectorDebug('Paused','Nearby Dreamforged population is at capacity ('..live..'/'..cap..').')
+        return
+    end
+    if hostiles>=math.max(8,cap) then
+        setDirectorDebug('Paused','Already engaged by '..hostiles..' hostile actors nearby.')
+        return
+    end
+    if healthRatio<=0.35 then
+        setDirectorDebug('Paused','Player health is low; the director is holding back.')
+        return
+    end
     local rng=R.rng(cell.id..':outdoor-director:'..math.floor(now/interval))
     local configuredChance=tonumber(C.outdoorDirectorChance)
     local baseChance=configuredChance and math.max(0,math.min(95,configuredChance))
@@ -1848,6 +1904,7 @@ local function updateOutdoorDirector(player)
     local chance=math.min(95,baseChance+(outdoor.pressure or 0))
     if rng(100)>chance then
         outdoor.pressure=math.min(100,(outdoor.pressure or 0)+(tonumber(C.outdoorPressureGain) or 15)*intensity)
+        setDirectorDebug('No spawn this roll','Chance missed; pressure builds toward the next batch.')
         return
     end
     -- At low pressure, spend the roll on a visible group of weaker enemies;
@@ -1863,7 +1920,10 @@ local function updateOutdoorDirector(player)
     local target=math.max(1,math.floor(power*(0.54+rng(61)/100)+0.5))
     local cost=math.max(0.35,math.min(1.5,target/power))
     local count=math.min(math.max(0,math.floor((cap-live)/cost)),low+rng(high-low+1)-1)
-    if count<=0 then return end
+    if count<=0 then
+        setDirectorDebug('Paused','Population capacity left no room for another group.')
+        return
+    end
     local special,specialOpportunity,specialMiss
     if C.worldBosses and C.specialEncounterChance>0 then
         special,specialOpportunity,specialMiss=SpecialEncounters.tryOpportunity(
@@ -1893,6 +1953,7 @@ local function updateOutdoorDirector(player)
             dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=specialCount,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+        setDirectorDebug('Attempting spawn','Special encounter: '..special.name..' ('..specialCount..' requested).')
     elseif not specialMiss and not denActive and rng(100)<=denChance and live+2<=cap then
         local families={'beast','undead','daedra','construct'}
         local family=families[rng(#families)]
@@ -1905,12 +1966,14 @@ local function updateOutdoorDirector(player)
             dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=1,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+        setDirectorDebug('Attempting spawn','Creature den placement (tier '..tier..').')
     else
         pending[token]={actor=player,level=target,count=count,cell=cell.id,
             created=now,director=true,cost=cost,promotionBonus=promotionBonus,
             dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0}
         player:sendEvent('AshenLoot_FindSpawn',{token=token,actor=player,count=count,
             director=true,dirX=outdoor.dirX or 1,dirY=outdoor.dirY or 0})
+        setDirectorDebug('Attempting spawn','Requested a group of '..count..' level-'..target..' enemies.')
     end
 end
 -- Keep short-lived scheduler tables from growing for the entire session.  The
@@ -1959,11 +2022,24 @@ local function maintenance(now)
 end
 function M.update(dt)
     timer=timer+dt
-    if timer<1 or not C.enabled or not world.players[1] then return end
+    if timer<1 or not world.players[1] then return end
     timer=0
     local now=core.getSimulationTime()
+    local player=world.players[1]
+    if not C.enabled then
+        setDirectorDebug('Disabled','Dreamforged is turned off.')
+        if C.directorDebugView and now-debugSentAt>=2 then
+            debugSentAt=now
+            local outdoor=state.director.outdoor
+            local debug=outdoor.debug or {}
+            player:sendEvent('AshenLoot_DirectorDebug',{pressure=outdoor.pressure or 0,
+                cycle=outdoor.bossProgress or 0,status=debug.status or 'Disabled',detail=debug.detail or '',
+                lastAction=debug.lastAction or 'No director action recorded yet.',phase=outdoor.phase or 'build'})
+        end
+        return
+    end
     maintenance(now)
-    updateCellState(world.players[1])
+    updateCellState(player)
     for itemId,loose in pairs(state.director.loose) do
         if type(loose)=='table' and (not loose.item or not loose.item:isValid() or loose.item.parentContainer) then
             if loose.light and loose.light:isValid() then loose.light:remove() end
@@ -1973,9 +2049,17 @@ function M.update(dt)
         end
     end
     local count=0
-    local player=world.players[1]
     updateDens(player)
-    updateOutdoorDirector(player)
+    if player.cell and player.cell.isExterior then
+        if C.extraEncounters then updateOutdoorDirector(player)
+        else setDirectorDebug('Disabled','Extra wilderness encounters are turned off.') end
+    elseif player.cell then
+        local cellState=state.director.cells[player.cell.id]
+        setDirectorDebug('Interior','Cell '..tostring(player.cell.name or player.cell.id)
+            ..'; additional enemies tracked: '..additionalCount(cellState)..'.')
+    else
+        setDirectorDebug('Waiting','Waiting for the player cell to become available.')
+    end
     for _,actor in ipairs(world.activeActors) do
         if count>=3 then break end
         local legacyExterior=state.director.generated[actor.id]==true and actor.cell.isExterior
@@ -2000,6 +2084,14 @@ function M.update(dt)
             end
             pending[token]=nil
         end
+    end
+    if C.directorDebugView and now-debugSentAt>=2 then
+        debugSentAt=now
+        local outdoor=state.director.outdoor
+        local debug=outdoor.debug or {}
+        player:sendEvent('AshenLoot_DirectorDebug',{pressure=outdoor.pressure or 0,
+            cycle=outdoor.bossProgress or 0,status=debug.status or 'Waiting',detail=debug.detail or '',
+            lastAction=debug.lastAction or 'No director action recorded yet.',phase=outdoor.phase or 'build'})
     end
 end
 function M.refreshPools()

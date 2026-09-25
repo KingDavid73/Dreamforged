@@ -7,7 +7,7 @@ local keys={'enabled','preset','elitePercent','dropPercent','settleSeconds','pro
     'worldBosses','worldBossCadenceMinutes','worldBossCellCap','uniquePercent','eliteTierPercent','worldBossMinLevel','worldBossRange','worldBossSpawnMinDistance','worldBossDistanceHide',
     'healingPercent','supplyPercent','ammunitionPercent','spellTomePercent','adaptiveLootDirector','lootDirectorStrength','lootDirectorReserve','lootDirectorSpreeChance','supplyContainers','randomizeContainers','containerLootPercent','randomizeLooseDungeonItems','looseDungeonItemPercent','groundDrops','groundGlow','autoSalvageCommon','autoSalvageUncommon','autoSalvageRare','autoSalvageEpic','autoSalvageLegendary','autoSalvageRelic',
     'npcProgression','randomizeNpcInventories','npcInventoryPercent','npcAshenGearPercent','guardProgression','guardPower','scavenge','civilianDefense',
-    'showTargetCard','directorVoiceFrequency','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
+    'showTargetCard','directorVoiceFrequency','directorDebugView','inventoryKey','forgeKey','abilityControllerModifier','abilityControllerCycle','abilityControllerUse'}
 local calls,controls={},nil
 local done=false
 local resetRequested=false
@@ -41,6 +41,7 @@ return {engineHandlers={onFrame=function()
             control('directorIntensity').set(3)
             control('worldBossCadenceMinutes').set(60)
             control('specialEncounterChance').set(0)
+            control('directorDebugView').set(true)
             core.sendGlobalEvent('Dreamforged_ResetSettings')
             resetRequested=true
             return
@@ -53,6 +54,8 @@ return {engineHandlers={onFrame=function()
             'Deferred all-settings reset did not restore worldBossCadenceMinutes')
         assert(storage.globalSection(C.groupKey('specialEncounterChance')):get('specialEncounterChance')==C.defaults.specialEncounterChance,
             'Deferred all-settings reset did not restore specialEncounterChance')
+        assert(storage.globalSection(C.groupKey('directorDebugView')):get('directorDebugView')==false,
+            'Deferred all-settings reset did not restore directorDebugView')
         local registered=storage.globalSection('OmwSettingGroups'):asTable()
         local encounterGroup=registered[C.groups.encounters]
         assert(encounterGroup and not encounterGroup.settings.outdoorDirectorInterval,

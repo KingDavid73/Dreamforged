@@ -93,6 +93,7 @@ local groups={
     {key=C.groups.interface,name='interfaceSettings',description='interfaceSettingsDescription',order=80,settings={
         option('showTargetCard', 'checkbox'),
         option('directorVoiceFrequency', 'number', {min=0,max=100,integer=true}),
+        option('directorDebugView', 'checkbox'),
         option('inventoryKey', 'select', {l10n = 'AshenLoot', items = {'F6', 'F7', 'F8', 'F9', 'F10', 'F11'}}),
         option('forgeKey', 'select', {l10n = 'AshenLoot', items = {'F6', 'F7', 'F8', 'F9', 'F10', 'F11'}}),
         option('abilityControllerModifier', 'select', {l10n='AshenLoot', items={'LeftShoulder','RightShoulder','LeftStick','RightStick','Back','Start','Paddle1','Paddle2','Paddle3','Paddle4'}}),

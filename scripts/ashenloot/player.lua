@@ -18,6 +18,7 @@ local classBoosted = false
 local classKitGranted = false
 local classElapsed = 0
 local classAttributes
+local classSampleElapsed,className=0,''
 local advancementElapsed,activeAbilities,activeIndex,lastAdvancementSignature=0,{},0,''
 local restSession
 local attributeIds = {'strength', 'intelligence', 'willpower', 'agility', 'speed', 'endurance', 'personality', 'luck'}
@@ -64,9 +65,11 @@ local function townSleepCell(cell)
     end
     return false
 end
-local book, forgeWindow, targetCard, bossCard, voiceCard
-local voiceMessage,voiceUntil
+local book, forgeWindow, targetCard, bossCard, voiceCard, directorDebugCard
+local voiceMessage,voiceUntil,directorDebugState,directorDebugSignature
 local page, lastTarget, elapsed = 0, nil, 0
+local directorDebugElapsed,bossCardElapsed=0,0
+local bossCardSignature
 local forgePage=1
 local function color(tier)
     local c = R.rarities[tier].color
@@ -227,9 +230,37 @@ local function clearTarget()
 end
 local function clearBossCard()
     if bossCard then bossCard:destroy();bossCard=nil end
+    bossCardSignature=nil
 end
 local function clearVoiceCard()
     if voiceCard then voiceCard:destroy();voiceCard=nil end
+end
+local function clearDirectorDebug()
+    if directorDebugCard then directorDebugCard:destroy();directorDebugCard=nil end
+    directorDebugSignature=nil
+end
+local function updateDirectorDebug()
+    if not C.directorDebugView or I.UI.getMode() then clearDirectorDebug();return end
+    local data=directorDebugState or {pressure=0,cycle=0,status='Starting',detail='Waiting for director status.'}
+    local pressure=math.max(0,math.min(100,tonumber(data.pressure) or 0))
+    local cycle=math.max(0,math.min(100,tonumber(data.cycle) or 0))
+    local status=tostring(data.status or 'Waiting')
+    local detail=tostring(data.detail or '')
+    local lastAction=tostring(data.lastAction or 'No director action recorded yet.')
+    local signature=table.concat({math.floor(pressure+0.5),math.floor(cycle+0.5),status,
+        tostring(data.phase or 'build'),detail,lastAction},'|')
+    if signature==directorDebugSignature then return end
+    clearDirectorDebug()
+    local lines={text('DREAMFORGED DIRECTOR DEBUG'),
+        text(string.format('Pressure %d%%  |  Boss cycle %d%%  |  %s',math.floor(pressure+0.5),
+            math.floor(cycle+0.5),tostring(data.phase or 'build'))),
+        text('State: '..status)}
+    if detail~='' then wrapped(lines,detail) end
+    if lastAction~='' then wrapped(lines,'Last: '..lastAction) end
+    local layout=panel(lines,0.015,0.13)
+    layout.props.anchor=util.vector2(0,0)
+    directorDebugCard=ui.create(layout)
+    directorDebugSignature=signature
 end
 local function updateVoiceCard()
     if not C.enabled or C.directorVoiceFrequency<=0 or I.UI.getMode()
@@ -248,8 +279,7 @@ local function updateVoiceCard()
     voiceCard=ui.create(layout)
 end
 local function updateBossCard()
-    clearBossCard()
-    if not C.worldBosses or I.UI.getMode() then return end
+    if not C.worldBosses or I.UI.getMode() then clearBossCard();return end
     local nearest,meta,distance
     for _,actor in ipairs(nearby.actors) do
         local boss=elites[actor.id]
@@ -258,7 +288,7 @@ local function updateBossCard()
             if d<=C.worldBossRange and (not distance or d<distance) then nearest,meta,distance=actor,boss,d end
         end
     end
-    if not nearest then return end
+    if not nearest then clearBossCard();return end
     local displayName=meta.name
     local hideDistance=math.max(0,tonumber(C.worldBossDistanceHide) or 900)
     if distance>hideDistance then
@@ -267,6 +297,9 @@ local function updateBossCard()
     local hp=types.Actor.stats.dynamic.health(nearest)
     local maximum=math.max(1,math.ceil(hp.base+hp.modifier))
     local current=math.max(0,math.ceil(hp.current))
+    local signature=table.concat({nearest.id,displayName,current,maximum},'|')
+    if bossCard and signature==bossCardSignature then return end
+    if bossCard then bossCard:destroy();bossCard=nil end
     local fraction=math.max(0,math.min(1,current/maximum))
     local width,height=760,52
     bossCard=ui.create({layer='HUD',type=ui.TYPE.Container,
@@ -282,14 +315,23 @@ local function updateBossCard()
             {type=ui.TYPE.Image,props={resource=whiteTexture,color=util.color.rgb(0.68,0.025,0.015),
                 position=util.vector2(3,33),size=util.vector2(math.max(1,(width-6)*fraction),14)}},
         }})
+    bossCardSignature=signature
 end
 local function frame(dt)
-    local class = string.lower(types.NPC.record(self).class or '')
+    directorDebugElapsed=directorDebugElapsed+dt
+    if directorDebugElapsed>=1 then directorDebugElapsed=0;updateDirectorDebug() end
+    classSampleElapsed=classSampleElapsed+dt
+    local sampledClass=classSampleElapsed>=0.25 or className==''
+    if sampledClass then
+        classSampleElapsed=0
+        className=string.lower(types.NPC.record(self).class or '')
+    end
+    local class=className
     local skills = classSkills[class]
     -- NCGDMW derives a new attribute total when chargen closes.  Remember the
     -- values the player actually confirmed so our deliberately stronger class
     -- templates survive that initialization pass.
-    if skills and I.UI.getMode() == 'ChargenClassReview' then
+    if skills and sampledClass and I.UI.getMode() == 'ChargenClassReview' then
         classAttributes = {}
         for _, id in ipairs(attributeIds) do
             classAttributes[id] = types.Actor.stats.attributes[id](self).base
@@ -347,10 +389,12 @@ local function frame(dt)
     end
     if not C.enabled or I.UI.getMode() then clearTarget();clearBossCard();clearVoiceCard(); return end
     elapsed = elapsed + dt
-    if elapsed < 0.15 then return end
+    if elapsed < 0.25 then return end
+    local uiElapsed=elapsed
     elapsed = 0
     updateVoiceCard()
-    updateBossCard()
+    bossCardElapsed=bossCardElapsed+uiElapsed
+    if bossCardElapsed>=0.5 then bossCardElapsed=0;updateBossCard() end
     if not C.showTargetCard then clearTarget();return end
     local origin = camera.getPosition()
     local direction = camera.viewportToWorldVector(util.vector2(0.5, 0.5))
@@ -499,8 +543,10 @@ return {
             classBoosted = data and data.classBoosted or false
             classKitGranted = data and data.classKitGranted or false
             classAttributes = data and data.classAttributes or nil
+            classSampleElapsed,className,bossCardElapsed=0,'',0
             lastAdvancementSignature='';advancementElapsed=0
             closeBook();closeForge(); clearTarget();clearBossCard();clearVoiceCard();voiceMessage=nil;voiceUntil=nil
+            clearDirectorDebug();directorDebugState=nil;directorDebugElapsed=0
         end,
     },
     eventHandlers = {
@@ -510,6 +556,9 @@ return {
             voiceUntil=core.getSimulationTime()+math.max(3,math.min(12,tonumber(event.duration) or 7))
             clearVoiceCard()
             updateVoiceCard()
+        end,
+        AshenLoot_DirectorDebug=function(event)
+            if event then directorDebugState=event end
         end,
         UiModeChanged = function(data)
             if not data then return end

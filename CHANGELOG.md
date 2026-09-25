@@ -1,5 +1,31 @@
 ﻿# Ashen Loot changelog
 
+## 0.10.28 - paced Lua update work
+
+- Reduced target-card raycasts to 4 Hz. World Boss discovery/HUD refresh runs
+  at 2 Hz and only recreates the bar when its visible values change.
+- Throttled chargen class sampling to 4 Hz.
+- Mythic summon expiration is checked once per second; active actors are
+  searched only when at least one summon expires, rather than every frame for
+  every live summon.
+- Includes the previously unshipped 0.10.27 director diagnostics and NPC
+  scavenging changes.
+- No per-frame world/inventory scans or tight retry loops were found. OpenMW
+  does dispatch update callbacks each frame, but substantial work is gated to
+  slower intervals.
+
+## 0.10.27 - director diagnostics and NPC scavenging
+
+- Added an optional, default-off HUD debug view for director pressure, boss
+  cycle, phase, current major state, and the last notable action/result. The
+  view is fed on a slow cadence and refreshes only when displayed values
+  change.
+- Idle NPC item scans are staggered to about once every ten seconds and reach
+  roughly 2,000 units. They collect likely loose player drops, equip only
+  better weapons/armor, and leave protected generated rewards alone until the
+  player has collected them. Busy schedules and combat remain undisturbed.
+- Corrected the NPC travel timeout to count elapsed seconds consistently.
+
 ## 0.10.26 - pressure milestones and skill-aware combat estimates
 
 - Director voice odds are now event-specific: 25% per ordinary spawn pack;

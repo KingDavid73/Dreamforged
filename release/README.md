@@ -1,12 +1,12 @@
-# Dreamforged 0.10.26
+# Dreamforged 0.10.28
 
 Dreamforged is a Morrowind/OpenMW dungeon-crawler overhaul with expanded encounters, promoted enemies, world bosses, and Diablo-style generated loot.
 
 ## Install
 
-1. Download `Dreamforged-0.10.26.zip` from this folder or the GitHub release.
+1. Download `Dreamforged-0.10.28.zip` from this folder or the GitHub release.
 2. Extract the archive into an OpenMW data directory or a separate mod directory.
-3. In OpenMW Launcher, add the extracted `Dreamforged-0.10.26` folder as a data directory.
+3. In OpenMW Launcher, add the extracted `Dreamforged-0.10.28` folder as a data directory.
 4. Enable `AshenLoot-Classes.esp` in the launcher’s Data Files list.
 5. Ensure `AshenLoot.omwscripts` is enabled in your OpenMW settings, then start the game.
 

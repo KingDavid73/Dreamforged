@@ -1,11 +1,26 @@
-# Morrowind: Dreamforged handoff — 0.10.26 working tree
+# Morrowind: Dreamforged handoff — 0.10.28
 
-**Latest installed release: 0.10.26.** Installed at
-`C:\Users\super\Documents\MorrowindMods\Dreamforged-0.10.26`; the active
+**Latest installed release: 0.10.28.** Installed at
+`C:\Users\super\Documents\MorrowindMods\Dreamforged-0.10.28`; the active
 OpenMW config points to this folder and lists one Dreamforged script plus its
-optional classes plugin. The prior 0.10.25 folder remains on disk but is no
-longer active. A pre-install config backup is at
-`C:\Users\super\Documents\My Games\OpenMW\openmw.cfg.before-Dreamforged-0.10.26-20260924`.
+optional classes plugin. Previous version folders are retained on disk but
+are not active. The pre-install config backup is at
+`C:\Users\super\Documents\My Games\OpenMW\openmw.cfg.before-Dreamforged-0.10.28-20260925`.
+
+The 0.10.28 release includes the previously unshipped director
+debug HUD/NPC scavenging work plus a low-risk Lua cadence cleanup. Crosshair
+raycasts run 4 times per second; the boss card refreshes at 2 Hz and avoids
+rebuilding unchanged UI; chargen sampling runs at 4 Hz; temporary summon
+expiry is checked once per second and active actors are searched only when a
+summon expires. OpenMW 0.51 dispatches frame/update callbacks each frame, but
+substantive collection scans are timer-gated. OpenMW does not provide a
+general Lua `onDropped` callback, so scavenging still identifies likely loose
+drops conservatively and protects unclaimed generated rewards.
+
+The 0.10.28 ZIP is packaged and installed. The OpenMW 0.51 Lua 5.1 parser
+accepted all 26 Lua source/test modules and `git diff --check` passed. No game
+session was launched; runtime profiling and in-game hitch measurement remain
+playtest items.
 
 0.10.26 changes the outdoor arc to provide cryptic Dream warnings at 25/50/75%
 pressure, with Dagoth Ur's optional remarks focused on spawn, promotion, boss,

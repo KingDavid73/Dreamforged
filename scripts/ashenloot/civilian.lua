@@ -1,9 +1,11 @@
 local core, types, self = require('openmw.core'), require('openmw.types'), require('openmw.self')
 local nearby, util = require('openmw.nearby'), require('openmw.util')
 local I, C = require('openmw.interfaces'), require('scripts.ashenloot.config')
-local elapsed, target, timeout, travelPos = -require('scripts.ashenloot.rules').rng(self.id)()*2,nil,0,nil
+local elapsed, target, timeout, travelPos = -require('scripts.ashenloot.rules').rng(self.id)()*8,nil,0,nil
 local scanCursor=1
 local scavenged=0
+local firstSeen={}
+local lastPrune=0
 local S=types.Actor.EQUIPMENT_SLOT
 local armorSlots={}
 for name,equip in pairs({Helmet='Helmet',Cuirass='Cuirass',Greaves='Greaves',LPauldron='LeftPauldron',
@@ -20,6 +22,16 @@ local function reservedForPlayer(item)
     local loose=ok and state and state.director and state.director.loose
         and state.director.loose[item.id]
     return type(loose)=='table' and loose.protected==true
+end
+local function likelyPlayerDrop(item)
+    local owner=item.owner
+    if owner and owner.recordId and tostring(owner.recordId):lower()=='player' then return true end
+    if owner and (owner.recordId or owner.factionId) then return false end
+    -- OpenMW 0.51 has no global onDropped/onPlaced callback. A loose object
+    -- without an original cell is the best available signal for an item that
+    -- came out of an inventory; generated Dreamforged rewards are separately
+    -- protected by reservedForPlayer until the player collects them.
+    return item.startingCell==nil
 end
 local function slot(item)
     if types.Weapon.objectIsInstance(item) then
@@ -55,16 +67,18 @@ local function stopTravel()
 end
 local function update(dt)
     elapsed=elapsed+dt
-    if elapsed<2 then return end
+    local interval=target and 1 or 10
+    if elapsed<interval then return end
     elapsed=0
     if not C.enabled or not C.scavenge or protected() then stopTravel();return end
     local active=I.AI.getActivePackage()
     if active and active.type=='Combat' then stopTravel();return end
     if target then
-        timeout=timeout+2
+        timeout=timeout+1
         if not target:isValid() or target.parentContainer or target.cell~=self.cell or timeout>20 then stopTravel();return end
         if (target.position-self.position):length()<220 then
-            core.sendGlobalEvent('AshenLoot_Scavenge',{actor=self,item=target})
+            core.sendGlobalEvent('AshenLoot_Scavenge',{actor=self,item=target,
+                playerDrop=likelyPlayerDrop(target)})
             stopTravel()
         end
         return
@@ -90,20 +104,36 @@ local function update(dt)
         or active.type=='Combat' or active.type=='Activate') then return end
     local eq=types.Actor.getEquipment(self)
     local items=nearby.items
+    local now=core.getSimulationTime()
+    if now-lastPrune>=60 then
+        lastPrune=now
+        for id,untilTime in pairs(firstSeen) do
+            if untilTime+30<now then firstSeen[id]=nil end
+        end
+    end
     for _=1,#items do
         if scanCursor>#items then scanCursor=1 end
         local item=items[scanCursor]
         scanCursor=scanCursor+1
-        if item.enabled and item.cell==self.cell and (item.position-self.position):length()<1600 then
+        if item.enabled and item.cell==self.cell and (item.position-self.position):length()<2000 then
             local s=slot(item)
             local ok,r=pcall(function() return item.type.record(item) end)
             local owner=item.owner
-            if ok and r and s and not reservedForPlayer(item) and not r.mwscript
-                and not (owner and (owner.recordId or owner.factionId))
-                and score(item)>score(eq[s])*1.02 then
-                target,timeout,travelPos=item,0,item.position
-                I.AI.startPackage {type='Travel',destPosition=travelPos,cancelOther=false}
-                return
+            local playerDrop=likelyPlayerDrop(item)
+            local ownedByOther=owner and (owner.recordId or owner.factionId)
+            local betterEquipment=s and score(item)>score(eq[s])*1.02
+            if ok and r and not reservedForPlayer(item) and not r.mwscript
+                and (playerDrop or (not ownedByOther and betterEquipment)) then
+                local grace=firstSeen[item.id]
+                if playerDrop and not grace then
+                    -- A brief first-noticed grace period gives the player time
+                    -- to correct an accidental drop without polling constantly.
+                    firstSeen[item.id]=now+5
+                elseif not grace or now>=grace then
+                    target,timeout,travelPos=item,0,item.position
+                    I.AI.startPackage {type='Travel',destPosition=travelPos,cancelOther=false}
+                    return
+                end
             end
         end
     end
@@ -125,12 +155,12 @@ return {engineHandlers={
 },eventHandlers={
     AshenLoot_Pickup=function(item)
         if not item or not item:isValid() or item.parentContainer~=self.object then return end
+        scavenged=scavenged+1
         local s=slot(item)
         if not s then return end
         local eq=types.Actor.getEquipment(self)
         if score(item)<=score(eq[s]) then return end
         eq[s]=item
         types.Actor.setEquipment(self,eq)
-        scavenged=scavenged+1
     end,
 }}

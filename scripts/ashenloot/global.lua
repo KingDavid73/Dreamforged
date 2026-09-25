@@ -34,7 +34,7 @@ for _,def in ipairs(mythicDefinitions) do
     if not def.kind then def.kind='weapon';def.effects={{'restorehealth',1,1,core.magic.RANGE.Target}} end
 end
 local enrollmentTimer, lastCoverage = 0, ''
-local voiceElapsed=0
+local voiceElapsed,summonCheckElapsed=0,0
 local settingsResetPending = false
 local beastHandlerRegistered = false
 local projectileHandlerRegistered = false
@@ -867,6 +867,12 @@ local function encounter(data)
             elite.itemLevel=Progress.actorLevel(actor)
             elite.effectScale=math.min(elite.worldBoss and 2.5 or 2,1+math.floor(elite.itemLevel/10)*0.15)
             state.elites[key] = elite
+            if directorActor and Progress.debugAction then
+                local tierName=elite.worldBoss and 'World Boss'
+                    or ({'Champion','Elite','Unique'})[elite.rank] or 'Champion'
+                Progress.debugAction(elite.worldBoss and 'World Boss promoted' or 'Promotion',
+                    elite.name..' ('..tierName..').')
+            end
             local princeActor=state.director and state.director.specialActors
                 and state.director.specialActors[key]
             if elite.worldBoss and not princeActor then
@@ -1270,12 +1276,25 @@ return {
             if not salvageOk then print('[AshenLoot] ERROR auto-salvage: '..tostring(salvageErr)) end
             local tomeOk,tomeErr=pcall(updateSpellTomePickup,dt)
             if not tomeOk then print('[AshenLoot] ERROR spell tome pickup: '..tostring(tomeErr)) end
-            if state.mythicSummons then
-                local now=core.getSimulationTime()
-                for id,expires in pairs(state.mythicSummons) do
-                    local found
-                    for _,actor in ipairs(world.activeActors) do if actor.id==id then found=actor;break end end
-                    if now>=expires then if found and found:isValid() then found:remove() end;state.mythicSummons[id]=nil end
+            summonCheckElapsed=summonCheckElapsed+dt
+            if summonCheckElapsed>=1 then
+                summonCheckElapsed=0
+                if state.mythicSummons then
+                    local now=core.getSimulationTime()
+                    local expired={}
+                    for id,expires in pairs(state.mythicSummons) do
+                        if now>=expires then expired[id]=true;state.mythicSummons[id]=nil end
+                    end
+                    -- Searching the active actor list is only needed when a
+                    -- summon expires, not on every frame of its lifetime.
+                    if next(expired) then
+                        for _,actor in ipairs(world.activeActors) do
+                            if expired[actor.id] then
+                                if actor:isValid() then actor:remove() end
+                                expired[actor.id]=nil
+                            end
+                        end
+                    end
                 end
             end
             enrollmentTimer = enrollmentTimer + dt
@@ -1290,7 +1309,7 @@ return {
         end,
         onSave = function() return state end,
         onLoad = function(data)
-            state = data or state; pool = nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0;voiceElapsed=0
+            state = data or state; pool = nil; lastCoverage = '';autoSalvageCounts={};autoSalvageElapsed=0;voiceElapsed=0;summonCheckElapsed=0
             local oldVersion=state.version or 1
             state.procs, state.cooldowns = state.procs or {}, state.cooldowns or {}
             state.itemSpells,state.itemCooldowns,state.itemProcRoll=state.itemSpells or {},state.itemCooldowns or {},state.itemProcRoll or 0

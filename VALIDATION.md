@@ -1,5 +1,31 @@
 ﻿# Ashen Loot validation
 
+## 0.10.28 Lua cadence and scan cleanup (2026-09-25)
+
+- The OpenMW 0.51 Lua 5.1 parser accepted all 26 Lua source/test modules;
+  `git diff --check` passed.
+- Static cadence review: player crosshair raycast 4 Hz; World Boss discovery
+  and HUD refresh 2 Hz, with card recreation only on visible-value changes;
+  chargen sampling 4 Hz; actor promotion/boss maintenance 1 Hz; idle NPC
+  scavenging 0.1 Hz (travel checks 1 Hz); inventory/tome scans 1 Hz; outdoor
+  director processing 1 Hz with its own 5-second decision cadence; active
+  actor scan for summon removal only on expiry, at a 1 Hz check cadence.
+- One-shot ground alignment waits approximately 0.05 seconds for placement,
+  then exits. No unbounded retry loops or per-frame collection scans were
+  found. Runtime profiling and in-game hitch measurement remain playtest items.
+
+## 0.10.27 director diagnostics and NPC scavenging (2026-09-25)
+
+- The Lua 5.1 parser bundled with OpenMW 0.51 accepted all eight changed Lua
+  modules; `git diff --check` passed.
+- Static review confirmed the debug view defaults off, is registered in the
+  Interface settings group, and reports director state on a two-second event
+  cadence. NPC scanning is staggered to a ten-second idle cadence, with
+  one-second travel checks and protected generated drops excluded.
+- No OpenMW runtime session or in-game playtest was run for this working-tree
+  change. Verify HUD placement/state updates and that player-dropped gear is
+  collected without NPCs disturbing generated rewards.
+
 ## 0.10.26 pressure milestones and skill-aware combat estimates (2026-09-24)
 
 - The Lua 5.1 parser bundled with OpenMW 0.50 accepted all seven changed Lua
