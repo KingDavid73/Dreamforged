@@ -12,6 +12,7 @@ local Progress = require('scripts.ashenloot.progression')
 local Narration = require('scripts.ashenloot.narration')
 local Delve = require('scripts.ashenloot.delve')
 local DelveRules = require('scripts.ashenloot.delve_rules')
+local Context=require('scripts.ashenloot.encounter_context')
 local script = 'scripts/ashenloot/actor.lua'
 local state = {version = 35, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
@@ -237,6 +238,7 @@ local function beastArmorEquip(armor, actor)
 end
 local function eligible(actor)
     if not C.enabled or not supported() or types.Player.objectIsInstance(actor) then return false end
+    if Context.kind(actor.cell)=='refuge' then return false end
     if actor.recordId=='df_delve_attendant' or actor.recordId=='df_delve_broker' then return false end
     if not actor.enabled or actor.scale < 0.001 then return false end
     if not (types.Creature.objectIsInstance(actor) or types.NPC.objectIsInstance(actor)) then return false end
@@ -1191,6 +1193,7 @@ local function startingKit(data)
 end
 local function bindDelve()
     Delve.bind(state,{giveLoot=giveLoot,progress=Progress,snapshot=snapshot,refreshBaseline=refreshAutoSalvageBaseline})
+    Progress.setDungeonDebugProvider(Delve.debugState)
 end
 bindDelve()
 return {

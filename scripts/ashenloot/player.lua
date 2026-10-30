@@ -10,6 +10,7 @@ local nearby = require('openmw.nearby')
 local I = require('openmw.interfaces')
 local C = require('scripts.ashenloot.config')
 local R = require('scripts.ashenloot.rules')
+local DebugText=require('scripts.ashenloot.director_debug')
 local A = require('scripts.ashenloot.advancement')
 local whiteTexture=ui.texture {path='white'}
 I.Settings.registerPage {key = 'AshenLoot', l10n = 'AshenLoot', name = 'page', description = 'pageDescription'}
@@ -67,7 +68,8 @@ local function townSleepCell(cell)
     return false
 end
 local book, forgeWindow, targetCard, bossCard, voiceCard, directorDebugCard
-local voiceMessage,voiceUntil,directorDebugState,directorDebugSignature
+local voiceMessage,voiceUntil,directorDebugState,directorDebugSignature,directorDebugLines
+local directorDebugNeedsClear=false
 local page, lastTarget, elapsed = 0, nil, 0
 local directorDebugElapsed,bossCardElapsed=0,0
 local bossCardSignature
@@ -238,26 +240,19 @@ local function clearVoiceCard()
 end
 local function clearDirectorDebug()
     if directorDebugCard then directorDebugCard:destroy();directorDebugCard=nil end
-    directorDebugSignature=nil
+    directorDebugSignature=nil;directorDebugLines=nil
 end
 local function updateDirectorDebug()
     if not C.directorDebugView or I.UI.getMode() then clearDirectorDebug();return end
-    local data=directorDebugState or {pressure=0,cycle=0,status='Starting',detail='Waiting for director status.'}
-    local pressure=math.max(0,math.min(100,tonumber(data.pressure) or 0))
-    local cycle=math.max(0,math.min(100,tonumber(data.cycle) or 0))
-    local status=tostring(data.status or 'Waiting')
-    local detail=tostring(data.detail or '')
-    local lastAction=tostring(data.lastAction or 'No director action recorded yet.')
-    local signature=table.concat({math.floor(pressure+0.5),math.floor(cycle+0.5),status,
-        tostring(data.phase or 'build'),detail,lastAction},'|')
+    if directorDebugState and (not self.cell or directorDebugState.cellId~=self.cell.id) then directorDebugState=nil end
+    local data=directorDebugState or {context='unknown',contextLabel='Updating location',
+        cellName=self.cell and self.cell.name,status='Waiting',detail='Waiting for current director state.'}
+    local rendered=DebugText.lines(data);local signature=table.concat(rendered,'|')
     if signature==directorDebugSignature then return end
     clearDirectorDebug()
-    local lines={text('DREAMFORGED DIRECTOR DEBUG'),
-        text(string.format('Pressure %d%%  |  Boss cycle %d%%  |  %s',math.floor(pressure+0.5),
-            math.floor(cycle+0.5),tostring(data.phase or 'build'))),
-        text('State: '..status)}
-    if detail~='' then wrapped(lines,detail) end
-    if lastAction~='' then wrapped(lines,'Last: '..lastAction) end
+    local lines={}
+    for _,line in ipairs(rendered)do wrapped(lines,line)end
+    directorDebugLines=rendered
     local layout=panel(lines,0.015,0.13)
     layout.props.anchor=util.vector2(0,0)
     directorDebugCard=ui.create(layout)
@@ -336,6 +331,7 @@ local function updateBossCard()
     bossCardSignature=signature
 end
 local function frame(dt)
+    if directorDebugNeedsClear then directorDebugNeedsClear=false;clearDirectorDebug() end
     directorDebugElapsed=directorDebugElapsed+dt
     if directorDebugElapsed>=1 then directorDebugElapsed=0;updateDirectorDebug() end
     classSampleElapsed=classSampleElapsed+dt
@@ -522,9 +518,10 @@ end
 if I.InventoryExtender then I.InventoryExtender.registerTooltipModifier('AshenLoot', tooltip) end
 return {
     interfaceName = 'AshenLootUI',
-    interface = {version = 1, getMetadata = metadata, openInventory = function() page = 1; renderBook() end},
+    interface = {version = 1, getMetadata = metadata, getDirectorDebug=function()return {state=directorDebugState,lines=directorDebugLines or {},visible=directorDebugCard~=nil}end, openInventory = function() page = 1; renderBook() end},
     engineHandlers = {
         onFrame = frame,
+        onTeleported=function()directorDebugState=nil;directorDebugNeedsClear=true;directorDebugElapsed=1 end,
         onKeyPress = function(key)
             if not C.enabled then return end
             if I.UI.getMode() == 'Console' then return end
@@ -579,7 +576,7 @@ return {
             updateVoiceCard()
         end,
         AshenLoot_DirectorDebug=function(event)
-            if event then directorDebugState=event end
+            if event and self.cell and event.cellId==self.cell.id then directorDebugState=event end
         end,
         UiModeChanged = function(data)
             if not data then return end

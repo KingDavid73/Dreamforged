@@ -1,3 +1,7 @@
+# Current build: Dreamforged 0.11.4 - explicit encounter contexts
+
+Task 04a separates wilderness, ordinary hostile/safe interiors, generated floors, and refuge rules. The HUD consumes the active scheduler: real dungeon depth/population/waves/guardian/add/placement data indoors, wilderness pressure/cycle outside. Interior kills cannot feed wilderness pressure. No run reset required. See ENCOUNTER-CONTEXTS.md and VALIDATION.md for checks and limits. Install target: Documents/MorrowindMods/Dreamforged-0.11.4. Next: 04c, dense ambient populations plus adaptive dungeon pressure/peaks/recovery, followed by 04b patron messaging. Promotion/drop tuning remains tasks 07-08; native isometric work remains tasks 14-16. Previous handoffs are historical.
+
 # Current build: Dreamforged 0.11.3 - dungeon reinforcement repair
 
 Task 04 complete. Actual camera projection, alternative per-member placement, registered-agent navigation with collision-checked generated-graph fallback, saved pursuit behavior, guardian caps, stale/travel/load cancellation, resume grace, and zero-count cleanup are implemented. Four ambient enemies/eight owned live actors remain the baseline pending task 04c. Clean full-suite Isowind and stock OpenMW tests passed; see REINFORCEMENTS.md and tests/reinforcement-*-pass.txt. Install target: Documents/MorrowindMods/Dreamforged-0.11.3. No run reset required. Next task: 04a, explicit encounter contexts and accurate dungeon HUD. Density/pacing task 04c precedes patron voice task 04b. Earlier handoffs below are historical.

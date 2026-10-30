@@ -1,3 +1,10 @@
+## 0.11.4 - Explicit encounter contexts
+
+- Centralized wilderness, ordinary hostile/safe interior, generated-floor, and refuge policies. Generated floors use their dedicated scheduler; the refuge cannot inherit hostile-shrine progression, encounters, or resets. Offices join safe interior names.
+- The director HUD reports the current context. Dungeon floors show actual depth, living owned population/cap, waves, guardian/add budget, placement status, and next check. Wilderness retains pressure/cycle/phase. Teleport/load discards stale displays and old-cell payloads.
+- Interior kills no longer advance wilderness pressure or its boss cycle. Pending legacy placement/replacement replies recheck their context and originating cell.
+- Existing runs persist; no reset required. Density/adaptive dungeon pacing is next (04c); promotion/loot tuning and native isometric controls remain in the backlog.
+
 ﻿# Ashen Loot changelog
 
 ## 0.11.3 - Dungeon reinforcement placement

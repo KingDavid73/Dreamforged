@@ -1,7 +1,8 @@
 -- Pure rules shared by runtime and offline checks.
-local M={hub='Seyda Neen, Shrine of the Unending Dream',bossEvery=3}
+local Context=require('scripts.ashenloot.encounter_context')
+local M={hub=Context.hub,bossEvery=3}
 function M.isFloor(cell)
-    return cell and not cell.isExterior and (cell.name or ''):match('^Dreamforged Depth %d%d$')~=nil
+    return Context.kind(cell)=='delve'
 end
 function M.theme(depth) return math.floor((depth-1)/3)%4+1 end
 function M.layout(depth) return (depth-1)%12+1 end

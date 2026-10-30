@@ -6,6 +6,8 @@ local Records = require('scripts.ashenloot.records')
 local SpecialEncounters = require('scripts.ashenloot.special_encounters')
 local Narration = require('scripts.ashenloot.narration')
 local DelveRules = require('scripts.ashenloot.delve_rules')
+local Context = require('scripts.ashenloot.encounter_context')
+local dungeonDebugProvider
 local ACTOR_SCRIPT = 'scripts/ashenloot/actor.lua'
 local M = {}
 local state, loot, promote, eligible
@@ -272,13 +274,13 @@ local function gearHealthScale(effectiveLevel,playerLevel,dps)
 end
 local function cellKey(cell) return cell.id end
 local function dungeon(cell)
-    if cell.isExterior then return false end
+    if Context.kind(cell)~='interior' then return false end
     local n = cell.name:lower()
     for _, word in ipairs({'tomb','shrine','ruin','cavern','cave','grotto','daedric','crypt','stronghold','mine'}) do
         if n:find(word,1,true) then return true end
     end
     -- Most vanilla caves have proper names rather than the word "cave".
-    for _,word in ipairs({'guild','temple','house','manor','shop','tavern','tradehouse','inn','canton','palace'}) do
+    for _,word in ipairs({'guild','temple','house','manor','shop','tavern','tradehouse','inn','canton','palace','office'}) do
         if n:find(word,1,true) then return false end
     end
     for _,actor in ipairs(world.activeActors) do
@@ -287,6 +289,9 @@ local function dungeon(cell)
         end
     end
     return true -- Called only after a protected/hostile eligibility check.
+end
+local function policyFor(cell)
+    return Context.get(cell,Context.kind(cell)=='interior' and dungeon(cell))
 end
 local function buildGenericCreatureIds()
     if genericCreatureIds then return end
@@ -701,6 +706,7 @@ local function applyOutdoorVictory(outdoor,elite,now,intensity,isExterior)
 end
 function M.victoryRespite(actor,elite)
     if not actor or not actor.cell then return end
+    if not policyFor(actor.cell).outdoor then return end
     local outdoor=state.director.outdoor
     local now=core.getSimulationTime()
     local isExterior=actor.cell.isExterior
@@ -754,7 +760,7 @@ function M.safeSleep(player,duration)
 end
 function M.bossWave(actor)
     -- Generated floors own validated anchors and a finite boss-add allowance.
-    if DelveRules.isFloor(actor.cell) then return end
+    if not policyFor(actor.cell).legacyBossAdds then return end
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
     local elite=state.elites[actor.id]
     local player=world.players[1]
@@ -1050,6 +1056,7 @@ function M.loadout(actor, target, minimum, profile)
 end
 function M.prepare(actor, inCombat)
     if not C.enabled or not eligible(actor) or not valid(actor) then return end
+    local policy=policyFor(actor.cell);if not policy.progression then return end
     local d = state.director
     local delve=state.delve and state.delve.actors and state.delve.actors[actor.id]
     -- 0.7.4 stored generated actors as boolean true. Reconsider active exterior
@@ -1092,12 +1099,12 @@ function M.prepare(actor, inCombat)
     d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
     local cellState=d.cells[ck]
     if cell.isExterior then cellState.isExterior=true end
-    local boss = not DelveRules.isFloor(cell) and C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
+    local boss = policy.interiorBoss and C.dungeonBosses and isAggressive(actor) and not cellState.boss
     if boss then cellState.boss=actor.id end
     local town=cell.isExterior and exteriorTown(cell) or false
     -- World Boss is the highest promotion result, not a separate per-cell roll.
     -- Only actors that actually promote receive this conditional chance.
-    local allowWorldBoss=not DelveRules.isFloor(cell) and C.worldBosses and not guard and not town and isAggressive(actor)
+    local allowWorldBoss=policy.randomBosses and C.worldBosses and not guard and not town and isAggressive(actor)
         and playerLevel>=C.worldBossMinLevel and activeWorldBosses(cell)<C.worldBossCellCap
     local outdoorBossChance=3
     local forceOutdoorBoss=false
@@ -1107,12 +1114,12 @@ function M.prepare(actor, inCombat)
         forceOutdoorBoss=progress>=100
     end
     -- Replace only before combat, never change a fighting actor underneath the player.
-    if not generated and not inCombat and not town and C.progression and types.Creature.objectIsInstance(actor)
+    if policy.replacement and not generated and not inCombat and not town and C.progression and types.Creature.objectIsInstance(actor)
         and rng(100) <= C.creatureVariety and (actor.position-world.players[1].position):length() > 900 then
         local id=pickCreature(actor,target,rng)
         if id ~= actor.recordId then
             local token=actor.id..':replacement'
-            pending[token]={actor=actor,replacement=id,created=core.getSimulationTime()}
+            pending[token]={actor=actor,replacement=id,cell=cell.id,created=core.getSimulationTime()}
             d.actors[actor.id].pendingReplacement=true
             world.players[1]:sendEvent('AshenLoot_CheckReplacement',{actor=actor,token=token})
             return
@@ -1130,7 +1137,7 @@ function M.prepare(actor, inCombat)
     if delve and delve.boss then
         promote({actor=actor,force=true,worldBoss=true,rank=3,combatDps=combatDps,combatBand=combatBand})
         world.players[1]:sendEvent('AshenLoot_Elite',{id=actor.id,actor=actor,metadata=state.elites[actor.id]})
-    elseif boss or cellState.boss==actor.id then
+    elseif policy.interiorBoss and (boss or cellState.boss==actor.id) then
         promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,
             worldBossChance=outdoorBossChance,combatDps=combatDps,combatBand=combatBand})
     else promote({actor=actor,force=forceOutdoorBoss,worldBoss=forceOutdoorBoss,
@@ -1161,7 +1168,7 @@ function M.prepare(actor, inCombat)
         {rank=elite and elite.rank or 0,worldBoss=elite and elite.worldBoss})
     if cellState.boss==actor.id then M.supplement(cell,target) end
     M.containerLoot(cell,actor,target)
-    local baseBudget=cell.isExterior and 6 or (dungeon(cell) and C.interiorBudget or 0)
+    local baseBudget=policy.outdoor and 6 or (policy.interiorPacks and C.interiorBudget or 0)
     local maxCount=math.floor(baseBudget*directorDensity()+0.5)
     if town then maxCount=0 end
     -- A replacement may stand in for its native anchor, but an additional
@@ -1170,7 +1177,7 @@ function M.prepare(actor, inCombat)
     -- Unsafe identity eligibility must never create extra population anchors.
     -- It permits promotions/transforms; ordinary encounter records still own
     -- the cell's strictly budgeted reinforcement generation.
-    if not DelveRules.isFloor(cell) and not cell.isExterior and C.extraEncounters and populationAnchor(actor) and canAnchorPack
+    if policy.interiorPacks and C.extraEncounters and populationAnchor(actor) and canAnchorPack
         and additionalCount(cellState) < maxCount then
         local group=math.max(1,math.floor(directorDensity()+0.5))
         if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
@@ -1188,7 +1195,8 @@ function M.replaceResult(event)
     local actor=request.actor
     if not valid(actor) then return end
     local d=state.director
-    if C.enabled and event.clear and (actor.position-world.players[1].position):length()>900 then
+    if C.enabled and policyFor(actor.cell).replacement and actor.cell.id==request.cell
+        and event.clear and world.players[1] and (actor.position-world.players[1].position):length()>900 then
         local replacement=world.createObject(request.replacement,1)
         d.generated[replacement.id]='replacement'
         replacement:teleport(actor.cell,actor.position,{rotation=actor.rotation})
@@ -1266,6 +1274,10 @@ function M.spawnResult(event)
         if cellState then setAdditionalCount(cellState,additionalCount(cellState)-(amount or request.count)) end
     end
     if not C.enabled or not C.extraEncounters or not valid(actor) or actor.cell.id~=request.cell then refund();return end
+    local policy=policyFor(actor.cell)
+    if (request.bossWave and not policy.legacyBossAdds) or (request.director and not policy.outdoor)
+        or (not request.bossWave and not request.director and not policy.interiorPacks)
+        or (not policy.outdoor and (not world.players[1] or world.players[1].cell~=actor.cell)) then refund();return end
     local rng=R.rng(event.token)
     local made=0
     for _,pos in ipairs(event.positions or {}) do
@@ -1468,7 +1480,7 @@ local looseKinds={types.Weapon,types.Armor,types.Clothing,types.Potion,types.Ing
     types.Lockpick,types.Probe,types.Apparatus}
 if types.Miscellaneous then looseKinds[#looseKinds+1]=types.Miscellaneous end
 local function looseDungeon(cell)
-    if not cell or cell.isExterior then return false end
+    if not cell or Context.kind(cell)=='refuge' or cell.isExterior then return false end
     local name=(cell.name or ''):lower()
     for _,word in ipairs({'tomb','crypt','ancestral','shrine','daedric','dwemer'}) do
         if name:find(word,1,true) then return true end
@@ -1714,6 +1726,7 @@ function M.scavenge(event)
     actor:sendEvent('AshenLoot_Pickup',item)
 end
 local function rerunDungeon(cell,cellState,force)
+    if not policyFor(cell).rerunInterior then return 0 end
     if not force and (not C.rerunnableDungeons or not cellState.clearedAt or not cellState.leftAfterClear
         or core.getGameTime()-cellState.clearedAt<C.dungeonResetHours*3600) then return 0 end
     local points={}
@@ -1756,8 +1769,9 @@ local function updateCellState(player)
     lastPlayerCell=current
     local cell=player.cell
     if not cell then return end
-    if DelveRules.isFloor(cell) then return end
-    if cell.isExterior then
+    local policy=policyFor(cell)
+    if not policy.outdoor and not policy.rerunInterior then return end
+    if policy.outdoor then
         local cellState=state.director.cells[current] or {additionalCount=0,boss=false,isExterior=true}
         state.director.cells[current]=cellState;cellState.isExterior=true
         if entering and C.rerunnableWilderness and cellState.wildernessLeftAt
@@ -1845,7 +1859,7 @@ local function updateDens(player)
             -- Destroying a den grants a short tactical lull, but it does not
             -- erase the wilderness appetite. Only a World Boss victory or a
             -- deliberate settlement reset clears the outdoor pressure arc.
-        elseif den and valid(den) and den.cell==player.cell and (den.position-player.position):length()<3500
+        elseif den and valid(den) and policyFor(den.cell).outdoor and den.cell==player.cell and (den.position-player.position):length()<3500
             and denState.cycles>0 and now>=(denState.nextWave or 0) then
             local threat=liveDirectorThreat(player)
             local cap=math.max(1,math.floor(9*C.directorIntensity+0.5))
@@ -1872,7 +1886,7 @@ local function updateDens(player)
 end
 local function updateOutdoorDirector(player)
     local cell=player.cell
-    if not cell or not cell.isExterior or not C.extraEncounters then return end
+    if not cell or not policyFor(cell).outdoor or not C.extraEncounters then return end
     local d=state.director
     local outdoor=d.outdoor
     local now=core.getSimulationTime()
@@ -2098,6 +2112,38 @@ local function maintenance(now)
         if not active[id] then d.specialActors[id]=nil end
     end
 end
+function M.setDungeonDebugProvider(provider) dungeonDebugProvider=provider end
+function M.debugState(player)
+    local cell=player and player.cell;local policy=policyFor(cell)
+    local result={context=policy.id,contextLabel=policy.label,cellId=cell and cell.id,cellName=cell and cell.name}
+    if policy.dungeonDirector then
+        local supplied=dungeonDebugProvider and dungeonDebugProvider(player) or {}
+        for k,v in pairs(supplied)do result[k]=v end
+        result.status=result.status or 'Uninitialized';result.detail=result.detail or 'Start or resume a descent through the refuge.'
+    elseif policy.outdoor then
+        local outdoor=state.director.outdoor;local debug=outdoor.debug or {}
+        result.pressure=outdoor.pressure or 0;result.cycle=outdoor.bossProgress or 0
+        result.phase=outdoor.phase or 'build';result.status=debug.status or 'Waiting'
+        result.detail=debug.detail or '';result.lastAction=debug.lastAction or ''
+    elseif policy.interiorPacks then
+        result.status='Interior encounters';result.additions=additionalCount(state.director.cells[cell.id])
+        result.detail='Actor-triggered interior rules; no wilderness pressure controller.'
+    elseif policy.id=='refuge' then
+        result.status='Safe refuge';result.detail='Automatic encounters, promotions, and dungeon resets are disabled here.'
+    elseif policy.id=='interior_safe' then
+        result.status='Safe interior';result.detail='No automatic encounter packs, random bosses, or dungeon resets here.'
+    else result.status='Waiting';result.detail='Waiting for the player location.' end
+    if not C.enabled then result.status='Disabled';result.detail='Dreamforged is turned off.'
+    elseif not C.extraEncounters and (policy.outdoor or policy.dungeonDirector or policy.interiorPacks) then
+        result.status='Encounters disabled';result.detail='Extra encounters are turned off.'
+    end
+    return result
+end
+local function publishDirectorDebug(player,now)
+    if C.directorDebugView and now-debugSentAt>=2 then
+        debugSentAt=now;player:sendEvent('AshenLoot_DirectorDebug',M.debugState(player))
+    end
+end
 function M.update(dt)
     timer=timer+dt
     if timer<1 or not world.players[1] then return end
@@ -2107,14 +2153,7 @@ function M.update(dt)
     reconcileOutdoorBoss(now)
     if not C.enabled then
         setDirectorDebug('Disabled','Dreamforged is turned off.')
-        if C.directorDebugView and now-debugSentAt>=2 then
-            debugSentAt=now
-            local outdoor=state.director.outdoor
-            local debug=outdoor.debug or {}
-            player:sendEvent('AshenLoot_DirectorDebug',{pressure=outdoor.pressure or 0,
-                cycle=outdoor.bossProgress or 0,status=debug.status or 'Disabled',detail=debug.detail or '',
-                lastAction=debug.lastAction or 'No director action recorded yet.',phase=outdoor.phase or 'build'})
-        end
+        publishDirectorDebug(player,now)
         return
     end
     maintenance(now)
@@ -2129,15 +2168,10 @@ function M.update(dt)
     end
     local count=0
     updateDens(player)
-    if player.cell and player.cell.isExterior then
+    if policyFor(player.cell).outdoor then
         if C.extraEncounters then updateOutdoorDirector(player)
         else setDirectorDebug('Disabled','Extra wilderness encounters are turned off.') end
-    elseif player.cell then
-        local cellState=state.director.cells[player.cell.id]
-        setDirectorDebug('Interior','Cell '..tostring(player.cell.name or player.cell.id)
-            ..'; additional enemies tracked: '..additionalCount(cellState)..'.')
-    else
-        setDirectorDebug('Waiting','Waiting for the player cell to become available.')
+
     end
     for _,actor in ipairs(world.activeActors) do
         if count>=3 then break end
@@ -2164,19 +2198,12 @@ function M.update(dt)
             pending[token]=nil
         end
     end
-    if C.directorDebugView and now-debugSentAt>=2 then
-        debugSentAt=now
-        local outdoor=state.director.outdoor
-        local debug=outdoor.debug or {}
-        player:sendEvent('AshenLoot_DirectorDebug',{pressure=outdoor.pressure or 0,
-            cycle=outdoor.bossProgress or 0,status=debug.status or 'Waiting',detail=debug.detail or '',
-            lastAction=debug.lastAction or 'No director action recorded yet.',phase=outdoor.phase or 'build'})
-    end
+    publishDirectorDebug(player,now)
 end
 function M.refreshPools()
     pools, gear, itemPools, kindPools, genericCreatureIds = nil, nil, nil, nil, nil
 end
-M.test={supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,rerunDungeon=rerunDungeon,
+M.test={context=policyFor,supplyRecord=supplyRecord,pickCreature=pickCreature,dungeon=dungeon,rerunDungeon=rerunDungeon,
     pickNpcReinforcement=pickNpcReinforcement,randomizeInventory=randomizeInventory,
     randomBase=randomBase,isGuard=isGuard,isAggressive=isAggressive,worldBossScale=worldBossScale,
     activeWorldBosses=activeWorldBosses,

@@ -1,0 +1,2 @@
+Actual configured Dreamforged-0.11.4 data directory; full suite plus Isowind; profile adds tests/Isowind only, no repository runtime override.
+[17:43:30.723 I] Global[scripts/ashenloot_test/context_installed.lua]:	[CONTEXT INSTALLED] ALL PASS configured 0.11.4 dungeon metrics and refuge HUD

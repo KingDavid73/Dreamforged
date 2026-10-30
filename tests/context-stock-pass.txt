@@ -1,0 +1,50 @@
+Stock OpenMW with base game and official expansions; task 04a; automated in-engine checks, not visual QA.
+[17:41:10.178 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS authored floor recognized
+[17:41:10.179 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS unowned matching name is not a generated floor
+[17:41:10.179 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS exterior classification has priority
+[17:41:10.179 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS ordinary interior policies remain distinct
+[17:41:10.179 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS shrine refuge explicitly safe
+[17:41:10.179 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS refuge cannot reset as a hostile shrine
+[17:41:15.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS refuge fixture is actually present
+[17:41:15.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS refuge actors excluded from promotions and automatic progression
+[17:41:15.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS refuge prepare cannot create director actor
+[17:41:16.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy refuge
+[17:41:16.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows refuge
+[17:41:16.193 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in refuge
+[17:41:22.202 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy interior_safe
+[17:41:22.202 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows interior_safe
+[17:41:22.202 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in interior_safe
+[17:41:23.331 I] Global[scripts/ashenloot/global.lua]:	[AshenLoot] encounter placement 2/2 in addamasartus
+[17:41:23.332 I] Global[scripts/ashenloot/global.lua]:	[AshenLoot] encounter placement 2/2 in addamasartus
+[17:41:25.284 I] Global[scripts/ashenloot/global.lua]:	[AshenLoot] encounter placement 1/1 in addamasartus
+[17:41:28.214 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy interior_hostile
+[17:41:28.215 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows interior_hostile
+[17:41:28.215 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in interior_hostile
+[17:41:35.458 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy wilderness
+[17:41:35.458 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows wilderness
+[17:41:35.459 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS wilderness retains pressure/cycle HUD
+[17:41:41.473 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy delve
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows delve
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in delve
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS dungeon HUD uses actual floor counters
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS HUD counters match live dungeon state
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS generated floors bypass legacy packs and random bosses
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS generated floor cannot use ordinary interior reset
+[17:41:41.474 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS dungeon kills cannot change wilderness pressure or boss cycle
+[17:41:41.676 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] reinforcement wave 1 at depth 1 (2 actors)
+[17:41:42.673 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS dedicated dungeon wave still spawns real bounded actors
+[17:41:48.674 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy refuge
+[17:41:48.674 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows refuge
+[17:41:48.675 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in refuge
+[17:41:56.680 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy delve
+[17:41:56.680 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows delve
+[17:41:56.680 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in delve
+[17:41:56.681 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS dungeon HUD uses actual floor counters
+[17:41:56.681 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS old-cell debug event rejected
+[17:41:57.691 I] Menu[scripts/ashenloot_test/menu.lua]:	[AshenLoot TEST] Reloading isolated test save in player
+[17:42:03.696 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS actual location policy delve
+[17:42:03.696 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS rendered HUD follows delve
+[17:42:03.699 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS no wilderness metrics in delve
+[17:42:03.699 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS dungeon HUD uses actual floor counters
+[17:42:03.699 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] PASS save/load rebinds dungeon debug provider
+[17:42:03.701 I] Global[scripts/ashenloot_test/context.lua]:	[CONTEXT FIX] ALL PASS explicit policies, rendered HUD, natural wave, portal and save/load

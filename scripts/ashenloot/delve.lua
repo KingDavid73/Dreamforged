@@ -9,6 +9,7 @@ local registered=false
 local script='scripts/ashenloot/actor.lua'
 local entrance={-7500,-68000,500}
 local Selection=require('scripts.ashenloot.delve_selection')
+local Context=require('scripts.ashenloot.encounter_context')
 local selectionVersion=2
 local bindingGeneration=0
 local selectEnemy=Selection.choose
@@ -24,6 +25,9 @@ local function diagnostic(slot,status,detail)
         if #d.history>32 then table.remove(d.history,1) end
     end
     d.status,d.detail=status,detail
+    if status=='wave spawned' or status=='batch deferred' or status=='placement cancelled' or status=='initial population' then
+        d.lastAction=status..': '..tostring(detail)
+    end
 end
 local function data()
     state.delve=state.delve or {version=1,serial=0,depth=0,bosses=0,slots={},actors={},offeredEpoch=-1}
@@ -80,6 +84,7 @@ local function context(actor)
 end
 function M.context(actor) return context(actor) end
 local function currentSlot(p)
+    if Context.kind(p and p.cell)~='delve' then return end
     local d=data()
     for index,l in ipairs(layouts) do
         local slot=d.slots[index]
@@ -457,6 +462,22 @@ function M.groundEntrance(e)
     -- Explicit terrain height; onGround snapping was burying the herald on slopes.
     npc:teleport('',e.position+util.vector3(0,0,12))
     print('[Dreamforged Delve] herald placed at '..tostring(e.position))
+end
+function M.debugState(p)
+    local slot=currentSlot(p)
+    if not slot then return {status='Uninitialized',detail='Start or resume a descent through the refuge.'} end
+    local now=core.getSimulationTime();local diag=slot.diagnostics or {};local bossEncounter=nearBoss(slot,p)
+    local guardian=not Rules.boss(slot.depth) and 'not scheduled' or slot.bossDefeated and 'defeated'
+        or livingHere(slot.boss,slot) and (bossEncounter and 'engaged' or 'alive') or 'pending'
+    return {depth=slot.depth,alive=aliveCount(slot),cap=8,
+        waves=slot.ordinaryWaves or math.max(0,(slot.waves or 0)-(slot.addWaves or 0)),
+        guardian=guardian,adds=slot.addsMade or 0,addCap=4,
+        countdown=not slot.pending and (not bossEncounter or (slot.addsMade or 0)<4)
+            and math.max(0,math.ceil((bossEncounter and (slot.nextAdds or now) or (slot.nextWave or now))-now)) or nil,
+        countdownKind=bossEncounter and 'guardian add' or 'wave',
+        status=diag.status or 'Initializing',detail=diag.detail or 'Preparing the floor.',
+        lastAction=diag.lastAction or '',attempt=slot.placement and slot.placement.attempts or nil,
+        lastFailure=slot.lastPlacementFailure}
 end
 M.test={descend=descend,resume=resume,retreat=retreat,shop=shop,spawn=spawn,data=data,activate=activate,
     selectEnemy=selectEnemy,migrateSelection=migrateSelection,selection=Selection,

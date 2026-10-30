@@ -1,3 +1,7 @@
+# 0.11.4 context and HUD update
+
+Generated floors and the refuge now have explicit encounter policies separate from ordinary interiors and the wilderness. The director debug panel shows actual floor state, not overworld pressure/cycle counters. Dungeon kills cannot advance the wilderness controller. See ENCOUNTER-CONTEXTS.md. Existing runs persist. Density/adaptive pacing remains task 04c.
+
 # Dreamforged 0.11.3 — The Unending Dream (playable prototype)
 
 ## Reinforcements (0.11.3)
