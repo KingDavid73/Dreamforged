@@ -1,5 +1,13 @@
 ﻿# Ashen Loot changelog
 
+## 0.11.2 - Depth-aware dungeon archetypes
+
+- Expanded the authored dungeon roster to 32 combat archetypes. Absolute depth shifts selection toward stronger creatures and boss forms across palette cycles; exhausted themes retain strong fallback creatures rather than resetting to rats.
+- Optional expansion/mod creatures can supplement ordinary encounters at a 25% chance when suitable candidates exist. Candidates must be walking, unscripted, nonessential, service-free population-list creatures with an identifiable theme; special actor tags and domestic/service creatures are excluded.
+- Optional creatures receive cached, nonrespawning dungeon-owned records that retain their mod appearance, stats, spells, and inventory across save/load.
+- Species selection uses its own depth band. Existing player/gear preparation, health/damage depth multipliers, promotion odds, and loot rules are unchanged.
+- Existing 0.11.1 floors keep their inhabitants. New spawns use the new roster. The earlier fallback-guar migration remains available for older saves.
+
 ## 0.11.1 - Dungeon enemy selection
 
 - Dungeon themes use private, script-free combat archetypes and explicit boss backups. Suite-added scripts cannot empty the pools or spawn untracked children.

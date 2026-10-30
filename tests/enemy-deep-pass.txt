@@ -1,0 +1,17 @@
+[11:48:07.276 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS second cave cycle generates normally
+[11:48:07.277 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS depth13 replaces opening rats with stronger archetypes df_delve_enemy_alit_blighted
+[11:48:07.277 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS depth13 replaces opening rats with stronger archetypes df_delve_enemy_kagouti
+[11:48:07.278 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS depth13 replaces opening rats with stronger archetypes Generated:0x11
+[11:48:07.278 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS depth13 replaces opening rats with stronger archetypes df_delve_enemy_kagouti
+[11:48:07.280 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS real spawn uses eligible optional archetype ab_fau_kwamagrubber
+[11:48:07.280 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional dungeon snapshot is nonrespawning and script-free
+[11:48:07.289 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional snapshot record reused
+[11:48:07.289 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS full suite supplies an eligible optional cave creature at depth13
+[11:48:12.280 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional spawn uses existing scaling target once
+[11:48:12.281 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS generated optional snapshot excluded from world random pool
+[11:48:17.325 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] combat=true fight=100 flee=0
+[11:48:17.325 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional creature enters combat with dungeon hostility
+[11:48:26.734 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional enemy and depth survive save/load
+[11:48:26.762 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS optional snapshot identity restored after load
+[11:48:26.762 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] PASS cached optional record survives save/load
+[11:48:26.762 I] Global[scripts/ashenloot_test/enemy_deep.lua]:	[ENEMY DEEP] ALL PASS

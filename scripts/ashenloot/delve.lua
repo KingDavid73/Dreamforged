@@ -8,27 +8,9 @@ local M={};local state,api,elapsed,lastCell,travelAt= nil,nil,0,nil,-100
 local registered=false
 local script='scripts/ashenloot/actor.lua'
 local entrance={-7500,-68000,500}
-local enemyThemes=require('scripts.ashenloot.delve_enemies')
+local Selection=require('scripts.ashenloot.delve_selection')
 local selectionVersion=2
-local rejected={}
-local function selectEnemy(theme,boss,rng)
-    local pool=assert(enemyThemes[theme],'Unknown dungeon enemy theme '..tostring(theme))
-    local choices={}
-    for _,id in ipairs(boss and pool.boss or pool.ordinary) do
-        local rec=types.Creature.records[id]
-        local reason=not rec and 'missing record' or rec.mwscript and 'attached MWScript'
-            or rec.isEssential and 'essential actor' or not rec.canWalk and 'cannot walk'
-        if not reason then
-            for _,offered in pairs(rec.servicesOffered or {}) do if offered then reason='service actor';break end end
-        end
-        if reason then
-            if not rejected[id] then print('[Dreamforged Delve] rejected '..id..': '..reason);rejected[id]=true end
-        else choices[#choices+1]=id end
-    end
-    assert(#choices>0,'No valid '..(boss and 'boss' or 'ordinary')..' creatures for '..pool.name..'; reinstall the matching Dreamforged-Delve.esp')
-    -- Boss order supplies an explicit backup; never silently substitute ordinary fauna.
-    return boss and choices[1] or choices[rng(#choices)]
-end
+local selectEnemy=Selection.choose
 local function vec(p) return util.vector3(p[1],p[2],p[3]) end
 local function live(o) return o and o:isValid() end
 local function data()
@@ -97,10 +79,12 @@ local function spawn(slot,index,anchor,boss,healthFraction)
     local rng=R.rng(d.serial..':'..slot.depth..':'..slot.serial)
     -- Adjacent short seeds have correlated first draws; mix before choosing a species.
     rng(997);rng(7919)
-    local id=selectEnemy(l.theme,boss,rng)
+    local _,archetype=selectEnemy(l.theme,boss,rng,slot.depth)
+    local id=Selection.recordId(archetype)
     local actor=world.createObject(id,1)
     local target=math.max(1,math.floor(d.baseline+(slot.depth-1)*1.25))
-    local info={depth=slot.depth,index=index,level=target,boss=boss or false,selectionVersion=selectionVersion}
+    local info={depth=slot.depth,index=index,level=target,boss=boss or false,selectionVersion=selectionVersion,
+        archetypeLevel=archetype.level,optionalArchetype=archetype.optional,archetypeSource=archetype.id}
     d.actors[actor.id]=info
     slot.objects[#slot.objects+1]=actor
     slot.ids=slot.ids or {};slot.ids[#slot.ids+1]=actor.id
@@ -112,7 +96,7 @@ local function spawn(slot,index,anchor,boss,healthFraction)
     actor:teleport(l.name,vec(anchor),{onGround=true})
     -- Start passive until the player approaches, rather than aggroing the entire floor.
     actor:sendEvent('Dreamforged_DelveSpawned',{healthFraction=healthFraction})
-    print('[Dreamforged Delve] selected '..id..' depth '..slot.depth..(boss and ' guardian' or ' ordinary'))
+    print('[Dreamforged Delve] selected '..id..' ('..archetype.id..') depth '..slot.depth..(boss and ' guardian' or ' ordinary'))
     return actor
 end
 local function forgetActor(id)
@@ -242,7 +226,7 @@ local function activate(o,p)
     else return end
     return false
 end
-function M.bind(s,a) state,api=s,a end
+function M.bind(s,a) state,api=s,a;Selection.bind(data) end
 function M.init()
     if registered or not core.contentFiles.has('Dreamforged-Delve.esp') then return end
     registered=true
@@ -371,5 +355,5 @@ function M.groundEntrance(e)
     print('[Dreamforged Delve] herald placed at '..tostring(e.position))
 end
 M.test={descend=descend,resume=resume,retreat=retreat,shop=shop,spawn=spawn,data=data,activate=activate,
-    selectEnemy=selectEnemy,migrateSelection=migrateSelection}
+    selectEnemy=selectEnemy,migrateSelection=migrateSelection,selection=Selection}
 return M

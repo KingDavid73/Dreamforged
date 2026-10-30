@@ -1,6 +1,6 @@
 [
-  {"name":"Cave","ordinary":["rat","kwama forager","nix-hound","alit"],"boss":["kagouti","alit"]},
-  {"name":"Ancestral Tomb","ordinary":["skeleton","ancestor_ghost","bonelord"],"boss":["bonewalker_greater","bonelord"]},
-  {"name":"Dwemer","ordinary":["centurion_spider","centurion_sphere","centurion_steam"],"boss":["centurion_steam","centurion_sphere"]},
-  {"name":"Daedric","ordinary":["scamp","clannfear","dremora"],"boss":["daedroth","dremora"]}
+ {"name":"Cave","ordinary":["rat","kwama forager","kwama worker","nix-hound","alit","kwama warrior","shalk","kagouti","alit_blighted","shalk_blighted","kagouti_blighted"],"boss":["kagouti","alit_blighted","kagouti_blighted"],"levels":{"rat":1,"kwama forager":2,"kwama worker":3,"nix-hound":5,"alit":4,"kwama warrior":6,"shalk":6,"kagouti":8,"alit_blighted":12,"shalk_blighted":16,"kagouti_blighted":18}},
+ {"name":"Ancestral Tomb","ordinary":["skeleton","ancestor_ghost","bonewalker_weak","bonewalker","skeleton warrior","bonelord","bonewalker_greater","skeleton champion"],"boss":["bonewalker","bonewalker_greater","skeleton champion"],"levels":{"skeleton":5,"ancestor_ghost":5,"bonewalker_weak":6,"bonewalker":10,"skeleton warrior":12,"bonelord":15,"bonewalker_greater":16,"skeleton champion":18}},
+ {"name":"Dwemer","ordinary":["centurion_spider","centurion_sphere","centurion_steam"],"boss":["centurion_sphere","centurion_steam"],"levels":{"centurion_spider":8,"centurion_sphere":14,"centurion_steam":24}},
+ {"name":"Daedric","ordinary":["scamp","clannfear","atronach_flame","daedroth","dremora","atronach_frost","ogrim","atronach_storm","ogrim titan","golden saint"],"boss":["daedroth","ogrim","atronach_storm","golden saint"],"levels":{"scamp":5,"clannfear":12,"atronach_flame":18,"daedroth":18,"dremora":20,"atronach_frost":20,"ogrim":22,"atronach_storm":25,"ogrim titan":26,"golden saint":30}}
 ]

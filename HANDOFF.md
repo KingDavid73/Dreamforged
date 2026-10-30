@@ -1,3 +1,7 @@
+# Current work: Dreamforged 0.11.2 - depth-aware archetypes
+
+Task 02a expands the authored roster to 32 species/forms and admits conservative optional population-list creatures through cached nonrespawning snapshots. Species selection progresses by absolute depth, independently of the existing stat multipliers. Existing floors persist. Full-suite and base-content sampling/regression checks passed, plus depth13 optional-spawn combat, record reuse, and save/load checks. See DELVE.md and tests/enemy-depth-*-pass.txt, tests/enemy-deep-pass.txt. Install target: Documents/MorrowindMods/Dreamforged-0.11.2. Next task: 03, diagnose missing dungeon reinforcements. Prior handoffs follow.
+
 # Current work: Dreamforged 0.11.1 - dungeon enemy selection
 
 Task 02 supplies private combat archetypes, fixes IDs, removes the Pack Guar fallback, and migrates living old-selector enemies in saved floors. See ENEMY-SELECTION-DIAGNOSIS.md and IMPLEMENTATION-BACKLOG.md. Full-suite Isowind and base-content stock OpenMW runtime tests both passed. Install target: Documents/MorrowindMods/Dreamforged-0.11.1. Earlier handoffs follow for historical context.

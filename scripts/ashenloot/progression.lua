@@ -319,8 +319,9 @@ local function ordinaryCreatureRecord(rec)
 end
 local function safeRecord(rec)
     if not rec then return false end
-    if rec.id:lower():find('df_delve_enemy_',1,true)==1 then return false end
-    if C.unsafeContent then return not rec.id:find('^generated:') end
+    local id=rec.id:lower()
+    if id:find('df_delve_enemy_',1,true)==1 or id:find('^generated:') then return false end
+    if C.unsafeContent then return true end
     return ordinaryCreatureRecord(rec)
 end
 local function populationAnchor(actor)

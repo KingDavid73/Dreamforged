@@ -1,0 +1,2 @@
+[11:52:40.967 I] Adding data directory C:/Users/super/Documents/MorrowindMods/Dreamforged-0.11.2
+[11:53:00.214 I] Global[scripts/ashenloot_test/enemy_installed.lua]:	[ENEMY INSTALLED] ALL PASS configured installation selects dungeon combat records

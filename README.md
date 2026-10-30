@@ -1,10 +1,10 @@
-# 0.11.1 dungeon enemy selection
+# 0.11.2 depth-aware dungeon archetypes
 
 See [DELVE.md](DELVE.md) for the Unending Dream, NPC entrance, portal, coin broker, and zero-gold equipment changes. The previous release documentation follows.
 
 # Morrowind: Dreamforged
 
-**Current release: 0.11.1 - Dungeon enemy selection.** See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
+**Current release: 0.11.2 - Depth-aware dungeon archetypes.** See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
 
 ## 0.10.29 World Boss tracker synchronization
 

@@ -8,13 +8,13 @@ local function run(dt)
  local A=I.AshenLoot;local D=A.delve;local d=D.test.data();local s=A.getState()
  if stage==0 and time>3 then
   for theme,pool in ipairs(themes) do
-   local seen={};local random=require('scripts.ashenloot.rules').rng('selection:'..theme);for seed=1,128 do seen[D.test.selectEnemy(theme,false,random)]=true end
+   local seen={};local random=require('scripts.ashenloot.rules').rng('selection:'..theme);for depth=1,80 do for sample=1,32 do seen[D.test.selectEnemy(theme,false,random,depth,false)]=true end end
    local count=0;for id in pairs(seen) do count=count+1;check(not A.progression.test.safeRecord(types.Creature.records[id]),'private archetype excluded from world pool '..id) end
    check(count==#pool.ordinary,'all ordinary archetypes reachable '..pool.name)
-   check(D.test.selectEnemy(theme,true,function()return 1 end)==pool.boss[1],'explicit boss '..pool.name)
+   local id=D.test.selectEnemy(theme,true,random,1,false);local curated=false;for _,bossId in ipairs(pool.boss)do if id==bossId then curated=true end end;check(curated,'explicit boss '..pool.name)
    for _,list in ipairs({pool.ordinary,pool.boss}) do for _,id in ipairs(list) do local r=types.Creature.records[id];check(r and not r.mwscript and not r.isEssential and not r.isRespawning and r.canWalk,'safe combat record '..id) end end
   end
-  D.test.descend(p);stage=1;nextAt=time+4
+  require('scripts.ashenloot_test.enemy_depth_checks')(D,check);D.test.descend(p);stage=1;nextAt=time+4
  elseif stage==1 and time>nextAt then
   local slot=d.slots[1];check(#slot.objects==4,'first floor has four actual creatures')
   -- Simulate an old saved floor: one surviving guar guardian and one dead guar.
@@ -62,7 +62,7 @@ local function run(dt)
  elseif stage==7 and time>nextAt then
   local index=require('scripts.ashenloot.delve_rules').layout(d.depth);local slot=d.slots[index]
   check(#slot.objects>=4,'floor populated at depth '..d.depth)
-  local allowed={};for _,id in ipairs(themes[require('scripts.ashenloot.delve_layouts')[index].theme].ordinary) do allowed[id]=true end
+  local allowed={};local theme=require('scripts.ashenloot.delve_layouts')[index].theme;for _,actor in ipairs(slot.objects)do local e=D.test.selection.describe(actor.recordId);allowed[actor.recordId]=e and e.theme==theme;local info=d.actors[actor.id];check(info and info.level==math.max(1,math.floor(d.baseline+(slot.depth-1)*1.25)),'single existing scaling target at depth '..d.depth)end
   for _,actor in ipairs(slot.objects) do if actor~=slot.boss then check(allowed[actor.recordId],'themed ordinary at depth '..d.depth..' '..actor.recordId) end end
   if d.depth%3==0 then check(slot.boss and s.elites[slot.boss.id] and s.elites[slot.boss.id].worldBoss,'real guardian at depth '..d.depth) end
   if d.depth==12 then print('[ENEMY FIX] ALL PASS');core.quit();stage=99

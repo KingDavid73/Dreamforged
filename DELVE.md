@@ -1,4 +1,35 @@
-# Dreamforged 0.11.1 — The Unending Dream (playable prototype)
+# Dreamforged 0.11.2 — The Unending Dream (playable prototype)
+
+## Depth-aware enemy selection (0.11.2)
+
+Shallow caves favor rats, foragers, and workers. Deeper cave cycles introduce
+warriors, kagouti, and blighted creatures. Tombs progress toward stronger undead;
+Dwemer floors toward sphere and steam constructs; Daedric floors toward atronachs,
+ogrim, and golden saints. Guardians also use depth-appropriate curated forms.
+Selection continues by absolute depth when the twelve layouts cycle. Exhausted
+themes retain strong archetypes while existing stat scaling increases difficulty.
+
+The archetype strength band starts at 1 and increases by 0.75 per depth;
+guardians use a band four points higher. This is a selection estimate, not final
+actor level. It adds no health/damage multiplier: preparation still uses the
+existing baseline + 1.25 per depth target and existing depth/prestige factors.
+Combined combat and loot scaling remains a separate balancing task.
+
+Compatible expansion/mod creatures have a 25% chance to supplement ordinary
+spawns when the band has candidates. Candidates must have a population-list
+reference, a recognizable theme, walking movement, and no script, essential flag,
+or services. Known special, quest, corpse, and domestic tags are rejected.
+Scripted candidates stay ineligible even with Unsafe Chaos enabled. No extra
+creature mod is required. Cached dungeon-owned copies are nonrespawning and
+retain their installed appearance, stats, spells, and inventory across save/load.
+Guardians remain on authored lists. Classification can be extended later.
+
+Full-suite sampling found 134 eligible optional archetypes. In native-only cave
+samples the mean strength estimate increased from 1.63 at depth 1 to 16.53 at
+depth 25. These numbers describe species choice, not final combat level.
+
+Existing 0.11.1 inhabitants persist; new floors and reinforcement spawns use
+the new selection. No run reset or new game is required.
 
 ## Enemy selection repair (0.11.1)
 
@@ -10,8 +41,7 @@ arbitrary fallback to Pack Guars.
 Living enemies from the old selector are replaced in place once when their floor
 is visited, preserving health fraction and guardian role. Dead enemies and
 completed guardians stay dead. Run depth and rewards persist. No new game or
-run reset is required. Depth-based archetypes and optional mod creatures remain
-task 02a; reinforcement behavior remains tasks 03-04.
+run reset is required. Reinforcement behavior remains tasks 03-04.
 
 ## Start the delve
 
@@ -78,7 +108,7 @@ upstairs. Identify is deliberately deferred.
 
 ## Install / undo
 
-Installed release location: Documents\MorrowindMods\Dreamforged-0.11.1.
+Installed release location: Documents\MorrowindMods\Dreamforged-0.11.2.
 The main OpenMW config uses this folder instead of 0.10.29 and loads
 Dreamforged-Delve.esp alongside AshenLoot.omwscripts. Isowind inherits this.
 Existing Isowind camera/HUD fixes and the inert Stats & Potions Limit
