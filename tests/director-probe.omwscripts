@@ -1,0 +1,3 @@
+GLOBAL: scripts/ashenloot_test/director_probe.lua
+PLAYER: scripts/ashenloot_test/director_probe_player.lua
+CUSTOM: scripts/ashenloot_test/enemy_actor.lua

@@ -1,5 +1,15 @@
 ﻿# Ashen Loot changelog
 
+## Unreleased - dungeon reinforcement diagnostics
+
+- Added bounded per-floor gate histories, candidate range/occupancy information,
+  and placement-response camera/ground/path details without changing spawn policy.
+- Reproduced Isowind projection/frame-order failures and occupied fixed boss-add
+  anchors. A same-suite control placed reinforcements indoors. See
+  DIRECTOR-DIAGNOSIS.md and the updated backlog; task 04 implements the repairs.
+- Added the requested dense ambient population/adaptive encounter pacing task
+  04c, with pressure peaks, recovery, nearby threat limits, and promotion/loot coordination.
+
 ## 0.11.2 - Depth-aware dungeon archetypes
 
 - Expanded the authored dungeon roster to 32 combat archetypes. Absolute depth shifts selection toward stronger creatures and boss forms across palette cycles; exhausted themes retain strong fallback creatures rather than resetting to rats.

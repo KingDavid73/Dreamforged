@@ -13,6 +13,16 @@ local selectionVersion=2
 local selectEnemy=Selection.choose
 local function vec(p) return util.vector3(p[1],p[2],p[3]) end
 local function live(o) return o and o:isValid() end
+local function diagnostic(slot,status,detail)
+    slot.diagnostics=slot.diagnostics or {counts={},history={}}
+    local d=slot.diagnostics
+    d.counts[status]=(d.counts[status] or 0)+1
+    if d.status~=status then
+        d.history[#d.history+1]={time=core.getSimulationTime(),status=status,detail=detail}
+        if #d.history>32 then table.remove(d.history,1) end
+    end
+    d.status,d.detail=status,detail
+end
 local function data()
     state.delve=state.delve or {version=1,serial=0,depth=0,bosses=0,slots={},actors={},offeredEpoch=-1}
     return state.delve
@@ -263,13 +273,19 @@ function M.update(dt)
         end
     end
     local slot,index=currentSlot(p)
-    if not slot or not C.enabled then return end
+    if not slot then return end
+    if not C.enabled then diagnostic(slot,'disabled','Dreamforged is disabled');return end
+    if slot.pending and now>slot.pending.expires and slot.expiredDiagnosticToken~=slot.pending.token then
+        slot.expiredDiagnosticToken=slot.pending.token
+        diagnostic(slot,'response expired','No accepted response for token '..slot.pending.token)
+    end
     if lastCell~=p.cell.name then lastCell=p.cell.name;slot.nextWave=now+15 end
     if slot.pendingInitial then
         slot.pendingInitial=nil
         for i=2,math.min(5,#layouts[index].anchors) do spawn(slot,index,layouts[index].anchors[i],false) end
         if Rules.boss(slot.depth) then spawn(slot,index,layouts[index].exit,true) end
         print('[Dreamforged Delve] initial population depth '..slot.depth)
+        diagnostic(slot,'initial population',#slot.objects..' actors placed')
     end
     migrateSelection(slot,index)
     -- Prepare remote actors globally too; custom actor-processing ranges must
@@ -292,30 +308,40 @@ function M.update(dt)
             -- Same out-of-view and nav validation as ordinary waves.
             slot.request=(slot.request or 0)+1
             slot.pending={token=slot.request,expires=now+5,anchor=anchor,count=1,bossAdd=true}
+            diagnostic(slot,'boss add requested','Token '..slot.request..'; fixed anchor 2')
             p:sendEvent('Dreamforged_DelveCheckAnchor',{token=slot.request,depth=slot.depth,position=vec(anchor)})
         end
+        diagnostic(slot,'boss encounter','Ordinary waves paused near living guardian; adds made '..(slot.addsMade or 0))
         return
     end
-    if now<slot.nextWave or not C.extraEncounters then return end
+    if not C.extraEncounters then diagnostic(slot,'encounters disabled','Extra encounters are disabled');return end
+    if now<slot.nextWave then diagnostic(slot,'waiting',math.ceil(slot.nextWave-now)..' seconds to next wave check');return end
     local alive=0
     for _,o in ipairs(slot.objects) do if live(o) and not types.Actor.isDead(o) then alive=alive+1 end end
     local cap=8
-    if alive>=cap then slot.nextWave=now+5;return end
+    slot.diagnostics=slot.diagnostics or {counts={},history={}}
+    slot.diagnostics.alive,slot.diagnostics.cap=alive,cap
+    if alive>=cap then diagnostic(slot,'population cap',alive..'/'..cap);slot.nextWave=now+5;return end
     local options={}
-    for _,a in ipairs(layouts[index].anchors) do
+    local candidates={}
+    for anchorIndex,a in ipairs(layouts[index].anchors) do
         local distance=(vec(a)-p.position):length()
         local occupied=false
         for _,actor in ipairs(slot.objects) do
             if live(actor) and not types.Actor.isDead(actor) and (actor.position-vec(a)):length()<350 then occupied=true;break end
         end
         if not occupied and distance>=1800 and distance<=7000 then options[#options+1]=a end
+        candidates[#candidates+1]={index=anchorIndex,distance=math.floor(distance),occupied=occupied,
+            inRange=distance>=1800 and distance<=7000}
     end
-    if #options==0 then slot.nextWave=now+5;return end
+    slot.diagnostics.candidates=candidates
+    if #options==0 then diagnostic(slot,'no eligible anchor','All six anchors occupied or outside 1800-7000 range');slot.nextWave=now+5;return end
     local rng=R.rng(d.serial..':'..slot.depth..':wave:'..slot.serial..':'..(slot.request or 0))
     local a=options[rng(#options)]
     -- Local ray/nav validation happens before any reinforcement is committed.
     slot.request=(slot.request or 0)+1
     slot.pending={token=slot.request,expires=now+5,anchor=a,count=math.min(2,cap-alive)}
+    diagnostic(slot,'wave requested','Token '..slot.request..'; '..#options..' eligible anchors; '..slot.pending.count..' actors')
     p:sendEvent('Dreamforged_DelveCheckAnchor',{token=slot.request,depth=slot.depth,position=vec(a)})
     slot.nextWave=now+30
 end
@@ -325,8 +351,13 @@ function M.anchor(e)
     local request=slot.pending
     if not request or e.depth~=slot.depth or e.token~=request.token then return end
     slot.pending=nil
+    slot.diagnostics=slot.diagnostics or {counts={},history={}}
+    slot.diagnostics.lastResponse={token=e.token,clear=e.clear,reason=e.reason,camera=e.camera,
+        ground=e.ground,visible=e.visible,navStatus=e.navStatus,occupied=e.occupied}
     if not e.clear or core.getSimulationTime()>request.expires then
-        slot.lastPlacementFailure=e.reason or 'expired';slot.nextWave=core.getSimulationTime()+5;return
+        slot.lastPlacementFailure=e.reason or 'expired'
+        diagnostic(slot,'placement rejected',slot.lastPlacementFailure)
+        slot.nextWave=core.getSimulationTime()+5;return
     end
     for i=1,request.count do
         local a=request.anchor
@@ -334,6 +365,7 @@ function M.anchor(e)
     end
     if request.bossAdd then slot.addsMade=(slot.addsMade or 0)+request.count end
     slot.waves=(slot.waves or 0)+1
+    diagnostic(slot,'wave spawned',request.count..' actors; wave '..slot.waves)
     print('[Dreamforged Delve] reinforcement wave '..slot.waves..' at depth '..slot.depth)
     if slot.waves%3==0 then slot.nextWave=core.getSimulationTime()+45 end
 end

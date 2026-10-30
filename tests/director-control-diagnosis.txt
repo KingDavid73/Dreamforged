@@ -1,0 +1,48 @@
+[12:55:51.779 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL settings enabled=true extra=true
+[12:56:09.796 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 1 ground=true legacyVisible=false referenceVisible=false x=880.55681213909 y=-16.428144948666 reason=nav status 2 fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 2 ground=true legacyVisible=false referenceVisible=false x=4.3458061175648 y=-0.043657548709372 reason=occupied fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 3 ground=true legacyVisible=true referenceVisible=true x=0.0957036634632 y=-0.012497307779758 reason=visible to camera fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 4 ground=true legacyVisible=true referenceVisible=true x=0.75366373337461 y=-0.010936184236482 reason=visible to camera fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 5 ground=true legacyVisible=true referenceVisible=true x=0.67009235378964 y=-0.0067316830949057 reason=visible to camera fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL probe 6 ground=true legacyVisible=true referenceVisible=true x=0.19146422790937 y=-0.006251031549239 reason=visible to camera fovDeg=80.000004502933 referenceFovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.999883581603
+[12:56:09.797 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL allowing unmodified scheduler for 45 seconds
+[12:56:54.811 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL idle floor depth=1 waves=1 objects=6 adds=0 requests=7
+[12:56:54.812 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL gate initial population=1
+[12:56:54.812 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL gate placement rejected=6
+[12:56:54.812 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL gate waiting=55
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL gate wave requested=7
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL gate wave spawned=1
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 1 distance=3584 occupied=false range=true
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 2 distance=6734 occupied=true range=true
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 3 distance=3620 occupied=false range=true
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 4 distance=6165 occupied=true range=true
+[12:56:54.813 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 5 distance=9413 occupied=true range=false
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL candidate 6 distance=7454 occupied=false range=false
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL last response token=7 clear=true reason=nav status 0 ground=true visible=false occupied=false
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 4.014037884 initial population 4 actors placed
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 4.014037884 waiting 15 seconds to next wave check
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 22.016324799999 wave requested Token 1; 2 eligible anchors; 2 actors
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 22.049658135999 placement rejected visible to camera
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 23.016324879999 waiting 5 seconds to next wave check
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 28.016325279999 wave requested Token 2; 2 eligible anchors; 2 actors
+[12:56:54.814 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 28.049658615999 placement rejected visible to camera
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 29.020815603999 waiting 5 seconds to next wave check
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 34.020816003999 wave requested Token 3; 2 eligible anchors; 2 actors
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 34.054149339999 placement rejected visible to camera
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 35.020816083999 waiting 5 seconds to next wave check
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 40.020816483998 wave requested Token 4; 2 eligible anchors; 2 actors
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 40.054149819998 placement rejected visible to camera
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 41.020816563998 waiting 5 seconds to next wave check
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 46.027337143998 wave requested Token 5; 2 eligible anchors; 2 actors
+[12:56:54.815 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 46.060670479998 placement rejected visible to camera
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 47.027337223998 waiting 5 seconds to next wave check
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 52.027337623998 wave requested Token 6; 2 eligible anchors; 2 actors
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 52.060670959998 placement rejected visible to camera
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 53.027337703998 waiting 5 seconds to next wave check
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 58.027338103998 wave requested Token 7; 2 eligible anchors; 2 actors
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 58.060671439998 wave spawned 2 actors; wave 1
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL history 59.039552135997 waiting 29 seconds to next wave check
+[12:56:54.816 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL world debug=Interior
+[12:56:57.811 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL reinforcement actor=@0x45 combat=true fight=100 flee=0
+[12:56:57.811 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL reinforcement actor=@0x42 combat=true fight=100 flee=0
+[12:56:57.812 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] CONTROL COMPLETE

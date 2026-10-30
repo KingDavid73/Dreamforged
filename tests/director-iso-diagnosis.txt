@@ -1,0 +1,65 @@
+[12:52:56.637 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO settings enabled=true extra=true
+[12:53:14.650 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 1 ground=true legacyVisible=true referenceVisible=false x=1.7360078530458 y=1.7877901448184 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.651 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 2 ground=true legacyVisible=true referenceVisible=false x=1.5398858784833 y=2.1581354612998 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.651 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 3 ground=true legacyVisible=true referenceVisible=false x=-1.3563224379466 y=1.8621205513754 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.651 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 4 ground=true legacyVisible=true referenceVisible=false x=0.12644280433331 y=2.2050142134868 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.651 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 5 ground=true legacyVisible=true referenceVisible=false x=0.00022490809919219 y=2.3376373223923 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.651 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO probe 6 ground=true legacyVisible=true referenceVisible=false x=-1.2026755382763 y=2.2250274045552 reason=visible to camera fovDeg=80.000004502933 baseDeg=80.000004502933 rayHalfDeg=39.991281134753
+[12:53:14.652 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO allowing unmodified scheduler for 45 seconds
+[12:53:59.662 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO idle floor depth=1 waves=0 objects=4 adds=0 requests=8
+[12:53:59.663 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate initial population=1
+[12:53:59.663 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate placement rejected=8
+[12:53:59.663 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate waiting=54
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate wave requested=8
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 1 distance=3584 occupied=false range=true
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 2 distance=6733 occupied=true range=true
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 3 distance=3614 occupied=false range=true
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 4 distance=6161 occupied=true range=true
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 5 distance=9408 occupied=true range=false
+[12:53:59.664 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO candidate 6 distance=7448 occupied=false range=false
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO last response token=8 clear=false reason=visible to camera ground=true visible=true occupied=false
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 4.005604084 initial population 4 actors placed
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 4.005604084 waiting 15 seconds to next wave check
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 21.021940399999 wave requested Token 1; 2 eligible anchors; 2 actors
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 21.055273735999 placement rejected visible to camera
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 22.021940479999 waiting 5 seconds to next wave check
+[12:53:59.665 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 27.029987675999 wave requested Token 2; 2 eligible anchors; 2 actors
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 27.063321011999 placement rejected visible to camera
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 28.029987755999 waiting 5 seconds to next wave check
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 33.029988155999 wave requested Token 3; 2 eligible anchors; 2 actors
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 33.063321491999 placement rejected visible to camera
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 34.029988235999 waiting 5 seconds to next wave check
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 39.029988635998 wave requested Token 4; 2 eligible anchors; 2 actors
+[12:53:59.666 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 39.063321971998 placement rejected visible to camera
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 40.029988715998 waiting 5 seconds to next wave check
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 45.046547295998 wave requested Token 5; 2 eligible anchors; 2 actors
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 45.079880631998 placement rejected visible to camera
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 46.046547375998 waiting 5 seconds to next wave check
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 51.046547775998 wave requested Token 6; 2 eligible anchors; 2 actors
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 51.079881111998 placement rejected visible to camera
+[12:53:59.667 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 52.046547855998 waiting 5 seconds to next wave check
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 57.050352563998 wave requested Token 7; 2 eligible anchors; 2 actors
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 57.083685899998 placement rejected visible to camera
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 58.050352643998 waiting 5 seconds to next wave check
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 63.050353043997 wave requested Token 8; 2 eligible anchors; 2 actors
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 63.083686379997 placement rejected visible to camera
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 64.050353123997 waiting 5 seconds to next wave check
+[12:53:59.668 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO world debug=Interior
+[12:54:39.700 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO boss floor depth=3 waves=0 objects=5 adds=0 requests=2
+[12:54:39.701 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate boss add requested=2
+[12:54:39.701 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate boss encounter=30
+[12:54:39.701 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate initial population=1
+[12:54:39.701 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate placement rejected=2
+[12:54:39.701 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO gate waiting=4
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO last response token=2 clear=false reason=occupied ground=true visible=false occupied=true
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 72.274212359997 initial population 5 actors placed
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 72.274212359997 waiting 15 seconds to next wave check
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 76.283799703997 boss add requested Token 1; fixed anchor 2
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 76.283799703997 boss encounter Ordinary waves paused near living guardian; adds made 0
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 76.317133039997 placement rejected occupied
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 77.283799783997 boss encounter Ordinary waves paused near living guardian; adds made 0
+[12:54:39.702 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 101.345572664 boss add requested Token 2; fixed anchor 2
+[12:54:39.703 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 101.345572664 boss encounter Ordinary waves paused near living guardian; adds made 0
+[12:54:39.703 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 101.378906 placement rejected occupied
+[12:54:39.703 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO history 102.354324324 boss encounter Ordinary waves paused near living guardian; adds made 0
+[12:54:39.703 I] Global[scripts/ashenloot_test/director_probe.lua]:	[DIRECTOR DIAG] ISO COMPLETE

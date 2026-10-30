@@ -1,3 +1,7 @@
+# Current source: task 03 diagnostics, unreleased
+
+Installed gameplay remains 0.11.2. Full-suite Isowind reproduced eight rejected waves/zero spawns; same-suite control without Isowind placed a group indoors. Camera probes confirm rendered/request FOV 30 degrees versus validation-frame/base 80 degrees and wide viewport rays. Both guardian-add requests failed at occupied fixed anchor 2. No gameplay spawn policy was changed. Read DIRECTOR-DIAGNOSIS.md before task 04; capture coherent rendered camera state, use actual projection, try alternative anchors, and repair boss-add placement. Task 04a fixes context/HUD; task 04c adds the requested dense ambient populations plus adaptive pressure/peaks/recovery. Tests and diagnostics are committed as a development milestone, not a new release archive. Prior release handoffs follow.
+
 # Current work: Dreamforged 0.11.2 - depth-aware archetypes
 
 Task 02a expands the authored roster to 32 species/forms and admits conservative optional population-list creatures through cached nonrespawning snapshots. Species selection progresses by absolute depth, independently of the existing stat multipliers. Existing floors persist. Full-suite and base-content sampling/regression checks passed, plus depth13 optional-spawn combat, record reuse, and save/load checks. See DELVE.md and tests/enemy-depth-*-pass.txt, tests/enemy-deep-pass.txt. Install target: Documents/MorrowindMods/Dreamforged-0.11.2. Next task: 03, diagnose missing dungeon reinforcements. Prior handoffs follow.
