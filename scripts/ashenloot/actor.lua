@@ -83,7 +83,7 @@ local function apply(event)
             hp.modifier=hp.modifier-data.modifierBonus
             hp.current=math.max(1,hp.current-data.modifierBonus)
         end
-        data.elite=nil;data.modifierBonus=0;data.applied=false
+        data.elite=nil;data.modifierBonus=0;data.applied=false;data.delveHealthFraction=nil
         return
     end
     if types.Actor.isDead(self) then return end
@@ -96,10 +96,11 @@ local function apply(event)
         local hp = types.Actor.stats.dynamic.health(self)
         local delta = event.elite.healthBonus - (data.modifierBonus or 0)
         hp.modifier = hp.modifier + delta
-        hp.current = math.max(1, hp.current + delta)
+        hp.current = math.max(1, hp.current + delta*(data.delveHealthFraction or 1))
         data.modifierBonus = event.elite.healthBonus
     end
     data.elite = event.elite
+    data.delveHealthFraction=nil
     data.applied = true
     core.sendGlobalEvent('AshenLoot_Promoted', self)
 end
@@ -240,6 +241,16 @@ return {
             types.Actor.stats.ai.fight(self).base=90
             local player=nearby.players[1]
             if player then I.AI.startPackage{type='Combat',target=player,cancelOther=true} end
+        end,
+        Dreamforged_DelveSpawned = function(event)
+            types.Actor.stats.ai.fight(self).base=100
+            types.Actor.stats.ai.flee(self).base=0
+            if event and event.healthFraction then
+                data.delveHealthFraction=event.healthFraction
+                local hp=types.Actor.stats.dynamic.health(self)
+                hp.current=math.max(1,hp.base*event.healthFraction)
+            end
+            core.sendGlobalEvent('AshenLoot_Prepare',self)
         end,
         AshenLoot_DenSpawned = function(event)
             data.den=true

@@ -5,6 +5,7 @@ local C, R = require('scripts.ashenloot.config'), require('scripts.ashenloot.rul
 local Records = require('scripts.ashenloot.records')
 local SpecialEncounters = require('scripts.ashenloot.special_encounters')
 local Narration = require('scripts.ashenloot.narration')
+local DelveRules = require('scripts.ashenloot.delve_rules')
 local ACTOR_SCRIPT = 'scripts/ashenloot/actor.lua'
 local M = {}
 local state, loot, promote, eligible
@@ -305,6 +306,7 @@ local function ordinaryCreatureRecord(rec)
     if not rec or rec.isEssential then return false end
     buildGenericCreatureIds()
     local id=rec.id:lower()
+    if id:find('df_delve_enemy_',1,true)==1 then return false end
     if id:find('^generated:') then return false end
     for _,word in ipairs({'unique','summon','_pet','_quest'}) do if id:find(word,1,true) then return false end end
     -- Many expansion and creature-pack records are not placed in a leveled list
@@ -317,6 +319,7 @@ local function ordinaryCreatureRecord(rec)
 end
 local function safeRecord(rec)
     if not rec then return false end
+    if rec.id:lower():find('df_delve_enemy_',1,true)==1 then return false end
     if C.unsafeContent then return not rec.id:find('^generated:') end
     return ordinaryCreatureRecord(rec)
 end
@@ -749,6 +752,8 @@ function M.safeSleep(player,duration)
         ..' after '..string.format('%.2f',hours)..' game hours')
 end
 function M.bossWave(actor)
+    -- Generated floors own validated anchors and a finite boss-add allowance.
+    if DelveRules.isFloor(actor.cell) then return end
     if not C.enabled or not C.extraEncounters or not valid(actor) then return end
     local elite=state.elites[actor.id]
     local player=world.players[1]
@@ -1045,6 +1050,7 @@ end
 function M.prepare(actor, inCombat)
     if not C.enabled or not eligible(actor) or not valid(actor) then return end
     local d = state.director
+    local delve=state.delve and state.delve.actors and state.delve.actors[actor.id]
     -- 0.7.4 stored generated actors as boolean true. Reconsider active exterior
     -- members once so an existing save can finish an unspent cell budget.
     local legacyExterior=d.generated[actor.id]==true and actor.cell.isExterior
@@ -1085,12 +1091,12 @@ function M.prepare(actor, inCombat)
     d.cells[ck]=d.cells[ck] or {additionalCount=0,boss=false}
     local cellState=d.cells[ck]
     if cell.isExterior then cellState.isExterior=true end
-    local boss = C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
+    local boss = not DelveRules.isFloor(cell) and C.dungeonBosses and dungeon(cell) and isAggressive(actor) and not cellState.boss
     if boss then cellState.boss=actor.id end
     local town=cell.isExterior and exteriorTown(cell) or false
     -- World Boss is the highest promotion result, not a separate per-cell roll.
     -- Only actors that actually promote receive this conditional chance.
-    local allowWorldBoss=C.worldBosses and not guard and not town and isAggressive(actor)
+    local allowWorldBoss=not DelveRules.isFloor(cell) and C.worldBosses and not guard and not town and isAggressive(actor)
         and playerLevel>=C.worldBossMinLevel and activeWorldBosses(cell)<C.worldBossCellCap
     local outdoorBossChance=3
     local forceOutdoorBoss=false
@@ -1114,11 +1120,16 @@ function M.prepare(actor, inCombat)
     local combatDps=combatProfile.dps
     local combatBand=combatProfile.band
     local prestige=prestigeScale(effectiveLevel)
-    actor:sendEvent('AshenLoot_Scale',{level=target,nativeLevel=native,health=C.enemyHealth*prestige*(guard and C.guardPower or 1),
-        damage=C.enemyDamage*prestige*(guard and C.guardPower or 1),progression=C.progression,
+    local depthHealth,depthDamage=1,1
+    if delve then depthHealth,depthDamage=DelveRules.scaling(delve.depth) end
+    actor:sendEvent('AshenLoot_Scale',{level=target,nativeLevel=native,health=C.enemyHealth*prestige*(guard and C.guardPower or 1)*depthHealth,
+        damage=C.enemyDamage*prestige*(guard and C.guardPower or 1)*depthDamage,progression=C.progression,
         allowDownscale=types.Creature.objectIsInstance(actor)})
     if guard then M.loadout(actor,target+6,2,{guard=true});return end
-    if boss or cellState.boss==actor.id then
+    if delve and delve.boss then
+        promote({actor=actor,force=true,worldBoss=true,rank=3,combatDps=combatDps,combatBand=combatBand})
+        world.players[1]:sendEvent('AshenLoot_Elite',{id=actor.id,actor=actor,metadata=state.elites[actor.id]})
+    elseif boss or cellState.boss==actor.id then
         promote({actor=actor,force=true,rank=2,allowWorldBoss=allowWorldBoss,
             worldBossChance=outdoorBossChance,combatDps=combatDps,combatBand=combatBand})
     else promote({actor=actor,force=forceOutdoorBoss,worldBoss=forceOutdoorBoss,
@@ -1158,7 +1169,7 @@ function M.prepare(actor, inCombat)
     -- Unsafe identity eligibility must never create extra population anchors.
     -- It permits promotions/transforms; ordinary encounter records still own
     -- the cell's strictly budgeted reinforcement generation.
-    if not cell.isExterior and C.extraEncounters and populationAnchor(actor) and canAnchorPack
+    if not DelveRules.isFloor(cell) and not cell.isExterior and C.extraEncounters and populationAnchor(actor) and canAnchorPack
         and additionalCount(cellState) < maxCount then
         local group=math.max(1,math.floor(directorDensity()+0.5))
         if elite and elite.rank==3 then group=group+(elite.worldBoss and 2 or 1) end
@@ -1744,6 +1755,7 @@ local function updateCellState(player)
     lastPlayerCell=current
     local cell=player.cell
     if not cell then return end
+    if DelveRules.isFloor(cell) then return end
     if cell.isExterior then
         local cellState=state.director.cells[current] or {additionalCount=0,boss=false,isExterior=true}
         state.director.cells[current]=cellState;cellState.isExterior=true

@@ -1,0 +1,169 @@
+[11:19:54.420 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_rat
+[11:19:54.420 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_kwama_forager
+[11:19:54.420 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_nix_hound
+[11:19:54.420 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_alit
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS all ordinary archetypes reachable Cave
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS explicit boss Cave
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_rat
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_kwama_forager
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_nix_hound
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_alit
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_kagouti
+[11:19:54.421 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_alit
+[11:19:54.423 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_skeleton
+[11:19:54.426 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_ancestor_ghost
+[11:19:54.430 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_bonelord
+[11:19:54.430 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS all ordinary archetypes reachable Ancestral Tomb
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS explicit boss Ancestral Tomb
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_skeleton
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_ancestor_ghost
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_bonelord
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_bonewalker_greater
+[11:19:54.431 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_bonelord
+[11:19:54.433 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_centurion_spider
+[11:19:54.433 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_centurion_sphere
+[11:19:54.433 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_centurion_steam
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS all ordinary archetypes reachable Dwemer
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS explicit boss Dwemer
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_centurion_spider
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_centurion_sphere
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_centurion_steam
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_centurion_steam
+[11:19:54.434 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_centurion_sphere
+[11:19:54.436 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_scamp
+[11:19:54.436 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_clannfear
+[11:19:54.436 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS private archetype excluded from world pool df_delve_enemy_dremora
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS all ordinary archetypes reachable Daedric
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS explicit boss Daedric
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_scamp
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_clannfear
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_dremora
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_daedroth
+[11:19:54.437 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS safe combat record df_delve_enemy_dremora
+[11:19:55.420 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kwama_forager depth 1 ordinary
+[11:19:55.421 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_rat depth 1 ordinary
+[11:19:55.422 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_nix_hound depth 1 ordinary
+[11:19:55.423 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kwama_forager depth 1 ordinary
+[11:19:58.427 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS first floor has four actual creatures
+[11:20:01.439 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS legacy corpse fixture is dead
+[11:20:07.806 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kagouti depth 1 guardian
+[11:20:07.807 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] repaired 1 saved enemies at depth 1
+[11:20:11.806 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS migration preserves population
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] migration oldValid=true oldEnabled=false new=df_delve_enemy_kagouti expected=df_delve_enemy_kagouti
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS saved live guar guardian replaced with cave boss
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS guardian identity preserved
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS dead guar corpse preserved
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS old guardian bookkeeping removed
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS replacement receives world boss promotion
+[11:20:11.807 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS migration does not heal surviving enemy to full
+[11:20:11.808 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS migration is idempotent
+[11:20:19.858 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS dungeon actor remains hostile and does not flee
+[11:20:19.858 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS dungeon creature actually enters combat near player
+[11:20:21.055 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kwama_forager depth 2 ordinary
+[11:20:21.061 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_alit depth 2 ordinary
+[11:20:21.064 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_nix_hound depth 2 ordinary
+[11:20:21.069 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_rat depth 2 ordinary
+[11:20:23.084 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 2
+[11:20:23.087 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 2 df_delve_enemy_kwama_forager
+[11:20:23.089 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 2 df_delve_enemy_alit
+[11:20:23.089 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 2 df_delve_enemy_nix_hound
+[11:20:23.089 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 2 df_delve_enemy_rat
+[11:20:24.056 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kwama_forager depth 3 ordinary
+[11:20:24.060 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_alit depth 3 ordinary
+[11:20:24.062 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kwama_forager depth 3 ordinary
+[11:20:24.066 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_rat depth 3 ordinary
+[11:20:24.068 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_kagouti depth 3 guardian
+[11:20:26.094 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 3
+[11:20:26.096 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 3 df_delve_enemy_kwama_forager
+[11:20:26.098 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 3 df_delve_enemy_alit
+[11:20:26.098 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 3 df_delve_enemy_kwama_forager
+[11:20:26.098 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 3 df_delve_enemy_rat
+[11:20:26.098 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS real guardian at depth 3
+[11:20:27.198 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_skeleton depth 4 ordinary
+[11:20:27.203 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 4 ordinary
+[11:20:27.205 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_ancestor_ghost depth 4 ordinary
+[11:20:27.210 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 4 ordinary
+[11:20:29.604 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 4
+[11:20:29.605 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 4 df_delve_enemy_skeleton
+[11:20:29.605 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 4 df_delve_enemy_bonelord
+[11:20:29.606 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 4 df_delve_enemy_ancestor_ghost
+[11:20:29.608 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 4 df_delve_enemy_bonelord
+[11:20:30.672 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_skeleton depth 5 ordinary
+[11:20:30.677 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 5 ordinary
+[11:20:30.679 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_skeleton depth 5 ordinary
+[11:20:30.683 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 5 ordinary
+[11:20:33.109 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 5
+[11:20:33.113 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 5 df_delve_enemy_skeleton
+[11:20:33.113 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 5 df_delve_enemy_bonelord
+[11:20:33.114 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 5 df_delve_enemy_skeleton
+[11:20:33.114 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 5 df_delve_enemy_bonelord
+[11:20:34.082 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 6 ordinary
+[11:20:34.085 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_ancestor_ghost depth 6 ordinary
+[11:20:34.090 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_skeleton depth 6 ordinary
+[11:20:34.092 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonelord depth 6 ordinary
+[11:20:34.097 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_bonewalker_greater depth 6 guardian
+[11:20:36.376 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 6
+[11:20:36.378 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 6 df_delve_enemy_bonelord
+[11:20:36.381 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 6 df_delve_enemy_ancestor_ghost
+[11:20:36.381 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 6 df_delve_enemy_skeleton
+[11:20:36.381 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 6 df_delve_enemy_bonelord
+[11:20:36.383 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS real guardian at depth 6
+[11:20:37.478 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 7 ordinary
+[11:20:37.480 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_sphere depth 7 ordinary
+[11:20:37.485 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_spider depth 7 ordinary
+[11:20:37.487 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 7 ordinary
+[11:20:40.245 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 7
+[11:20:40.248 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 7 df_delve_enemy_centurion_steam
+[11:20:40.250 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 7 df_delve_enemy_centurion_sphere
+[11:20:40.250 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 7 df_delve_enemy_centurion_spider
+[11:20:40.250 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 7 df_delve_enemy_centurion_steam
+[11:20:41.311 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 8 ordinary
+[11:20:41.314 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_sphere depth 8 ordinary
+[11:20:41.316 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 8 ordinary
+[11:20:41.320 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_sphere depth 8 ordinary
+[11:20:43.343 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 8
+[11:20:43.345 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 8 df_delve_enemy_centurion_steam
+[11:20:43.345 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 8 df_delve_enemy_centurion_sphere
+[11:20:43.345 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 8 df_delve_enemy_centurion_steam
+[11:20:43.347 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 8 df_delve_enemy_centurion_sphere
+[11:20:44.371 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 9 ordinary
+[11:20:44.376 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_spider depth 9 ordinary
+[11:20:44.380 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 9 ordinary
+[11:20:44.382 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_sphere depth 9 ordinary
+[11:20:44.387 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_centurion_steam depth 9 guardian
+[11:20:46.408 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 9
+[11:20:46.410 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 9 df_delve_enemy_centurion_steam
+[11:20:46.413 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 9 df_delve_enemy_centurion_spider
+[11:20:46.413 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 9 df_delve_enemy_centurion_steam
+[11:20:46.413 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 9 df_delve_enemy_centurion_sphere
+[11:20:46.413 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS real guardian at depth 9
+[11:20:47.377 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_scamp depth 10 ordinary
+[11:20:47.379 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_dremora depth 10 ordinary
+[11:20:47.381 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_clannfear depth 10 ordinary
+[11:20:47.386 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_dremora depth 10 ordinary
+[11:20:49.722 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 10
+[11:20:49.722 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 10 df_delve_enemy_scamp
+[11:20:49.722 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 10 df_delve_enemy_dremora
+[11:20:49.723 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 10 df_delve_enemy_clannfear
+[11:20:49.723 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 10 df_delve_enemy_dremora
+[11:20:50.692 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_scamp depth 11 ordinary
+[11:20:50.694 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_clannfear depth 11 ordinary
+[11:20:50.696 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_scamp depth 11 ordinary
+[11:20:50.701 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_dremora depth 11 ordinary
+[11:20:52.725 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 11
+[11:20:52.727 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 11 df_delve_enemy_scamp
+[11:20:52.729 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 11 df_delve_enemy_clannfear
+[11:20:52.730 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 11 df_delve_enemy_scamp
+[11:20:52.730 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 11 df_delve_enemy_dremora
+[11:20:53.708 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_dremora depth 12 ordinary
+[11:20:53.715 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_clannfear depth 12 ordinary
+[11:20:53.720 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_scamp depth 12 ordinary
+[11:20:53.726 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_dremora depth 12 ordinary
+[11:20:53.732 I] Global[scripts/ashenloot/global.lua]:	[Dreamforged Delve] selected df_delve_enemy_daedroth depth 12 guardian
+[11:20:55.895 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS floor populated at depth 12
+[11:20:55.900 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 12 df_delve_enemy_dremora
+[11:20:55.900 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 12 df_delve_enemy_clannfear
+[11:20:55.902 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 12 df_delve_enemy_scamp
+[11:20:55.902 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS themed ordinary at depth 12 df_delve_enemy_dremora
+[11:20:55.902 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] PASS real guardian at depth 12
+[11:20:55.905 I] Global[scripts/ashenloot_test/enemy_fix.lua]:	[ENEMY FIX] ALL PASS

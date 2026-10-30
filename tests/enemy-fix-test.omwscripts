@@ -1,0 +1,4 @@
+GLOBAL: scripts/ashenloot_test/enemy_fix.lua
+PLAYER: scripts/ashenloot_test/delve_player.lua
+CUSTOM: scripts/ashenloot_test/enemy_actor.lua
+MENU: scripts/ashenloot_test/menu.lua

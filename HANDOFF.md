@@ -1,3 +1,11 @@
+# Current work: Dreamforged 0.11.1 - dungeon enemy selection
+
+Task 02 supplies private combat archetypes, fixes IDs, removes the Pack Guar fallback, and migrates living old-selector enemies in saved floors. See ENEMY-SELECTION-DIAGNOSIS.md and IMPLEMENTATION-BACKLOG.md. Full-suite Isowind and base-content stock OpenMW runtime tests both passed. Install target: Documents/MorrowindMods/Dreamforged-0.11.1. Earlier handoffs follow for historical context.
+
+# Current work: Dreamforged 0.11.0 — Unending Dream prototype
+
+Source and validation are in this repository; install target is Documents/MorrowindMods/Dreamforged-0.11.0. See DELVE.md and DELVE-LORE.md. Twelve generated layouts cycle with increasing depth, a World Boss every third depth, and an NPC-only herald entrance near Seyda Neen. Old gate placement migrates away. Generated equipment now has zero gold value; existing saved items are preserved. Broker stock refreshes on boss victories. Isolated test profiles are development-only and must not be used as regular launch profiles. Prior handoff follows for historical context.
+
 # Morrowind: Dreamforged handoff — 0.10.29
 
 **Latest installed release: 0.10.29.** Installed at

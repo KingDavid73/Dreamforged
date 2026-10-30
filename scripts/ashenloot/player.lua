@@ -498,6 +498,9 @@ local function tooltip(item, layout)
     if not meta then return end
     local ok, content = pcall(function() return layout.content[1].content[1].content end)
     if ok and content then content:insert(2, text('[' .. (meta.rarity or R.rarities[meta.tier].name) .. '] ' .. meta.source, meta.tier)) end
+    if ok and content and meta.zeroGold then
+        content:insert(3,text(meta.mythic and 'No gold value | Mythic artifact' or 'Trade-in only | Salvage: 1 forging coin',meta.tier))
+    end
 end
 local function selectedAbilityMessage()
     if #activeAbilities==0 then ui.showMessage('No Dreamforged active abilities unlocked.');return false end

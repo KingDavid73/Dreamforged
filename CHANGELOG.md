@@ -1,5 +1,12 @@
 ﻿# Ashen Loot changelog
 
+## 0.11.1 - Dungeon enemy selection
+
+- Dungeon themes use private, script-free combat archetypes and explicit boss backups. Suite-added scripts cannot empty the pools or spawn untracked children.
+- Corrected ancestor ghost and greater bonewalker IDs; removed the arbitrary Pack Guar fallback for ordinary enemies and bosses.
+- Living old-selector enemies migrate when visited, preserving guardian role and health fraction. Corpses, completed bosses, depth, rewards, and carried loot persist.
+- Private dungeon records stay out of world spawn pools. Depth-based archetypes and optional mod creatures remain task 02a; reinforcement issues remain tasks 03-04.
+
 ## 0.10.29 - World Boss tracker synchronization
 
 - The outdoor director now stores and validates the actual living World Boss
@@ -739,3 +746,12 @@ Initial independent loot/elite prototype with Fresh Loot rarity presentation int
 - Added three-for-one coin combining from Magic through Legendary, producing one coin of the next rarity up to Relic.
 - Protected equipped items in both the displayed list and authoritative global transaction handler.
 - Persisted coin balances per player and refunded currency if record generation fails.
+
+## 0.11.0 — Unending Dream prototype
+
+Added a generated dungeon plugin, NPC herald near Seyda Neen, introductory
+journal quest, safe refuge, Dream Portal, three-floor theme bands, guaranteed
+World Bosses every third depth, bounded dungeon director, depth scaling,
+coin-only broker with boss-based stock refresh, and zero-gold newly generated
+equipment. Twelve layouts cycle at increasing depth. Old gear is preserved.
+See DELVE.md for operation, persistence limits, and validation.

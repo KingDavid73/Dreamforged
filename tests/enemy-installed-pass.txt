@@ -1,0 +1,1 @@
+[11:24:16.291 I] Global[scripts/ashenloot_test/enemy_installed.lua]:	[ENEMY INSTALLED] ALL PASS configured 0.11.1 selects dungeon combat records

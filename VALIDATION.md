@@ -1,4 +1,8 @@
-﻿# Ashen Loot validation
+# 0.11.1 enemy selection validation (2026-10-30)
+
+Full-suite Isowind and base-content stock OpenMW tests report [ENEMY FIX] ALL PASS; evidence is in tests/enemy-fix-full-pass.txt and tests/enemy-fix-stock-pass.txt. Checks cover all twelve floors, every theme, explicit guardians at depths 3/6/9/12, actual combat aggression, private-record exclusion from world pools, save/load repair of surviving legacy guars, corpse preservation, guardian promotion, health fraction, and idempotence. The plugin rebuild is deterministic. Installed runtime files were hash-checked against source; an additional launch through the actual configured 0.11.1 install populated the first floor with combat records and reported [ENEMY INSTALLED] ALL PASS (tests/enemy-installed-pass.txt). These are automated in-engine checks, not visual QA. The unrelated suite music initialization warning remains. Reinforcement behavior is not certified by these tests and remains tasks 03-04. The first-task diagnosis and detailed resolution are in ENEMY-SELECTION-DIAGNOSIS.md.
+
+# Ashen Loot validation
 
 ## 0.10.29 World Boss tracker synchronization (2026-09-25)
 
@@ -666,3 +670,29 @@ An isolated exterior test used Unsafe Chaos off, Random mode, density 3, and the
 - Validate family-first 55/35/10 selection, class-aware melee/ranged/magic weighting, and subtype-first base choice against the loaded catalog.
 - Validate 1/2/3/4/6 reward attempts, promoted rarity pressure without a forced tier, Accessory-family spell tomes, and forward-fan ground placement.
 - Validate six coin balances, Common/Uncommon filters, protected Mythics, and version-20 migration before release packaging.
+
+## 0.11.0 prototype validation
+
+- Isowind 0.51 full-suite regression: ALL PASS through depth 13. Includes
+  quest/portal, zero-gold offers, coin transactions and duplicate purchase
+  rejection, genuine World Boss promotion, boss stock refresh, save/load,
+  theme changes and recycling. Evidence: tests/delve-full-suite-pass.log.
+- Stock OpenMW 0.51: matching regression passed; final always-succeed portal
+  flag is covered by the current test run. Evidence: tests/delve-stock-profile/openmw.log.
+- All twelve generated floor graphs pass generator connectivity checks.
+  Actual engine nav paths across twelve layouts passed across the regression
+  and wave runs; startup nav generation can defer early reinforcements.
+- Director wave test: ALL PASS. A reinforcement wave was committed from a
+  validated offscreen anchor; live population remained within the cap.
+- Full-suite herald test: ALL PASS. NPC-only placement, grounded actor,
+  migration from the old gate, transport, and journal progression.
+- Binary plugin record boundaries and all 212 reference IDs validated.
+- git diff --check passed (only configured CRLF conversion notices).
+- Visual screenshot capture failed. Initial oversized gate was rejected in
+  user feedback, then replaced with NPC transport. Visual polish and combat
+  balance are still playtest items, not automated-test claims.
+- Final installed-release smoke check: ALL PASS. Actual main OpenMW load order
+  resolved Dreamforged-0.11.0, the dungeon plugin and Isowind together; state
+  version 35 and the reliable portal record initialized. No developer source
+  directory was used as a mod override. Evidence:
+  tests/delve-installed-profile/openmw.log.

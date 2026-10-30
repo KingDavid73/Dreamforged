@@ -41,11 +41,11 @@ function M.makeItem(base, kind, spec)
     local weapon = kind == types.Weapon
     if spec.tier==1 then
         local name='[Common] '..base.name
-        local record=world.createRecord(kind.createRecordDraft{template=base,name=name})
+        local record=world.createRecord(kind.createRecordDraft{template=base,name=name,value=0})
         return record.id,{name=name,tier=1,rarity='Common',level=itemLevel,dropLevel=itemLevel,
             baseQualityTier=spec.baseQualityTier or 1,
             details={'Base quality tier '..tostring(spec.baseQualityTier or 1)..'/8','No affixes','Drop level '..itemLevel},
-            source='Dreamforged',baseId=base.id,itemType=weapon and 'weapon' or 'wearable',procs={}}
+            source='Dreamforged',baseId=base.id,itemType=weapon and 'weapon' or 'wearable',procs={},zeroGold=true}
     end
     local usePrefix=spec.tier>=3 or (spec.roll%2==1)
     local useSuffix=spec.tier>=3 or not usePrefix
@@ -109,7 +109,7 @@ function M.makeItem(base, kind, spec)
     local affixName=(usePrefix and ((weapon and pre.name or pre.defensiveName)..' ') or '')..base.name
         ..(useSuffix and (' '..((not weapon and suf.defensiveName) or suf.name)) or '')
     local draft = {template = base, name = '[' .. R.rarities[spec.tier].name .. '] ' .. affixName,
-        enchant = enchantment.id, value = math.floor(base.value * (1 + spec.tier * 0.2) + magnitude * 8)}
+        enchant = enchantment.id, value = 0}
     local details = {}
     details[#details + 1] = 'Base quality tier ' .. tostring(spec.baseQualityTier or 1) .. '/8'
     local bonus = 0.05 * (spec.tier + spec.roll) + math.min(0.45, math.max(0, itemLevel-1)*0.0075)
@@ -176,7 +176,7 @@ function M.makeItem(base, kind, spec)
         level = itemLevel, dropLevel = itemLevel,
         baseQualityTier = spec.baseQualityTier or 1,
         details = details, source = 'Dreamforged', baseId = base.id, enchantmentId = enchantment.id,
-        itemType=weapon and 'weapon' or 'wearable', procs=itemProcs}
+        itemType=weapon and 'weapon' or 'wearable', procs=itemProcs,zeroGold=true}
 end
 function M.makeMythic(base,kind,definition)
     local effects={}
@@ -189,10 +189,10 @@ function M.makeMythic(base,kind,definition)
         type=kind==types.Weapon and core.magic.ENCHANTMENT_TYPE.CastOnUse or core.magic.ENCHANTMENT_TYPE.ConstantEffect,
         cost=kind==types.Weapon and 1 or 0,charge=kind==types.Weapon and 10000 or 0,isAutocalc=false,effects=effects})
     local record=world.createRecord(kind.createRecordDraft{template=base,name='[Mythic] '..definition.name,
-        enchant=enchant.id,value=math.max(base.value or 1,50000)})
+        enchant=enchant.id,value=0})
     return record.id,{name='[Mythic] '..definition.name,tier=6,rarity='Mythic',level=1,dropLevel=1,
         details={definition.description,kind==types.Weapon and 'Cast on use | Mythic projectile effect' or 'Constant effect'},
         source='Dreamforged Mythic',baseId=base.id,enchantmentId=enchant.id,itemType=kind==types.Weapon and 'weapon' or 'wearable',
-        procs={},mythic=definition.id}
+        procs={},mythic=definition.id,zeroGold=true}
 end
 return M

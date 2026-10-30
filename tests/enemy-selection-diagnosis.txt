@@ -1,0 +1,18 @@
+[11:01:34.673 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] rat exists=true script=plx_rat_ai essential=false
+[11:01:34.673 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] kwama forager exists=true script=plx_forager_ai essential=false
+[11:01:34.673 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] nix-hound exists=true script=plx_spawn_nixpup essential=false
+[11:01:34.673 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] alit exists=true script=ttooth_alit_spawns essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] skeleton exists=true script=plx_stat_random_und_dis essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] ancestral ghost exists=false script=nil essential=nil
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] bonelord exists=true script=plx_stat_random_und_dis essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] centurion_spider exists=true script=plx_spawn_rspiders2 essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] centurion_sphere exists=true script=plx_spawn_rspiders2 essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] centurion_steam exists=true script=plx_spawn_rspiders2 essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] scamp exists=true script=plx_stat_randomiser essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] clannfear exists=true script=plx_stat_randomiser essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] dremora exists=true script=rv_dremora_weapon essential=false
+[11:01:34.674 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] kagouti exists=true script=ttooth_kagouti_spawns essential=false
+[11:01:34.675 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] bonewalker greater exists=false script=nil essential=nil
+[11:01:34.675 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] daedroth exists=true script=plx_stat_randomiser essential=false
+[11:01:34.700 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] first fallback=guar_pack name=Pack Guar
+[11:01:34.700 I] Global[scripts/ashenloot_test/enemy_selection.lua]:	[ENEMY DIAG] COMPLETE

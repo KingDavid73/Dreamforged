@@ -1,0 +1,2 @@
+GLOBAL: scripts/ashenloot_test/delve_waves.lua
+PLAYER: scripts/ashenloot_test/delve_player.lua

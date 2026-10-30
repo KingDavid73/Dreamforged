@@ -10,8 +10,10 @@ local A = require('scripts.ashenloot.advancement')
 local Records = require('scripts.ashenloot.records')
 local Progress = require('scripts.ashenloot.progression')
 local Narration = require('scripts.ashenloot.narration')
+local Delve = require('scripts.ashenloot.delve')
+local DelveRules = require('scripts.ashenloot.delve_rules')
 local script = 'scripts/ashenloot/actor.lua'
-local state = {version = 34, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
+local state = {version = 35, records = {}, cache = {}, elites = {}, rewards = {}, abilities = {}, procs = {}, cooldowns = {},
     itemSpells={},itemCooldowns={},itemProcRoll=0,count = 0}
 local pool
 local mythicDefinitions={
@@ -235,6 +237,7 @@ local function beastArmorEquip(armor, actor)
 end
 local function eligible(actor)
     if not C.enabled or not supported() or types.Player.objectIsInstance(actor) then return false end
+    if actor.recordId=='df_delve_attendant' or actor.recordId=='df_delve_broker' then return false end
     if not actor.enabled or actor.scale < 0.001 then return false end
     if not (types.Creature.objectIsInstance(actor) or types.NPC.objectIsInstance(actor)) then return false end
     local rec = actor.type.record(actor)
@@ -550,14 +553,14 @@ local function giveLoot(actor, seed, minimum, forcedBase, forcedTier, trophy, de
     local entry = chooseLootEntry(candidates, baseRandom, profile,
         spec.tier>=5 and nil or forcedFamily, spec.tier>=5)
     spec.baseQualityTier=entry.qualityTier or desiredQuality
-    local key = table.concat({'v8', profile and profile.key or 'none', entry.id, spec.baseQualityTier, spec.tier, spec.prefix, spec.suffix, spec.power, spec.roll, spec.style, spec.dropLevel}, ':')
+    local key = table.concat({'v9-zero-gold', profile and profile.key or 'none', entry.id, spec.baseQualityTier, spec.tier, spec.prefix, spec.suffix, spec.power, spec.roll, spec.style, spec.dropLevel}, ':')
     local id = state.cache[key]
     if not id then
         if state.count >= C.maxGeneratedItems then
             -- Reuse a known item when the save's generation budget is exhausted.
             local matching, bestDistance = {}, nil
             for rid, meta in pairs(state.records) do
-                if meta.tier >= (minimum or 1) and (not forcedBase or meta.baseId==forcedBase) then
+                if meta.zeroGold and meta.tier >= (minimum or 1) and (not forcedBase or meta.baseId==forcedBase) then
                     local distance=math.abs((tonumber(meta.level or meta.dropLevel) or dropLevel)-dropLevel)
                     if not bestDistance or distance<bestDistance then
                         matching={rid};bestDistance=distance
@@ -953,7 +956,10 @@ local function enemyLootBudget(actor,rank)
     local gearPart=math.max(0,gearOverage())*({[0]=0,[1]=0.10,[2]=0.20,[3]=0.35,[4]=0.60})[rank]
     local difficulty=math.max(0,C.enemyHealth-1)+math.max(0,C.enemyDamage-1)
     local difficultyPart=difficulty*({[0]=0,[1]=2,[2]=5,[3]=10,[4]=15})[rank]
-    return base+actorLevel*perLevel+gearPart+difficultyPart
+    local budget=base+actorLevel*perLevel+gearPart+difficultyPart
+    local delve=Delve.context(actor)
+    if delve then local _,_,mult=DelveRules.scaling(delve.depth);budget=budget*mult end
+    return budget
 end
 local function rewardDirectorBudget(actor,rank,rng)
     state.rewardDirector=state.rewardDirector or {bank=0,hunger=0,kills=0,sprees=0}
@@ -1183,9 +1189,13 @@ local function startingKit(data)
         if not spells[id] then spells:add(id) end
     end
 end
+local function bindDelve()
+    Delve.bind(state,{giveLoot=giveLoot,progress=Progress,snapshot=snapshot,refreshBaseline=refreshAutoSalvageBaseline})
+end
+bindDelve()
 return {
     interfaceName = 'AshenLoot',
-    interface = {version = 4, eligible = eligible, getState = function() return state end, progression=Progress,
+    interface = {version = 4, eligible = eligible, getState = function() return state end, progression=Progress,delve=Delve,
         test = {giveLoot = giveLoot, encounter = encounter, death = death, snapshot = snapshot, physicalHit=physicalHit,
             startingKit = startingKit,reconcileAdvancement=reconcileAdvancement,useAdvancement=useAdvancement,
             mythicImpact=mythicImpact,mythicDefinitions=mythicDefinitions,getPool=getPool,mythicChance=mythicChance,
@@ -1217,6 +1227,8 @@ return {
         end,
         onActorActive = guard(attach), onPlayerAdded = guard(function(player) snapshot(player);refreshAutoSalvageBaseline(player) end),
         onUpdate = function(dt)
+            local delveOk,delveErr=pcall(Delve.update,dt)
+            if not delveOk then print('[Dreamforged Delve] ERROR: '..tostring(delveErr)) end
             if settingsResetPending then
                 settingsResetPending = false
                 local okReset, errReset = pcall(function()
@@ -1397,11 +1409,15 @@ return {
                 if encounterSettings:get('exteriorSpawnMin')==450 then encounterSettings:set('exteriorSpawnMin',1200) end
                 if encounterSettings:get('exteriorSpread')==1000 then encounterSettings:set('exteriorSpread',2200) end
             end
-            state.version = 34
+            state.version = 35
             Progress.bind(state,giveLoot,encounter,eligible)
+            bindDelve()
         end,
     },
     eventHandlers = {
+        Dreamforged_DelveAction = guard(Delve.action),
+        Dreamforged_DelveAnchor = guard(Delve.anchor),
+        Dreamforged_DelveEntrance = guard(Delve.groundEntrance),
         AshenLoot_Prepare = guard(Progress.prepare),
         AshenLoot_Salvage = guard(salvage),
         AshenLoot_Reforge = guard(reforge),

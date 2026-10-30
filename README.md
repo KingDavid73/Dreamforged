@@ -1,6 +1,10 @@
-﻿# Morrowind: Dreamforged
+# 0.11.1 dungeon enemy selection
 
-**Current release: 0.10.29 - World Boss tracker synchronization.**
+See [DELVE.md](DELVE.md) for the Unending Dream, NPC entrance, portal, coin broker, and zero-gold equipment changes. The previous release documentation follows.
+
+# Morrowind: Dreamforged
+
+**Current release: 0.11.1 - Dungeon enemy selection.** See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
 
 ## 0.10.29 World Boss tracker synchronization
 
@@ -750,4 +754,3 @@ Generated equipment is capped at 2,000 cached records per save. Compatible cache
 Optional ground drops use the corpse position with a vertical offset. Slopes, deep water and unusual geometry need playtesting; corpse inventory is the default reliable destination. Scenery, plants, placed world loot and other environmental objects are not randomized.
 
 See VALIDATION.md for actual test coverage. Balance is an initial tunable implementation, not a measured reproduction of another game's DPS or encounter pacing.
-

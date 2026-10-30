@@ -1,0 +1,6 @@
+[
+  {"name":"Cave","ordinary":["rat","kwama forager","nix-hound","alit"],"boss":["kagouti","alit"]},
+  {"name":"Ancestral Tomb","ordinary":["skeleton","ancestor_ghost","bonelord"],"boss":["bonewalker_greater","bonelord"]},
+  {"name":"Dwemer","ordinary":["centurion_spider","centurion_sphere","centurion_steam"],"boss":["centurion_steam","centurion_sphere"]},
+  {"name":"Daedric","ordinary":["scamp","clannfear","dremora"],"boss":["daedroth","dremora"]}
+]
