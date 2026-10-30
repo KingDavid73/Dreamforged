@@ -1,12 +1,26 @@
 ﻿# Ashen Loot changelog
 
-## Unreleased - dungeon reinforcement diagnostics
+## 0.11.3 - Dungeon reinforcement placement
+
+- Fixed Isowind's rendered-FOV mismatch by capturing the request-time camera
+  state and using its projection during physical validation.
+- Added bounded alternative-point search, per-member formation checks, registered
+  creature navigation, and a collision-checked generated-floor route fallback
+  when navigation meshes are absent.
+- Reinforcement groups actively pursue the player. Guardian adds use alternative
+  positions, respect the eight-actor live cap and four-add cumulative budget,
+  and no longer share the guardian's initial exit position with an ordinary mob.
+- Added stale-response, load/travel cancellation, resume grace, disabled-setting,
+  and zero-count reference handling. Existing saves require no reset.
+- Baseline density/pacing is retained pending task 04c. See REINFORCEMENTS.md.
+
+### Diagnostic foundation from task 03
 
 - Added bounded per-floor gate histories, candidate range/occupancy information,
   and placement-response camera/ground/path details without changing spawn policy.
 - Reproduced Isowind projection/frame-order failures and occupied fixed boss-add
   anchors. A same-suite control placed reinforcements indoors. See
-  DIRECTOR-DIAGNOSIS.md and the updated backlog; task 04 implements the repairs.
+  DIRECTOR-DIAGNOSIS.md and the updated backlog; task 04 implements the repairs above.
 - Added the requested dense ambient population/adaptive encounter pacing task
   04c, with pressure peaks, recovery, nearby threat limits, and promotion/loot coordination.
 

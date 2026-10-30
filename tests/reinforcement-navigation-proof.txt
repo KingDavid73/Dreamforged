@@ -1,0 +1,9 @@
+[15:04:09.000 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] missingMesh=2 success=0 player=(1280, 1280, 1)
+[15:04:09.001 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] player shape=1 size=(22, 22, 65) status=2 processing=true
+[15:04:09.001 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] player shape=1 size=(22, 22, 65) status=2 processing=true
+[15:04:09.001 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] df_delve_enemy_kwama_forager shape=1 size=(16.97905731201171875, 44.068145751953125, 28.9651813507080078125) status=0 processing=false
+[15:04:09.001 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] df_delve_enemy_kwama_worker shape=1 size=(43.77845001220703125, 84.0110931396484375, 48.060787200927734375) status=0 processing=false
+[15:04:09.002 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] df_delve_enemy_kwama_forager shape=1 size=(16.97905731201171875, 44.068145751953125, 28.9651813507080078125) status=0 processing=false
+[15:04:09.002 I] L@0x1[scripts/ashenloot_test/reinforcement_player.lua]:	[NAV PROBE] df_delve_enemy_rat shape=1 size=(22.116058349609375, 59.8013916015625, 29.65122222900390625) status=0 processing=false
+[15:04:51.982 I] Global[scripts/ashenloot_test/delve_waves.lua]:	[DELVE WAVES] reason=safe formation nav=0 fov=0.52359879016876
+[15:04:51.982 I] Global[scripts/ashenloot_test/delve_waves.lua]:	[DELVE WAVES] ALL PASS safe reinforcement placement and cap

@@ -1,5 +1,8 @@
 # Task 03: dungeon reinforcement diagnosis
 
+Historical baseline: the placement failures below are repaired in 0.11.3.
+See REINFORCEMENTS.md for the implementation and current verification.
+
 Confirmed 2026-10-30 against 0.11.2 plus read-only diagnostic instrumentation.
 Gameplay placement and pacing policies were not changed. Installed release
 remains 0.11.2; this is preparation for task 04.

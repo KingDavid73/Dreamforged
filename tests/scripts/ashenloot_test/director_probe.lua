@@ -26,9 +26,9 @@ local function run(dt)
   for n=1,6 do
    local r,v=responses['probe:'..n],references['probe:'..n];assert(r and v,'probe response missing '..n)
    local c=r.camera
-   line('probe '..n..' ground='..tostring(r.ground)..' legacyVisible='..tostring(r.visible)..' referenceVisible='..tostring(v.visible)..' x='..v.x..' y='..v.y..' reason='..tostring(r.reason)..' fovDeg='..math.deg(c.fov)..' eventFovDeg='..tostring(c.receivedFov and math.deg(c.receivedFov))..' referenceFovDeg='..math.deg(v.fov)..' baseDeg='..math.deg(c.baseFov)..' rayHalfDeg='..math.deg(c.viewportHalfAngle))
+   line('probe '..n..' ground='..tostring(r.ground)..' legacyVisible='..tostring(r.visible)..' referenceVisible='..tostring(v.visible)..' x='..v.x..' y='..v.y..' reason='..tostring(r.reason)..' fovDeg='..math.deg(c.fov)..' eventFovDeg='..tostring(c.receivedFov and math.deg(c.receivedFov))..' referenceFovDeg='..math.deg(v.fov)..' baseDeg='..math.deg(c.baseFov)..' rayHalfDeg='..tostring(c.viewportHalfAngle and math.deg(c.viewportHalfAngle)))
   end
-  if core.contentFiles.has('director-quick.omwscripts')then line('QUICK COMPLETE');core.quit();stage=99;return end;line('allowing unmodified scheduler for 45 seconds');slot.nextWave=core.getSimulationTime();stage=3;at=t+45
+  if core.contentFiles.has('director-quick.omwscripts')then line('QUICK COMPLETE');core.quit();stage=99;return end;line('observing runtime scheduler for 45 seconds');slot.nextWave=core.getSimulationTime();stage=3;at=t+45
  elseif stage==3 and t>at then
   dump(slot,'idle floor');line('world debug='..tostring(A.getState().director.outdoor.debug.status))
   for i=5,#slot.objects do local o=slot.objects[i];if o:isValid() then o:addScript('scripts/ashenloot_test/enemy_actor.lua');o:sendEvent('EnemyTest_Inspect')end end

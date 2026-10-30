@@ -153,6 +153,13 @@ local function update(dt)
             fightingPlayer=true
         end
     end)
+    if data.delveReinforcement and not fightingPlayer then
+        local player=nearby.players[1]
+        if player and player.cell==self.cell and not types.Actor.isDead(player) then
+            I.AI.startPackage{type='Combat',target=player,cancelOther=true}
+            data.witnessed=true;fightingPlayer=true
+        end
+    end
     if quiet < C.settleSeconds then return end
     if deferred then
         local event = deferred
@@ -245,6 +252,14 @@ return {
         Dreamforged_DelveSpawned = function(event)
             types.Actor.stats.ai.fight(self).base=100
             types.Actor.stats.ai.flee(self).base=0
+            if event and event.reinforcement then
+                data.delveReinforcement=true
+                I.AI.removePackages();invalidateAvailability()
+                local player=nearby.players[1]
+                if player and player.cell==self.cell and not types.Actor.isDead(player) then
+                    I.AI.startPackage{type='Combat',target=player,cancelOther=true};data.witnessed=true
+                end
+            end
             if event and event.healthFraction then
                 data.delveHealthFraction=event.healthFraction
                 local hp=types.Actor.stats.dynamic.health(self)

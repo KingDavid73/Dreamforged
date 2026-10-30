@@ -1,4 +1,12 @@
-# Dreamforged 0.11.2 — The Unending Dream (playable prototype)
+# Dreamforged 0.11.3 — The Unending Dream (playable prototype)
+
+## Reinforcements (0.11.3)
+
+Hidden reachable formation points are checked against the actual rendered camera.
+Reinforcement groups pursue the player, and guardian adds use alternative positions
+with live/cumulative limits. Portal and load transitions discard obsolete requests
+and grant placement recovery. See REINFORCEMENTS.md. Density and adaptive pacing
+are still task 04c; encounter-context/HUD work is task 04a.
 
 ## Depth-aware enemy selection (0.11.2)
 
@@ -41,7 +49,7 @@ arbitrary fallback to Pack Guars.
 Living enemies from the old selector are replaced in place once when their floor
 is visited, preserving health fraction and guardian role. Dead enemies and
 completed guardians stay dead. Run depth and rewards persist. No new game or
-run reset is required. Reinforcement behavior remains tasks 03-04.
+run reset is required. Reinforcement placement was repaired in 0.11.3; context and density work remain tasks 04a/04c.
 
 ## Start the delve
 
@@ -108,7 +116,7 @@ upstairs. Identify is deliberately deferred.
 
 ## Install / undo
 
-Installed release location: Documents\MorrowindMods\Dreamforged-0.11.2.
+Installed release location: Documents\MorrowindMods\Dreamforged-0.11.3.
 The main OpenMW config uses this folder instead of 0.10.29 and loads
 Dreamforged-Delve.esp alongside AshenLoot.omwscripts. Isowind inherits this.
 Existing Isowind camera/HUD fixes and the inert Stats & Potions Limit

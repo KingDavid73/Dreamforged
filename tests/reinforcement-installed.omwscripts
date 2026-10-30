@@ -1,0 +1,2 @@
+GLOBAL: scripts/ashenloot_test/reinforcement_installed.lua
+PLAYER: scripts/ashenloot_test/reinforcement_player.lua

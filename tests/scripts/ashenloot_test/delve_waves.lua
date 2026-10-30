@@ -8,6 +8,9 @@ return {engineHandlers={onUpdate=function(dt)
  elseif stage==1 and t>5 then D.test.descend(p);stage=2
  elseif stage==2 and t>55 then
   local slot=d.slots[2]
+  print('[DELVE WAVES] position='..tostring(p.position)..' cell='..p.cell.name)
+  for _,h in ipairs((slot.diagnostics or {}).history or {}) do print('[DELVE WAVES] '..h.time..' '..h.status..' '..tostring(h.detail)) end
+  local r=slot.diagnostics and slot.diagnostics.lastResponse;if r then print('[DELVE WAVES] reason='..tostring(r.reason)..' nav='..tostring(r.navStatus)..' fov='..tostring(r.camera and r.camera.fov));for k,v in pairs(r.rejections or {})do print('[DELVE WAVES] reject '..k..'='..v)end end
   assert((slot.waves or 0)>0 and #slot.objects>4,'Director never reinforced a floor: '..tostring(slot.lastPlacementFailure)..' request '..tostring(slot.request))
   local alive=0;for _,o in ipairs(slot.objects)do if o:isValid() and not require('openmw.types').Actor.isDead(o) then alive=alive+1 end end
   assert(alive<=8,'Population cap exceeded')

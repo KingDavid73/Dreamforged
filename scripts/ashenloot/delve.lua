@@ -10,9 +10,11 @@ local script='scripts/ashenloot/actor.lua'
 local entrance={-7500,-68000,500}
 local Selection=require('scripts.ashenloot.delve_selection')
 local selectionVersion=2
+local bindingGeneration=0
 local selectEnemy=Selection.choose
 local function vec(p) return util.vector3(p[1],p[2],p[3]) end
 local function live(o) return o and o:isValid() end
+local function remove(o) if live(o) and o.count>0 then o:remove() end end
 local function diagnostic(slot,status,detail)
     slot.diagnostics=slot.diagnostics or {counts={},history={}}
     local d=slot.diagnostics
@@ -49,7 +51,7 @@ end
 local function shop(p)
     local d=data();local epoch=d.bosses or 0
     if d.offeredEpoch~=epoch then
-        if live(d.escrow) then d.escrow:remove() end
+        remove(d.escrow)
         d.escrow=world.createObject('df_delve_escrow',1);d.offers={}
         local inv=types.Container.content(d.escrow)
         local tiers={3,4,5}
@@ -84,7 +86,7 @@ local function currentSlot(p)
         if slot and p.cell and p.cell.name==l.name then return slot,index end
     end
 end
-local function spawn(slot,index,anchor,boss,healthFraction)
+local function spawn(slot,index,anchor,boss,healthFraction,reinforcement)
     local d=data();local l=layouts[index];slot.serial=(slot.serial or 0)+1
     local rng=R.rng(d.serial..':'..slot.depth..':'..slot.serial)
     -- Adjacent short seeds have correlated first draws; mix before choosing a species.
@@ -94,7 +96,7 @@ local function spawn(slot,index,anchor,boss,healthFraction)
     local actor=world.createObject(id,1)
     local target=math.max(1,math.floor(d.baseline+(slot.depth-1)*1.25))
     local info={depth=slot.depth,index=index,level=target,boss=boss or false,selectionVersion=selectionVersion,
-        archetypeLevel=archetype.level,optionalArchetype=archetype.optional,archetypeSource=archetype.id}
+        archetypeLevel=archetype.level,optionalArchetype=archetype.optional,archetypeSource=archetype.id,reinforcement=reinforcement or false}
     d.actors[actor.id]=info
     slot.objects[#slot.objects+1]=actor
     slot.ids=slot.ids or {};slot.ids[#slot.ids+1]=actor.id
@@ -104,8 +106,8 @@ local function spawn(slot,index,anchor,boss,healthFraction)
     -- Attach before teleport so activation cannot race progression preparation.
     if not actor:hasScript(script) then actor:addScript(script) end
     actor:teleport(l.name,vec(anchor),{onGround=true})
-    -- Start passive until the player approaches, rather than aggroing the entire floor.
-    actor:sendEvent('Dreamforged_DelveSpawned',{healthFraction=healthFraction})
+    -- Ambient enemies stay local; reinforcement groups actively join the encounter.
+    actor:sendEvent('Dreamforged_DelveSpawned',{healthFraction=healthFraction,reinforcement=reinforcement or false})
     print('[Dreamforged Delve] selected '..id..' ('..archetype.id..') depth '..slot.depth..(boss and ' guardian' or ' ordinary'))
     return actor
 end
@@ -120,7 +122,7 @@ local function migrateSelection(slot,index)
     for i=1,#slot.objects do
         local old=slot.objects[i]
         local info=live(old) and context(old)
-        if info and info.selectionVersion~=selectionVersion and not types.Actor.isDead(old) then
+        if info and old.enabled and old.count>0 and info.selectionVersion~=selectionVersion and not types.Actor.isDead(old) then
             local hp=types.Actor.stats.dynamic.health(old)
             local maximum=hp.base+hp.modifier
             local fraction=maximum>0 and math.max(0.01,math.min(1,hp.current/maximum)) or 1
@@ -129,7 +131,7 @@ local function migrateSelection(slot,index)
             -- spawn appends; replace the original entry without changing population.
             slot.objects[#slot.objects]=nil;slot.ids[#slot.ids]=nil
             slot.objects[i]=actor;slot.ids[i]=actor.id
-            local oldId=old.id;old:remove();forgetActor(oldId);replaced=replaced+1
+            local oldId=old.id;remove(old);forgetActor(oldId);replaced=replaced+1
         end
     end
     slot.selectionVersion=selectionVersion
@@ -143,25 +145,91 @@ local function cleanup(slot)
     for id,loose in pairs(state.director.loose or {}) do
         local item=type(loose)=='table' and loose.item
         if live(item) and not item.parentContainer and item.cell and item.cell.name==cellName then
-            item:remove()
-            if live(loose.light) then loose.light:remove() end
+            remove(item);remove(loose.light)
             state.director.loose[id]=nil
         end
     end
     for i,o in ipairs(slot.objects or {}) do
         local id=slot.ids and slot.ids[i] or (live(o) and o.id)
-        if live(o) then o:remove() end
+        remove(o)
         if id then
             forgetActor(id)
         end
     end
 end
+local function livingHere(actor,slot)
+    return live(actor) and actor.enabled and actor.count>0 and actor.cell and actor.cell.name==slot.cell and not types.Actor.isDead(actor)
+end
+local function aliveCount(slot)
+    local count=0;for _,actor in ipairs(slot.objects) do if livingHere(actor,slot) then count=count+1 end end
+    return count
+end
+local function nearBoss(slot,p)
+    return not not (livingHere(slot.boss,slot) and (slot.boss.position-p.position):length()<1800)
+end
+local function cancelPlacement(slot,reason)
+    if slot.pending or slot.placement then diagnostic(slot,'placement cancelled',reason) end
+    slot.pending=nil;slot.placement=nil
+end
+local function finishFailure(slot,reason)
+    local batch=slot.placement
+    slot.pending=nil;slot.placement=nil;slot.lastPlacementFailure=reason
+    diagnostic(slot,'batch deferred',reason)
+    if batch and batch.bossAdd then slot.nextAdds=core.getSimulationTime()+5
+    else slot.nextWave=core.getSimulationTime()+5 end
+end
+local function nextCandidate(slot,p)
+    local batch=slot.placement;local now=core.getSimulationTime()
+    if not batch then return end
+    if now>batch.expires or batch.attempts>=12 or batch.attempts>=#batch.options then finishFailure(slot,'candidate batch exhausted');return end
+    batch.attempts=batch.attempts+1
+    local index=(batch.start+batch.attempts-1)%#batch.options+1
+    slot.anchorCursor=index
+    local anchor=batch.options[index]
+    local d=data();d.placementSerial=(d.placementSerial or 0)+1
+    local token=bindingGeneration..':'..d.placementSerial
+    slot.request=(slot.request or 0)+1
+    slot.pending={token=token,expires=math.min(batch.expires,now+2),anchor=anchor,count=batch.count,bossAdd=batch.bossAdd,bossId=batch.bossId}
+    diagnostic(slot,batch.bossAdd and 'boss add requested' or 'wave requested',
+        'Token '..token..'; attempt '..batch.attempts..'/'..math.min(12,#batch.options)..'; '..batch.count..' actors')
+    p:sendEvent('Dreamforged_DelveCheckAnchor',{token=token,depth=slot.depth,cell=slot.cell,position=vec(anchor),count=batch.count})
+end
+local function beginPlacement(slot,index,p,bossAdd)
+    if not C.enabled or not C.extraEncounters or (bossAdd or false)~=nearBoss(slot,p) then return false end
+    if slot.pending or slot.placement then return false end
+    local alive=aliveCount(slot);local available=8-alive
+    diagnostic(slot,'placement search',alive..'/8 living enemies')
+    slot.diagnostics.alive,slot.diagnostics.cap=alive,8
+    if available<=0 then diagnostic(slot,'population cap',alive..'/8');return false end
+    if bossAdd and (slot.addsMade or 0)>=4 then return false end
+    local options,candidates={},{}
+    for anchorIndex,a in ipairs(layouts[index].anchors) do
+        for offsetIndex,offset in ipairs({{0,0},{384,0},{-384,0},{0,384},{0,-384},{384,384},{-384,384},{384,-384},{-384,-384}}) do
+            local pos=vec(a)+util.vector3(offset[1],offset[2],0);local distance=(pos-p.position):length()
+            local occupied=false
+            for _,actor in ipairs(slot.objects) do if livingHere(actor,slot) and (actor.position-pos):length()<300 then occupied=true;break end end
+            if not occupied and distance>=1800 and distance<=4000 then options[#options+1]={pos.x,pos.y,pos.z} end
+            candidates[#candidates+1]={index=anchorIndex,offset=offsetIndex,distance=math.floor(distance),occupied=occupied,inRange=distance>=1800 and distance<=4000}
+        end
+    end
+    slot.diagnostics.candidates=candidates
+    if #options==0 then diagnostic(slot,'no eligible anchor','No free candidate within 1800-4000');return false end
+    local rng=R.rng(data().serial..':'..slot.depth..':placement');rng(997);rng(7919)
+    local start=slot.anchorCursor or (rng(#options)-1)
+    slot.placement={options=options,start=start,attempts=0,expires=core.getSimulationTime()+8,
+        count=math.min(bossAdd and 1 or 2,available),bossAdd=bossAdd or false,bossId=bossAdd and slot.boss.id or nil}
+    nextCandidate(slot,p);return true
+end
 local function descend(p)
     if core.getSimulationTime()-travelAt<2 then return end
     travelAt=core.getSimulationTime()
+    local previous=currentSlot(p)
+    if previous then
+        cancelPlacement(previous,'descending');previous.nextWave=travelAt+15;previous.nextAdds=travelAt+15
+    end
     local d=data();local depth=d.depth+1;local index=Rules.layout(depth)
     local old=d.slots[index]
-    if old then cleanup(old) end
+    if old then cancelPlacement(old,'layout recycled');cleanup(old) end
     d.depth=depth;d.returnPoint=nil
     if not d.baseline then d.baseline=math.max(1,api.progress.gearLevel());d.serial=d.serial+1 end
     local slot={depth=depth,cell=layouts[index].name,serial=0,objects={},phase='build',nextWave=core.getSimulationTime()+25,
@@ -177,6 +245,8 @@ end
 local function retreat(p)
     local slot=currentSlot(p)
     if not slot then tell(p,'Dream Portal answers only within the Unending Dream.');return end
+    cancelPlacement(slot,'portal retreat')
+    slot.nextWave=core.getSimulationTime()+15;slot.nextAdds=core.getSimulationTime()+15
     local d=data();d.returnPoint={cell=p.cell.name,position=p.position,rotation=p.rotation,depth=slot.depth}
     hub(p)
 end
@@ -186,10 +256,12 @@ local function resume(p)
     if r and returnSlot and returnSlot.depth==r.depth then
         p:teleport(r.cell,r.position,{rotation=r.rotation,onGround=true})
         returnSlot.nextWave=core.getSimulationTime()+15
+        returnSlot.nextAdds=math.max(returnSlot.nextAdds or 0,core.getSimulationTime()+15)
     elseif d.depth>0 then
         local index=Rules.layout(d.depth)
         p:teleport(layouts[index].name,vec(layouts[index].entry),{onGround=true})
         d.slots[index].nextWave=core.getSimulationTime()+15
+        d.slots[index].nextAdds=math.max(d.slots[index].nextAdds or 0,core.getSimulationTime()+15)
     else descend(p) end
 end
 local function nearBroker(p)
@@ -213,7 +285,7 @@ function M.action(e)
         offer.item:moveInto(types.Actor.inventory(p));coins[offer.tier]=coins[offer.tier]-offer.price;offer.sold=true
         d.pendingBaseline=p;api.snapshot(p);shop(p)
     elseif e.action=='newRun' and p.cell and p.cell.name==Rules.hub and e.confirm then
-        for _,slot in pairs(d.slots) do cleanup(slot) end
+        for _,slot in pairs(d.slots) do cancelPlacement(slot,'run reset');cleanup(slot) end
         d.depth=0;d.baseline=nil;d.returnPoint=nil;d.slots={};d.serial=d.serial+1
         tell(p,'The old descent fades. Your equipment and forging coins remain.');hub(p)
     elseif e.action=='shop' and nearBroker(p) then shop(p) end
@@ -236,7 +308,10 @@ local function activate(o,p)
     else return end
     return false
 end
-function M.bind(s,a) state,api=s,a;Selection.bind(data) end
+function M.bind(s,a)
+    state,api=s,a;Selection.bind(data);bindingGeneration=bindingGeneration+1;lastCell=nil;elapsed=0
+    for _,slot in pairs((s.delve or {}).slots or {}) do slot.pending=nil;slot.placement=nil end
+end
 function M.init()
     if registered or not core.contentFiles.has('Dreamforged-Delve.esp') then return end
     registered=true
@@ -252,7 +327,7 @@ function M.update(dt)
     local p=world.players[1];if not live(p) or types.Actor.isDead(p) then return end
     local d=data();local now=core.getSimulationTime()
     if d.entrance and d.entranceVersion~=2 then
-        for _,o in ipairs(d.entrance) do if live(o) then o:remove() end end
+        for _,o in ipairs(d.entrance) do remove(o) end
         d.entrance=nil;d.entrancePosition=nil
     end
     if live(d.escrow) then
@@ -269,20 +344,20 @@ function M.update(dt)
         local active=types.Actor.activeSpells(p)
         if active:isSpellActive(d.portalSpell) then
             for _,s in pairs(active) do if s.id==d.portalSpell then active:remove(s.activeSpellId) end end
-            retreat(p)
+            retreat(p);return
         end
     end
     local slot,index=currentSlot(p)
-    if not slot then return end
-    if not C.enabled then diagnostic(slot,'disabled','Dreamforged is disabled');return end
-    if slot.pending and now>slot.pending.expires and slot.expiredDiagnosticToken~=slot.pending.token then
-        slot.expiredDiagnosticToken=slot.pending.token
-        diagnostic(slot,'response expired','No accepted response for token '..slot.pending.token)
+    for _,other in pairs(d.slots) do if other.cell~=p.cell.name then cancelPlacement(other,'player left floor') end end
+    if not slot then lastCell=nil;return end
+    if not C.enabled then cancelPlacement(slot,'Dreamforged disabled');diagnostic(slot,'disabled','Dreamforged is disabled');return end
+    if lastCell~=p.cell.name then
+        lastCell=p.cell.name;slot.nextWave=now+15;slot.nextAdds=math.max(slot.nextAdds or 0,now+15)
     end
-    if lastCell~=p.cell.name then lastCell=p.cell.name;slot.nextWave=now+15 end
     if slot.pendingInitial then
         slot.pendingInitial=nil
-        for i=2,math.min(5,#layouts[index].anchors) do spawn(slot,index,layouts[index].anchors[i],false) end
+        -- Keep the guardian's exit anchor free of ordinary starting actors.
+        for i=1,math.min(4,#layouts[index].anchors) do spawn(slot,index,layouts[index].anchors[i],false) end
         if Rules.boss(slot.depth) then spawn(slot,index,layouts[index].exit,true) end
         print('[Dreamforged Delve] initial population depth '..slot.depth)
         diagnostic(slot,'initial population',#slot.objects..' actors placed')
@@ -300,74 +375,71 @@ function M.update(dt)
         if slot.depth>=3 then journal(p,100) end
         tell(p,'The guardian falls. Velyna has new stock. The Dream grants a moment of quiet.')
     end
-    -- Boss fights use a bounded add budget; ordinary waves pause during the climax.
-    if live(slot.boss) and not types.Actor.isDead(slot.boss) and (slot.boss.position-p.position):length()<1800 then
-        if now>=(slot.nextAdds or 0) and (slot.addsMade or 0)<4 then
-            slot.nextAdds=now+25
-            local anchor=layouts[index].anchors[2]
-            -- Same out-of-view and nav validation as ordinary waves.
-            slot.request=(slot.request or 0)+1
-            slot.pending={token=slot.request,expires=now+5,anchor=anchor,count=1,bossAdd=true}
-            diagnostic(slot,'boss add requested','Token '..slot.request..'; fixed anchor 2')
-            p:sendEvent('Dreamforged_DelveCheckAnchor',{token=slot.request,depth=slot.depth,position=vec(anchor)})
-        end
-        diagnostic(slot,'boss encounter','Ordinary waves paused near living guardian; adds made '..(slot.addsMade or 0))
+    if not C.extraEncounters then cancelPlacement(slot,'extra encounters disabled');diagnostic(slot,'encounters disabled','Extra encounters are disabled');return end
+    local bossEncounter=nearBoss(slot,p)
+    if slot.placement and slot.placement.bossAdd~=bossEncounter then cancelPlacement(slot,'encounter changed') end
+    if slot.pending then
+        if now>slot.pending.expires then
+            diagnostic(slot,'response expired','Token '..slot.pending.token);slot.pending=nil;nextCandidate(slot,p)
+        else diagnostic(slot,'awaiting placement','Token '..slot.pending.token) end
         return
     end
-    if not C.extraEncounters then diagnostic(slot,'encounters disabled','Extra encounters are disabled');return end
-    if now<slot.nextWave then diagnostic(slot,'waiting',math.ceil(slot.nextWave-now)..' seconds to next wave check');return end
-    local alive=0
-    for _,o in ipairs(slot.objects) do if live(o) and not types.Actor.isDead(o) then alive=alive+1 end end
-    local cap=8
-    slot.diagnostics=slot.diagnostics or {counts={},history={}}
-    slot.diagnostics.alive,slot.diagnostics.cap=alive,cap
-    if alive>=cap then diagnostic(slot,'population cap',alive..'/'..cap);slot.nextWave=now+5;return end
-    local options={}
-    local candidates={}
-    for anchorIndex,a in ipairs(layouts[index].anchors) do
-        local distance=(vec(a)-p.position):length()
-        local occupied=false
-        for _,actor in ipairs(slot.objects) do
-            if live(actor) and not types.Actor.isDead(actor) and (actor.position-vec(a)):length()<350 then occupied=true;break end
-        end
-        if not occupied and distance>=1800 and distance<=7000 then options[#options+1]=a end
-        candidates[#candidates+1]={index=anchorIndex,distance=math.floor(distance),occupied=occupied,
-            inRange=distance>=1800 and distance<=7000}
+    if bossEncounter then
+        if now>=(slot.nextAdds or 0) and (slot.addsMade or 0)<4 then
+            if not beginPlacement(slot,index,p,true) then slot.nextAdds=now+5 end
+        else diagnostic(slot,'boss encounter','Ordinary waves paused; adds made '..(slot.addsMade or 0)) end
+        return
     end
-    slot.diagnostics.candidates=candidates
-    if #options==0 then diagnostic(slot,'no eligible anchor','All six anchors occupied or outside 1800-7000 range');slot.nextWave=now+5;return end
-    local rng=R.rng(d.serial..':'..slot.depth..':wave:'..slot.serial..':'..(slot.request or 0))
-    local a=options[rng(#options)]
-    -- Local ray/nav validation happens before any reinforcement is committed.
-    slot.request=(slot.request or 0)+1
-    slot.pending={token=slot.request,expires=now+5,anchor=a,count=math.min(2,cap-alive)}
-    diagnostic(slot,'wave requested','Token '..slot.request..'; '..#options..' eligible anchors; '..slot.pending.count..' actors')
-    p:sendEvent('Dreamforged_DelveCheckAnchor',{token=slot.request,depth=slot.depth,position=vec(a)})
-    slot.nextWave=now+30
+    if now<slot.nextWave then diagnostic(slot,'waiting',math.ceil(slot.nextWave-now)..' seconds to next wave check');return end
+    if not beginPlacement(slot,index,p,false) then slot.nextWave=now+5 end
 end
 function M.anchor(e)
-    local p=e and e.player;if not live(p) then return end
+    local p=e and e.player;if not live(p) or not types.Player.objectIsInstance(p) then return end
     local slot,index=currentSlot(p);if not slot then return end
-    local request=slot.pending
-    if not request or e.depth~=slot.depth or e.token~=request.token then return end
+    local request=slot.pending;local batch=slot.placement;local now=core.getSimulationTime()
+    if not request or not batch or e.depth~=slot.depth or e.token~=request.token then return end
     slot.pending=nil
-    slot.diagnostics=slot.diagnostics or {counts={},history={}}
+    if not C.enabled or not C.extraEncounters or types.Actor.isDead(p) or request.bossAdd~=nearBoss(slot,p)
+        or (request.bossAdd and request.bossId~=slot.boss.id) then cancelPlacement(slot,'encounter changed');return end
     slot.diagnostics.lastResponse={token=e.token,clear=e.clear,reason=e.reason,camera=e.camera,
-        ground=e.ground,visible=e.visible,navStatus=e.navStatus,occupied=e.occupied}
-    if not e.clear or core.getSimulationTime()>request.expires then
-        slot.lastPlacementFailure=e.reason or 'expired'
-        diagnostic(slot,'placement rejected',slot.lastPlacementFailure)
-        slot.nextWave=core.getSimulationTime()+5;return
+        ground=e.ground,visible=e.visible,navStatus=e.navStatus,navMethod=e.navMethod,occupied=e.occupied,rejections=e.rejections}
+    local failure=not e.clear and (e.reason or 'placement rejected')
+        or now>request.expires and 'expired response'
+        or e.cell~=slot.cell and 'changed cell'
+        or not e.checkedAt and 'missing validation time'
+        or e.checkedAt and now-e.checkedAt>0.75 and 'stale camera validation'
+        or not e.origin and 'missing validation origin'
+        or e.origin and (p.position-e.origin):length()>160 and 'player moved during validation'
+    local positions={}
+    if not failure then
+        for i,a in ipairs(e.positions or {}) do
+            if i>request.count then break end
+            local pos=vec(a);local distance=(pos-p.position):length()
+            if (pos-vec(request.anchor)):length()>500 or distance<1800 or distance>4000 then failure='invalid validated position';break end
+            for _,actor in ipairs(slot.objects) do if livingHere(actor,slot) and (actor.position-pos):length()<300 then failure='position became occupied';break end end
+            for _,other in ipairs(positions) do if (vec(other)-pos):length()<300 then failure='formation overlap';break end end
+            if failure then break end
+            positions[#positions+1]=a
+        end
+        if #positions==0 then failure=failure or 'empty formation' end
     end
-    for i=1,request.count do
-        local a=request.anchor
-        spawn(slot,index,{a[1]+(i-1)*100,a[2],a[3]},false)
+    if failure then
+        slot.lastPlacementFailure=failure;diagnostic(slot,'placement rejected',failure)
+        nextCandidate(slot,p);return
     end
-    if request.bossAdd then slot.addsMade=(slot.addsMade or 0)+request.count end
+    local count=math.min(#positions,8-aliveCount(slot),request.bossAdd and (4-(slot.addsMade or 0)) or 2)
+    if count<=0 then finishFailure(slot,'population capacity changed');return end
+    slot.placement=nil;slot.lastPlacementFailure=nil
+    for i=1,count do spawn(slot,index,positions[i],false,nil,true) end
+    if request.bossAdd then
+        slot.addsMade=(slot.addsMade or 0)+count;slot.addWaves=(slot.addWaves or 0)+1;slot.nextAdds=now+25
+    else
+        slot.ordinaryWaves=(slot.ordinaryWaves or slot.waves or 0)+1
+        slot.nextWave=now+(slot.ordinaryWaves%3==0 and 45 or 30)
+    end
     slot.waves=(slot.waves or 0)+1
-    diagnostic(slot,'wave spawned',request.count..' actors; wave '..slot.waves)
-    print('[Dreamforged Delve] reinforcement wave '..slot.waves..' at depth '..slot.depth)
-    if slot.waves%3==0 then slot.nextWave=core.getSimulationTime()+45 end
+    diagnostic(slot,'wave spawned',count..' actors; '..(request.bossAdd and 'boss add' or 'ordinary wave'))
+    print('[Dreamforged Delve] reinforcement wave '..slot.waves..' at depth '..slot.depth..' ('..count..' actors)')
 end
 function M.groundEntrance(e)
     local p=e and e.player;if not live(p) or not p.cell.isExterior or not e.position then return end
@@ -387,5 +459,6 @@ function M.groundEntrance(e)
     print('[Dreamforged Delve] herald placed at '..tostring(e.position))
 end
 M.test={descend=descend,resume=resume,retreat=retreat,shop=shop,spawn=spawn,data=data,activate=activate,
-    selectEnemy=selectEnemy,migrateSelection=migrateSelection,selection=Selection}
+    selectEnemy=selectEnemy,migrateSelection=migrateSelection,selection=Selection,
+    beginPlacement=beginPlacement,aliveCount=aliveCount,cancelPlacement=cancelPlacement}
 return M

@@ -1,0 +1,2 @@
+[15:29:04.425 I] Adding data directory C:/Users/super/Documents/MorrowindMods/Dreamforged-0.11.3
+[15:29:33.985 I] Global[scripts/ashenloot_test/reinforcement_installed.lua]:	[INSTALLED REINFORCEMENT] ALL PASS configured 0.11.3 actually places a hidden reachable group

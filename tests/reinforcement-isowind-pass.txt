@@ -1,0 +1,36 @@
+[15:18:41.490 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS natural isometric/normal wave produces real actors
+[15:18:41.490 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS reinforcement metadata recorded
+[15:18:51.513 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS reinforcement actively pursues player
+[15:18:51.514 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS reinforcement moves toward encounter
+[15:18:51.514 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS second batch can be requested
+[15:18:53.518 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS portal cancels in-flight placement
+[15:18:53.519 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS late portal response cannot spawn
+[15:18:56.521 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS portal resume grants recovery window
+[15:19:04.821 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS save/load discards obsolete placement request
+[15:19:04.822 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS pre-load reply cannot duplicate a wave
+[15:19:06.832 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS authored route fallback passes physical checks and rejects off-floor destination
+[15:19:08.838 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS extra encounter toggle blocks new groups
+[15:19:10.844 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS disabled mod blocks new groups
+[15:19:14.855 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS removed valid references do not consume population capacity
+[15:19:14.856 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS cleared floor can request another group
+[15:19:14.857 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS rejected candidate immediately advances to a different request
+[15:19:14.857 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS duplicate stale response cannot consume current request
+[15:19:15.889 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS reinforcements resume after clearing the floor
+[15:19:21.889 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS camera reaches third
+[15:19:21.890 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS placement starts in third
+[15:19:21.925 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS safe wave succeeds in third
+[15:19:27.941 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS camera reaches first
+[15:19:27.942 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS placement starts in first
+[15:19:27.978 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS safe wave succeeds in first
+[15:19:33.998 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS camera reaches iso
+[15:19:33.999 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS placement starts in iso
+[15:19:34.034 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS safe wave succeeds in iso
+[15:19:38.041 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS isometric zoom-out changes view distance
+[15:19:49.098 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS guardian floor exists
+[15:19:50.017 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS boss adds spawn within cumulative and live caps
+[15:19:50.017 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS ordinary waves pause during nearby guardian
+[15:19:50.017 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS successful boss add grants the normal add interval
+[15:19:52.058 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS live cap prevents ninth actor during boss fight
+[15:19:53.032 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS cumulative four-add budget blocks further adds
+[15:19:53.032 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] PASS independent rendered-view checks passed for accepted formation points
+[15:19:53.032 I] Global[scripts/ashenloot_test/reinforcement.lua]:	[REINFORCEMENT FIX] ALL PASS ISOWIND

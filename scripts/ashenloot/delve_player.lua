@@ -3,6 +3,8 @@ local ui,util,async=require('openmw.ui'),require('openmw.util'),require('openmw.
 local nearby,camera,I=require('openmw.nearby'),require('openmw.camera'),require('openmw.interfaces')
 local input=require('openmw.input')
 local R=require('scripts.ashenloot.rules')
+local View=require('scripts.ashenloot.delve_view')
+local Navigation=require('scripts.ashenloot.delve_navigation')
 local window,groundRequest,anchorRequest
 local function close()
     if window then window:destroy();window=nil end
@@ -61,16 +63,52 @@ local function panel(e)
         props={relativePosition=util.vector2(0.5,0.5),anchor=util.vector2(0.5,0.5)},
         content=ui.content{{type=ui.TYPE.Flex,content=ui.content(out)}}}
 end
-local function inView(pos)
-    local offset=pos-camera.getPosition()
-    local points={util.vector2(0,0),util.vector2(1,0),util.vector2(1,1),util.vector2(0,1)}
-    local centre=camera.viewportToWorldVector(util.vector2(0.5,0.5))
-    if offset:dot(centre)<=0 then return false end
-    for i=1,4 do
-        local normal=camera.viewportToWorldVector(points[i]):cross(camera.viewportToWorldVector(points[i%4+1]))
-        if offset:dot(normal)*centre:dot(normal)<0 then return false end
+local function validateAnchor(e)
+    if e.cell and e.cell~=self.cell.name then
+        core.sendGlobalEvent('Dreamforged_DelveAnchor',{player=self,token=e.token,depth=e.depth,clear=false,reason='player left floor'})
+        return
     end
-    return true
+    local view=e.view
+    if view and (core.getSimulationTime()-e.snapshotAt>.5 or (self.position-e.snapshotOrigin):length()>160) then view=nil end
+    local positions,rejections={},{}
+    local reason='no safe formation point';local groundFound,visible,occupied,navStatus=false,false,false,nil
+    local navMethod;local agents=Navigation.agents()
+    local count=math.min(2,math.max(1,e.count or 1))
+    local offsets={{0,0},{320,0},{-320,0},{0,320},{0,-320}}
+    for _,offset in ipairs(offsets) do
+        local pos=e.position+util.vector3(offset[1],offset[2],0)
+        local distance=(pos-self.position):length()
+        local ground=nearby.castRay(pos+util.vector3(0,0,150),pos-util.vector3(0,0,150),{collisionType=nearby.COLLISION_TYPE.World})
+        local why
+        if not view then why='camera unavailable'
+        elseif not ground.hit or ground.hitNormal.z<.8 or math.abs(ground.hitPos.z-pos.z)>64 then why='no level ground'
+        elseif distance<1800 or distance>4000 then why='outside encounter range'
+        else
+            groundFound=true;pos=ground.hitPos+util.vector3(0,0,8)
+            if View.visible(view,pos+util.vector3(0,0,150),250) then visible=true;why='visible to rendered camera'
+            else
+                for _,actor in ipairs(nearby.actors) do
+                    if actor.enabled and not types.Actor.isDead(actor) and (actor.position-pos):length()<300 then occupied=true;why='occupied';break end
+                end
+                for _,chosen in ipairs(positions) do if (util.vector3(chosen[1],chosen[2],chosen[3])-pos):length()<300 then why='formation overlap' end end
+                if not why and nearby.castRay(pos+util.vector3(0,0,110),pos+util.vector3(0,0,280),
+                    {radius=100,collisionType=nearby.COLLISION_TYPE.World+nearby.COLLISION_TYPE.Door}).hit then why='blocked clearance' end
+                if not why then
+                    local reachable,method,status=Navigation.reachable(self.position,pos,agents)
+                    navStatus,navMethod=status,method
+                    if not reachable then why=method..' status '..tostring(status) end
+                end
+            end
+        end
+        if why then reason=why;rejections[why]=(rejections[why] or 0)+1
+        else positions[#positions+1]={pos.x,pos.y,pos.z} end
+        if #positions>=count then break end
+    end
+    core.sendGlobalEvent('Dreamforged_DelveAnchor',{player=self,token=e.token,depth=e.depth,
+        clear=#positions>0,reason=#positions>0 and 'safe formation' or reason,positions=positions,
+        cell=self.cell.name,origin=self.position,checkedAt=e.snapshotAt,
+        ground=groundFound,visible=visible,occupied=occupied,navStatus=navStatus,navMethod=navMethod,rejections=rejections,
+        camera=view and {fov=view.fov,baseFov=view.baseFov,mode=view.mode,margin=1.15} or nil})
 end
 return {engineHandlers={
     onFrame=function()
@@ -94,30 +132,12 @@ return {engineHandlers={
         end
         if anchorRequest then
             local e=anchorRequest;anchorRequest=nil
-            local pos=e.position
-            local ground=nearby.castRay(pos+util.vector3(0,0,150),pos-util.vector3(0,0,150),{collisionType=nearby.COLLISION_TYPE.World})
-            local visible=ground.hit and inView(pos+util.vector3(0,0,80)) or false
-            local navStatus,occupied
-            local clear,reason=false,'no ground'
-            if ground.hit then reason='visible to camera' end
-            if ground.hit and not visible then
-                local status=nearby.findPath(self.position,pos,{agentBounds=types.Actor.getPathfindingAgentBounds(self),includeFlags=nearby.NAVIGATOR_FLAGS.Walk})
-                navStatus=tostring(status)
-                clear=status==nearby.FIND_PATH_STATUS.Success
-                reason='nav status '..tostring(status)
-                for _,actor in ipairs(nearby.actors) do if not types.Actor.isDead(actor) and (actor.position-pos):length()<220 then clear=false;reason='occupied';occupied=true end end
-            end
-            local centre=camera.viewportToWorldVector(util.vector2(0.5,0.5)):normalize()
-            local edge=camera.viewportToWorldVector(util.vector2(0.5,0)):normalize()
-            core.sendGlobalEvent('Dreamforged_DelveAnchor',{player=self,token=e.token,depth=e.depth,clear=clear,reason=reason,
-                ground=ground.hit,visible=visible,navStatus=navStatus,occupied=occupied or false,
-                camera={fov=camera.getFieldOfView(),baseFov=camera.getBaseFieldOfView(),
-                    receivedFov=e.receivedFov,
-                    viewportHalfAngle=math.acos(math.max(-1,math.min(1,centre:dot(edge)))),
-                    distance=(camera.getPosition()-self.position):length()}})
+            validateAnchor(e)
         end
     end,
     onKeyPress=function(e) if window and e.code==input.KEY.Escape then close() end end,
 },eventHandlers={Dreamforged_DelvePanel=panel,
     Dreamforged_DelveGroundEntrance=function(e) groundRequest=e end,
-    Dreamforged_DelveCheckAnchor=function(e) e.receivedFov=camera.getFieldOfView();anchorRequest=e end}}
+    Dreamforged_DelveCheckAnchor=function(e)
+        e.view=View.capture();e.snapshotAt=core.getSimulationTime();e.snapshotOrigin=self.position;anchorRequest=e
+    end}}
