@@ -1,0 +1,3 @@
+Stock OpenMW isolated old-format saved-state fixture; no personal save used.
+[19:25:16.725 I] Menu[scripts/ashenloot_test/menu.lua]:	[AshenLoot TEST] Reloading isolated test save in player
+[19:25:27.983 I] Global[scripts/ashenloot_test/density_legacy.lua]:	[DENSITY LEGACY] ALL PASS old-format saved floor keeps four identities/rewards, gains pacing without top-up, and rejects expired/travel replies

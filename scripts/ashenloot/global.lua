@@ -818,6 +818,10 @@ local function encounter(data)
         -- ladder, but the chance remains bounded so a single group cannot turn
         -- into a stack of bosses.
         local promotionChance=C.eliteChance
+        local delveInfo=Delve.context(actor)
+        if delveInfo and delveInfo.density and not delveInfo.boss then
+            promotionChance=Delve.allowPromotion(actor) and math.min(.08,promotionChance) or 0
+        end
         if directorActor then
             promotionChance=math.max(0.05,math.min(0.85,
                 promotionChance*(0.65+directorPressure/100*1.35)+overspendBonus))
@@ -874,6 +878,7 @@ local function encounter(data)
             elite.itemLevel=Progress.actorLevel(actor)
             elite.effectScale=math.min(elite.worldBoss and 2.5 or 2,1+math.floor(elite.itemLevel/10)*0.15)
             state.elites[key] = elite
+            Delve.promoted(actor)
             if directorActor and Progress.debugAction then
                 local tierName=elite.worldBoss and 'World Boss'
                     or ({'Champion','Elite','Unique'})[elite.rank] or 'Champion'
@@ -992,10 +997,11 @@ local function death(actor)
     if not actor or not actor:isValid() or not eligible(actor) or not types.Actor.isDead(actor) then return end
     if state.rewards[actor.id] then return end
     state.rewards[actor.id] = true
-    Progress.supplies(actor)
     local elite = state.elites[actor.id]
     Progress.recordKillTime(actor,elite)
     Progress.victoryRespite(actor,elite)
+    if not Delve.rewardEligible(actor) then return end
+    Progress.supplies(actor)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
     local rng=R.rng(actor.id..':loot-budget-v1')
@@ -1420,6 +1426,8 @@ return {
     eventHandlers = {
         Dreamforged_DelveAction = guard(Delve.action),
         Dreamforged_DelveAnchor = guard(Delve.anchor),
+        Dreamforged_DelvePopulation = guard(Delve.population),
+        Dreamforged_DelveCombat = guard(Delve.combat),
         Dreamforged_DelveEntrance = guard(Delve.groundEntrance),
         AshenLoot_Prepare = guard(Progress.prepare),
         AshenLoot_Salvage = guard(salvage),

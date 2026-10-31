@@ -1,0 +1,2 @@
+GLOBAL: scripts/ashenloot_test/density_benchmark.lua
+PLAYER: scripts/ashenloot_test/density_player.lua

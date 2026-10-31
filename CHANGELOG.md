@@ -1,3 +1,12 @@
+## 0.11.5 - Dense dungeon populations and adaptive pacing
+
+- New floors receive 24–32 ordinary ambient enemies in broad connected pockets, with reserved entry/guardian space. Bounded staged validation requires hidden rendered-view positions, level ground, clearance, free space and reachable navigation.
+- Added dungeon-only build, peak, fade and recovery phases driven by health/recent loss, nearby threats, incoming reinforcements, actual Combat-package reports and nearby deaths. Ordinary groups can arrive more frequently while depleted players get recovery.
+- Separated nearby admission ceilings (8 build / 12 peak), six living reinforcement actors, 48 owned live actors and a 96-actor lifetime floor budget. Distant ambient population no longer consumes every reinforcement slot. Existing enemies remain during recovery.
+- Guaranteed third-floor guardians retain four cumulative adds; depleted players receive no new adds. Guardian victory grants quiet recovery.
+- Density safeguards: ordinary promotion rolls are at most 8%, with two ordinary promotions per floor; unpromoted generated-reward eligibility is sampled at 4/ambient-target before existing reward rules. Native inventory remains native; promoted/guardian rewards remain unchanged. Broader balance remains tasks 05–08.
+- Dungeon HUD shows actual intensity/phase, nearby and incoming counts and recovery. Existing floors retain their inhabitants; adaptive reinforcement rules apply without filling visible gaps on load. New floors receive dense populations; no run reset required.
+
 ## 0.11.4 - Explicit encounter contexts
 
 - Centralized wilderness, ordinary hostile/safe interior, generated-floor, and refuge policies. Generated floors use their dedicated scheduler; the refuge cannot inherit hostile-shrine progression, encounters, or resets. Offices join safe interior names.

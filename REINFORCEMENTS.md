@@ -1,3 +1,7 @@
+# 0.11.5 update
+
+DUNGEON-PACING.md supersedes the population caps and ordinary wave timers in the 0.11.3 notes below. New floors have 24–32 ambient actors, distinct nearby/incoming reinforcement allowances, a 48-live floor bound, and adaptive build/peak/fade/recovery scheduling. The rendered-view, navigation, token, pursuit and physical placement protections remain. Historical 0.11.3 tests target its four/eight-actor baseline; density-test.omwscripts covers the new controller.
+
 # Dungeon reinforcement repair — 0.11.3
 
 Ordinary waves and guardian adds now search for hidden, reachable formation

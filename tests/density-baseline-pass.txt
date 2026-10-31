@@ -1,0 +1,4 @@
+Configured 0.11.4, full suite + Isowind, stationary protected player for 45 simulation seconds, separate process from density tests.
+[19:20:51.135 I] Global[scripts/ashenloot_test/density_benchmark.lua]:	[DENSITY BENCH] owned=6 waves=1
+[19:20:51.168 I] Global[scripts/ashenloot_test/density_benchmark.lua]:	[DENSITY BENCH] frames=2684 meanMs=16.769781462354 p95Ms=16.666667535901 maxMs=174.251973629
+[19:20:51.168 I] Global[scripts/ashenloot_test/density_benchmark.lua]:	[DENSITY BENCH] ALL PASS

@@ -9,6 +9,10 @@ function M.lines(data)
     elseif data.context=='delve' then
         if data.depth then
             lines[#lines+1]=string.format('Depth %d | Enemies %d/%d | Waves %d',data.depth,data.alive or 0,data.cap or 8,data.waves or 0)
+            if data.dungeonPhase then
+                lines[#lines+1]=string.format('%s | Intensity %d%% | Nearby %d/%d | Incoming %d',data.dungeonPhase,data.intensity or 0,data.nearby or 0,data.nearbyCap or 8,data.incoming or 0)
+                if data.recovery then lines[#lines+1]='Recovery: '..data.recovery..'s minimum'end
+            end
             lines[#lines+1]=string.format('Guardian: %s | Adds %d/%d',data.guardian or 'not scheduled',data.adds or 0,data.addCap or 4)
             if data.countdown then lines[#lines+1]=string.format('Next %s check: %ds',data.countdownKind or 'wave',data.countdown) end
         end

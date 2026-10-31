@@ -1,3 +1,7 @@
+# 0.11.5 update
+
+The context separation below remains in force. Generated floors now have the adaptive density/pacing controller described in DUNGEON-PACING.md, with actual dungeon intensity, phase, nearby/incoming counts and recovery shown in the HUD. The original 0.11.4 implementation notes below describe the preceding scheduler.
+
 # Encounter contexts — 0.11.4
 
 `encounter_context.lua` identifies exteriors, the exact refuge cell, and the twelve authored generated-floor cells. Similar names alone do not make another mod's interior a generated floor. Ordinary interiors retain the existing name/service heuristic for hostile versus safe locations, with offices included among safe names. This is a heuristic, not an authoritative classification of every third-party interior.

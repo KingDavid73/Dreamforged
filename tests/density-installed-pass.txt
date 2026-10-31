@@ -1,0 +1,15 @@
+Configured 0.11.5; full suite + Isowind; no repository runtime override. Automated checks, protected player; timing sample taken before the concurrent legacy test was launched.
+[19:23:34.884 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] depth=1 alive=24 meanCheckMs=0.51622871043427 maxCheckMs=1.2781000696123
+[19:23:34.914 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] halfBounds width=84.011093139648 height=48.060787200928 blocked=0
+[19:24:12.892 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] stationary owned=25 waves=1 phase=fade
+[19:24:12.925 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] frames=2681 meanMs=16.805064698062 p95Ms=16.666667535901 maxMs=107.39284753799
+[19:24:12.926 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] actual HUD DREAMFORGED DIRECTOR DEBUG Context: Generated dungeon Dreamforged Depth 01 Depth 1 | Enemies 25/48 | Waves 1 fade | Intensity 100% | Nearby 9/8 | Incoming 0 Guardian: not scheduled | Adds 0/4 State: fade Let existing threats resolve Last: wave spawned: 1 actors; ordinary wave
+[19:24:20.189 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] depth=4 alive=24 meanCheckMs=0.49718321921925 maxCheckMs=1.1355997994542
+[19:24:20.219 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] halfBounds width=29.2799949646 height=66.5 blocked=0
+[19:24:30.325 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] depth=7 alive=26 meanCheckMs=0.52359999556627 maxCheckMs=1.312100328505
+[19:24:30.357 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] halfBounds width=57.984958648682 height=40.609279632568 blocked=0
+[19:24:40.471 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] depth=10 alive=26 meanCheckMs=0.54154285628881 maxCheckMs=1.6919001936913
+[19:24:40.503 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] halfBounds width=33.585609436035 height=56.558620452881 blocked=0
+[19:24:53.333 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] depth=30 alive=33 meanCheckMs=0.43375995010138 maxCheckMs=0.62509998679161
+[19:24:53.365 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] halfBounds width=75.256340026855 height=113.05000305176 blocked=0
+[19:24:55.332 I] Global[scripts/ashenloot_test/density_installed.lua]:	[DENSITY INSTALLED] ALL PASS configured release, all palettes, depth30, actual actor bounds, rendered visibility and performance

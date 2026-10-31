@@ -1,3 +1,7 @@
+# Current build: Dreamforged 0.11.5 - dense dungeon pacing
+
+Task 04c implements 24–32 ambient actors on new floors plus a separate adaptive reinforcement controller. See DUNGEON-PACING.md for references, numeric targets, health/combat/death signals, admission/floor/lifetime caps, guardian limits and local promotion/reward safeguards. Existing floors persist without surprise population top-ups. Tests use protected automated players; this is not manual visual QA or completion of broad loot tuning. Install target: Documents/MorrowindMods/Dreamforged-0.11.5. Next: 04b patron messaging, then combat/reward measurement and broader balancing. Minimap task 13 and native isometric camera/controls tasks 14–16 remain queued. Previous handoffs below are historical.
+
 # Current build: Dreamforged 0.11.4 - explicit encounter contexts
 
 Task 04a separates wilderness, ordinary hostile/safe interiors, generated floors, and refuge rules. The HUD consumes the active scheduler: real dungeon depth/population/waves/guardian/add/placement data indoors, wilderness pressure/cycle outside. Interior kills cannot feed wilderness pressure. No run reset required. See ENCOUNTER-CONTEXTS.md and VALIDATION.md for checks and limits. Install target: Documents/MorrowindMods/Dreamforged-0.11.4. Next: 04c, dense ambient populations plus adaptive dungeon pressure/peaks/recovery, followed by 04b patron messaging. Promotion/drop tuning remains tasks 07-08; native isometric work remains tasks 14-16. Previous handoffs are historical.

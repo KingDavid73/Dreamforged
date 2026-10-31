@@ -1,3 +1,7 @@
+# 0.11.5 density and adaptive pacing
+
+New floors now receive 24–32 validated ambient enemies spread through broad spaces. Reinforcements use separate nearby/incoming limits and build/peak/fade/recovery scheduling; low health or recent damage stops new pressure. Guardians retain bounded adds. Local promotion and generated-reward safeguards offset the higher ordinary headcount. Existing saved floors persist and receive adaptive reinforcements; descend for the new ambient population. See DUNGEON-PACING.md for references, limits, save behavior and scope.
+
 # 0.11.4 context and HUD update
 
 Generated floors and the refuge now have explicit encounter policies separate from ordinary interiors and the wilderness. The director debug panel shows actual floor state, not overworld pressure/cycle counters. Dungeon kills cannot advance the wilderness controller. See ENCOUNTER-CONTEXTS.md. Existing runs persist. Density/adaptive pacing remains task 04c.

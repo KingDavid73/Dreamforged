@@ -1,0 +1,61 @@
+Stock OpenMW with official expansions; automated in-engine checks with test-only health and movement helpers; not manual visual QA.
+[19:15:11.707 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 01
+[19:15:11.708 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 02
+[19:15:11.708 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 03
+[19:15:11.708 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 04
+[19:15:11.709 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 05
+[19:15:11.709 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 06
+[19:15:11.710 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 07
+[19:15:11.711 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 08
+[19:15:11.711 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 09
+[19:15:11.712 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 10
+[19:15:11.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 11
+[19:15:11.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS authored broad-pocket candidates Dreamforged Depth 12
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS strong-player simulation cycles all pacing states
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS struggling-player simulation stops admission before recovery clock
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS recovery clock starts after threats resolve
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS depleted player keeps recovery after timer
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS healed player resumes building
+[19:15:11.714 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS distant ambient population reserves reinforcement capacity
+[19:15:11.715 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS nearby, incoming and floor caps each stop admission
+[19:15:28.712 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS new floor has 24 validated ambient enemies
+[19:15:28.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS ambient actors actually present
+[19:15:28.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] population validations=16 meanMs=0.26361251366325 maxMs=0.84750028327107
+[19:16:13.712 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS stationary player receives natural reinforcement groups
+[19:16:13.712 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS reinforcement actually arrives within encounter range
+[19:16:13.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] stationary waves=1 arrivals=2 maxNearby=11 maxAlive=26 phase=fade
+[19:16:18.711 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual low health stops new pressure
+[19:16:18.711 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS no new reinforcement group during low health
+[19:16:21.713 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS ambient and wave positions independently checked outside rendered view
+[19:16:36.790 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS player physically traverses broad connected space
+[19:16:36.791 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] moving distance=3552.2084960938 maxNearby=11 waves=1 promotions=2
+[19:16:36.791 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS higher population does not multiply promoted enemies
+[19:16:39.805 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS quiet recovery starts after actual threats die
+[19:16:49.741 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full recovery window precedes new build
+[19:16:55.753 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS portal resume keeps grace period
+[19:16:56.754 I] Menu[scripts/ashenloot_test/menu.lua]:	[AshenLoot TEST] Reloading isolated test save in player
+[19:17:00.765 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS save/load preserves population and clears request
+[19:17:21.956 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 3
+[19:17:21.957 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 3
+[19:17:21.957 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=3 actors=25 meanMs=0.28606471331681 maxMs=0.44920016080141
+[19:17:21.957 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS scheduled guardian remains a World Boss depth 3
+[19:17:31.013 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS guardian four-add cumulative bound retained
+[19:17:34.028 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS guardian defeat grants quiet recovery
+[19:18:06.459 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 4
+[19:18:06.460 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 4
+[19:18:06.460 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=4 actors=24 meanMs=0.15255719024156 maxMs=0.56800013408065
+[19:18:19.799 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 7
+[19:18:19.800 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 7
+[19:18:19.802 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=7 actors=26 meanMs=0.28996661098467 maxMs=0.41850004345179
+[19:18:30.939 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 10
+[19:18:30.939 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 10
+[19:18:30.939 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=10 actors=26 meanMs=0.31700011874948 maxMs=0.43749995529652
+[19:18:43.026 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 25
+[19:18:43.030 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 25
+[19:18:43.030 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=25 actors=32 meanMs=0.37408748175949 maxMs=0.57530030608177
+[19:18:56.083 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS full ambient population at depth 30
+[19:18:56.089 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS actual living population depth 30
+[19:18:56.098 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] depth=30 actors=33 meanMs=0.37921111409863 maxMs=0.6313999183476
+[19:18:56.098 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS scheduled guardian remains a World Boss depth 30
+[19:18:59.097 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] PASS all-theme accepted spawns independently outside rendered view
+[19:18:59.112 I] Global[scripts/ashenloot_test/density.lua]:	[DENSITY] ALL PASS ambient density, arrivals, physical traversal, actual recovery, portals, save/load, themes and depth

@@ -1,0 +1,3 @@
+GLOBAL: scripts/ashenloot_test/density_legacy.lua
+PLAYER: scripts/ashenloot_test/density_player.lua
+MENU: scripts/ashenloot_test/menu.lua

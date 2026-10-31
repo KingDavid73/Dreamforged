@@ -160,6 +160,10 @@ local function update(dt)
             data.witnessed=true;fightingPlayer=true
         end
     end
+    if data.delveActor and (data.delveFighting~=fightingPlayer or (fightingPlayer and core.getSimulationTime()>=(data.delveCombatAt or 0)))then
+        data.delveFighting=fightingPlayer;data.delveCombatAt=core.getSimulationTime()+3
+        core.sendGlobalEvent('Dreamforged_DelveCombat',{actor=self,fighting=fightingPlayer})
+    end
     if quiet < C.settleSeconds then return end
     if deferred then
         local event = deferred
@@ -250,6 +254,7 @@ return {
             if player then I.AI.startPackage{type='Combat',target=player,cancelOther=true} end
         end,
         Dreamforged_DelveSpawned = function(event)
+            data.delveActor=true
             types.Actor.stats.ai.fight(self).base=100
             types.Actor.stats.ai.flee(self).base=0
             if event and event.reinforcement then

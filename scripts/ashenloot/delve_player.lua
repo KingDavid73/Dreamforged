@@ -5,7 +5,7 @@ local input=require('openmw.input')
 local R=require('scripts.ashenloot.rules')
 local View=require('scripts.ashenloot.delve_view')
 local Navigation=require('scripts.ashenloot.delve_navigation')
-local window,groundRequest,anchorRequest
+local window,groundRequest,anchorRequest,populationRequest
 local function close()
     if window then window:destroy();window=nil end
     if I.UI.getMode()==I.UI.MODE.Interface then I.UI.removeMode(I.UI.MODE.Interface) end
@@ -110,8 +110,37 @@ local function validateAnchor(e)
         ground=groundFound,visible=visible,occupied=occupied,navStatus=navStatus,navMethod=navMethod,rejections=rejections,
         camera=view and {fov=view.fov,baseFov=view.baseFov,mode=view.mode,margin=1.15} or nil})
 end
+local function validatePopulation(e)
+    if not self.cell or self.cell.name~=e.cell then return end
+    local started=core.getRealTime();local positions,rejections={},{}
+    local agents=Navigation.agents();local methods={}
+    for _,a in ipairs(e.points)do
+        local pos=util.vector3(a[1],a[2],a[3]);local why
+        local ground=nearby.castRay(pos+util.vector3(0,0,150),pos-util.vector3(0,0,150),{collisionType=nearby.COLLISION_TYPE.World})
+        if (pos-self.position):length()<1800 then why='near player'
+        elseif not ground.hit or ground.hitNormal.z<.8 then why='ground'
+        elseif View.visible(e.view,pos+util.vector3(0,0,150),250)then why='visible'
+        elseif nearby.castRay(pos+util.vector3(0,0,110),pos+util.vector3(0,0,280),
+            {radius=100,collisionType=nearby.COLLISION_TYPE.World+nearby.COLLISION_TYPE.Door}).hit then why='clearance'
+        else
+            for _,actor in ipairs(nearby.actors)do
+                if actor.enabled and not types.Actor.isDead(actor) and (actor.position-pos):length()<400 then why='occupied';break end
+            end
+            if not why then
+                local reachable,method=Navigation.reachable(self.position,pos,agents);methods[method]=(methods[method]or 0)+1
+                if not reachable then why='route' end
+            end
+        end
+        if why then rejections[why]=(rejections[why]or 0)+1
+        else positions[#positions+1]={ground.hitPos.x,ground.hitPos.y,ground.hitPos.z+8}end
+    end
+    core.sendGlobalEvent('Dreamforged_DelvePopulation',{player=self,token=e.token,depth=e.depth,cell=e.cell,
+        origin=e.origin,checkedAt=e.at,positions=positions,
+        metrics={ms=(core.getRealTime()-started)*1000,methods=methods,rejections=rejections}})
+end
 return {engineHandlers={
     onFrame=function()
+        if populationRequest then local e=populationRequest;populationRequest=nil;validatePopulation(e)end
         if window and I.UI.getMode()~=I.UI.MODE.Interface then window:destroy();window=nil end
         if groundRequest then
             local e=groundRequest;groundRequest=nil
@@ -140,4 +169,7 @@ return {engineHandlers={
     Dreamforged_DelveGroundEntrance=function(e) groundRequest=e end,
     Dreamforged_DelveCheckAnchor=function(e)
         e.view=View.capture();e.snapshotAt=core.getSimulationTime();e.snapshotOrigin=self.position;anchorRequest=e
+    end,
+    Dreamforged_DelvePopulation=function(e)
+        e.view=View.capture();e.at=core.getSimulationTime();e.origin=self.position;populationRequest=e
     end}}
