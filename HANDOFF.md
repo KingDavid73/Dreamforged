@@ -1,3 +1,7 @@
+# Current development milestone: task 05 measured, gameplay remains 0.11.6
+
+BALANCE-BASELINE.md and tests/balance-validation.txt capture live/projection baselines, the current save snapshot, scaling interactions and verified RNG stream coupling. No production or installed runtime changed. Next task is newly inserted 05a: fix reward/promotion stream independence before reference-driven rate tuning. Existing 0.11.6 release notes below remain the installed state. Original saves were loaded only through isolated copies; the archived level 351 build could not be loaded with its missing dependencies, so stress rows are explicitly synthetic.
+
 # Current build: Dreamforged 0.11.6 - patron narration
 
 Task 04b adds original Fa-Nuit-Hen captions for generated-dungeon events, blocks indoor wilderness narration leaks, and preserves overworld speakers. See PATRON-NARRATION.md. Guardian approach/victory, phase changes, reward interpolation, prioritized cooldown, mute, stale-cell rejection and saved milestone deduplication are covered by focused runtime tests. Narration consumes scheduler events without changing encounter/reward mechanics. Install target: Documents/MorrowindMods/Dreamforged-0.11.6. Next: task 05, measure combat/reward output before broader tuning. Minimap and native isometric controls remain queued. Earlier handoffs are historical.

@@ -1,0 +1,62 @@
+[
+  {
+    "chance": 12.4,
+    "controlJoint": 1919,
+    "equipment": 11963,
+    "expectedIndependent": 1980.95317,
+    "gate": 16559,
+    "joint": 10367,
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16
+  },
+  {
+    "chance": 18.25,
+    "controlJoint": 2953,
+    "equipment": 17963,
+    "expectedIndependent": 2974.49317,
+    "gate": 16559,
+    "joint": 10367,
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16
+  },
+  {
+    "chance": 22.25,
+    "controlJoint": 3636,
+    "equipment": 22048,
+    "expectedIndependent": 3650.92832,
+    "gate": 16559,
+    "joint": 10367,
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16
+  },
+  {
+    "expectedIndependent": 392.11214,
+    "gate": 7973,
+    "gateChance": 0.08,
+    "joint": 0,
+    "kind": "promotion-unique",
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16,
+    "unique": 4918
+  },
+  {
+    "expectedIndependent": 795.33896,
+    "gate": 16172,
+    "gateChance": 0.1625,
+    "joint": 0,
+    "kind": "promotion-unique",
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16,
+    "unique": 4918
+  },
+  {
+    "expectedIndependent": 2464.06554,
+    "gate": 50103,
+    "gateChance": 0.5,
+    "joint": 4918,
+    "kind": "promotion-unique",
+    "n": 100000,
+    "offsetError": 2.2204460492503e-16,
+    "unique": 4918
+  }
+]

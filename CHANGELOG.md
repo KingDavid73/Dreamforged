@@ -1,3 +1,9 @@
+## Development - Combat/reward measurement baseline
+
+- Completed task 05 as a report/test milestone; installed gameplay remains 0.11.6.
+- Added actual actor/reward cohorts, conditional budget-plan samples, sanitized current-character readout and scaling audit.
+- Verified equal-length RNG stream coupling affecting ordinary reward and promotion/rank gates; queued task 05a before rate tuning. No probability or gameplay fix was applied in this measurement task.
+
 ## 0.11.6 - Dungeon patron narration
 
 - Added original Fa-Nuit-Hen captions for descent, encounter buildup/peaks/recovery, reinforcement groups, guardian approach/victory, promotions and rewards. Existing world dialogue pools stay intact.

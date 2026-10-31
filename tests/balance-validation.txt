@@ -1,0 +1,9 @@
+Task05 baseline validation; gameplay 0.11.6 remains unchanged.
+kernel: [21:06:17.341 I] Global[scripts/ashenloot_test/balance_kernel.lua]:	[BALANCE KERNEL] ALL PASS 110 conditional cohorts, 1100000 reward-plan trials
+live: [21:11:58.954 I] Global[scripts/ashenloot_test/balance_live.lua]:	[BALANCE LIVE] ALL PASS actual promotions, scaled actor stats and created reward categories
+drops: [21:16:48.846 I] Global[scripts/ashenloot_test/balance_live.lua]:	[BALANCE LIVE] ALL PASS actual promotions, scaled actor stats and created reward categories
+correlation: [21:14:08.085 I] Global[scripts/ashenloot_test/balance_correlation.lua]:	[BALANCE CORRELATION] ALL PASS actual RNG verifies gate/first-loot-roll coupling; burn control is diagnostic only
+personal: [21:16:40.775 I] Global[scripts/ashenloot_test/balance_personal.lua]:	[BALANCE PERSONAL] ALL PASS isolated-copy readout
+JSON totals verified: 110 cohorts / 1,100,000 plan trials; 522 initial + 336 refined actors; 90 + 336 scripted deaths.
+Both source personal-save SHA-256 values matched their pre-probe hashes; only isolated copies were loaded.
+High-level archive runtime sample not obtained: isolated copy waits on three missing disabled dependencies; stopped without re-enabling content. Metadata level351 stress rows are explicit substitutes, not its actual build.

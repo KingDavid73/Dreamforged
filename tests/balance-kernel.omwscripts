@@ -1,0 +1,2 @@
+GLOBAL: scripts/ashenloot_test/balance_kernel.lua
+PLAYER: scripts/ashenloot_test/balance_player.lua

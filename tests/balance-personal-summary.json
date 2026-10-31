@@ -1,0 +1,128 @@
+{
+  "damage": {
+    "band": 7,
+    "bestSpell": 39.27825,
+    "bestSpellRaw": 62.1,
+    "bestWeapon": 220,
+    "bestWeaponRaw": 176,
+    "cadence": 2,
+    "dps": 66,
+    "feedback": 1.25,
+    "hit": 132,
+    "rawHit": 220,
+    "score": 34,
+    "spellSkill": 51,
+    "weaponSkill": 135
+  },
+  "depth": 6,
+  "equipped": {
+    "1": {
+      "tier": 6
+    },
+    "2": {
+      "tier": 6
+    },
+    "3": {
+      "level": 14,
+      "tier": 5
+    },
+    "4": {
+      "baseQualityTier": 3,
+      "level": 22,
+      "tier": 6
+    },
+    "5": {
+      "tier": 3
+    },
+    "6": {
+      "tier": 2
+    },
+    "7": {
+      "baseQualityTier": 3,
+      "level": 21,
+      "tier": 6
+    },
+    "8": {
+      "tier": 2
+    },
+    "9": {
+      "level": 9,
+      "tier": 5
+    },
+    "10": {
+      "baseQualityTier": 2,
+      "level": 21,
+      "tier": 6
+    },
+    "11": {
+      "baseQualityTier": 1,
+      "level": 22,
+      "tier": 6
+    },
+    "12": {
+      "baseQualityTier": 1,
+      "level": 19,
+      "tier": 6
+    },
+    "13": {
+      "baseQualityTier": 8,
+      "level": 20,
+      "tier": 6
+    },
+    "14": {
+      "baseQualityTier": 1,
+      "level": 21,
+      "tier": 6
+    }
+  },
+  "gearLevel": 34,
+  "generatedInventory": 209,
+  "generatedRecordCount": 706,
+  "health": {
+    "base": 252,
+    "current": 252,
+    "modifier": 0
+  },
+  "inventoryTiers": {
+    "1": 4,
+    "2": 18,
+    "3": 61,
+    "4": 42,
+    "5": 23,
+    "6": 60,
+    "7": 1
+  },
+  "level": 16,
+  "recordEntries": 707,
+  "rewardDirector": {
+    "bank": 125.9821688,
+    "hunger": 0,
+    "kills": 272,
+    "lastMood": "saving",
+    "lastTier": 6,
+    "sprees": 2
+  },
+  "runBaseline": 34,
+  "settings": {
+    "adaptiveLootDirector": true,
+    "ammunitionPercent": 15,
+    "directorIntensity": 1,
+    "eliteChance": 0.25,
+    "eliteTierPercent": 25,
+    "encounterDensity": 1.5,
+    "enemyDamage": 1,
+    "enemyHealth": 1,
+    "gearLevelInfluence": 0.5,
+    "healingPercent": 65,
+    "levelScaling": 0.6,
+    "lootDirectorReserve": 150,
+    "lootDirectorSpreeChance": 15,
+    "lootDirectorStrength": 1,
+    "maxGeneratedItems": 2000,
+    "normalDropChance": 0.35,
+    "preset": "Crawler",
+    "spellTomePercent": 25,
+    "supplyPercent": 25,
+    "uniquePercent": 5
+  }
+}
