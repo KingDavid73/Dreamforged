@@ -1,0 +1,3 @@
+GLOBAL: scripts/ashenloot_test/rng_compat.lua
+PLAYER: scripts/ashenloot_test/balance_player.lua
+MENU: scripts/ashenloot_test/rng_compat_menu.lua

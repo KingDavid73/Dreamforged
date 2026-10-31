@@ -1,0 +1,44 @@
+[
+  {
+    "boss": 3010,
+    "correlation": 0.00016263687403747,
+    "density": 16628,
+    "equipment": 12025,
+    "joint": 1926,
+    "lagCorrelation": -0.0018540319979506,
+    "n": 100000,
+    "pattern": "consecutive",
+    "promotedBoss": 231,
+    "promotedUnique": 387,
+    "promotion": 8045,
+    "unique": 5060
+  },
+  {
+    "boss": 3067,
+    "correlation": 0.0024168093003066,
+    "density": 16714,
+    "equipment": 11835,
+    "joint": 1993,
+    "lagCorrelation": -0.0013066530013037,
+    "n": 100000,
+    "pattern": "strided",
+    "promotedBoss": 265,
+    "promotedUnique": 416,
+    "promotion": 7951,
+    "unique": 5120
+  },
+  {
+    "boss": 2987,
+    "correlation": -0.0053361241260951,
+    "density": 16673,
+    "equipment": 12051,
+    "joint": 1958,
+    "lagCorrelation": 0.0014408820310846,
+    "n": 100000,
+    "pattern": "decimal",
+    "promotedBoss": 236,
+    "promotedUnique": 382,
+    "promotion": 7922,
+    "unique": 5014
+  }
+]

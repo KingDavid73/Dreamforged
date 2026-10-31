@@ -1,4 +1,4 @@
--- Pure Lua rules, shared by the engine scripts and deterministic tests.
+-- Rule tables and deterministic rolls. Versioned gameplay streams use OpenMW's bit operations.
 local M = {}
 M.rarities = {
     -- Keep the two chase tiers equally likely.  The previous table had a
@@ -201,6 +201,10 @@ function M.rng(seed)
         local v = n / 2147483647
         return max and math.floor(v * max) + 1 or v
     end
+end
+-- Keep rng() stable for legacy rolls and cached item generation. New decisions opt in.
+function M.stream(seed,namespace)
+    return require('scripts.ashenloot.random_stream').new(seed,namespace)
 end
 function M.rarity(random, minimum, bonus)
     -- Rarity bonuses improve a roll, but never collapse the overflow into the
@@ -429,7 +433,7 @@ end
 M.trophies = {{prefix=1}, {prefix=2}, {prefix=3}, {prefix=4}, {suffix=1},
     {suffix=2}, {suffix=3}, {suffix=4}, {prefix=4}, {prefix=5}}
 function M.elite(seed, baseName, family)
-    local r = M.rng(seed)
+    local r = M.stream(seed,'elite-base-v1')
     local tier = r() < 0.18 and 2 or 1
     local a, b = r(#M.elites), r(#M.elites - 1)
     if b >= a then b = b + 1 end

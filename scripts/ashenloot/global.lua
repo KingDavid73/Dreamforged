@@ -826,24 +826,24 @@ local function encounter(data)
             promotionChance=math.max(0.05,math.min(0.85,
                 promotionChance*(0.65+directorPressure/100*1.35)+overspendBonus))
         end
-        if data.force or R.rng(key .. ':elite')() < promotionChance then
+        if data.force or R.stream(key,'promotion-gate-v1')() < promotionChance then
             local rec = actor.type.record(actor)
             local elite = R.elite(key, rec.name, family(rec))
-            local random = R.rng(key .. ':rank4')
+            local random = R.stream(key,'promotion-modifiers-v1')
             -- World Boss is the top rung of the promotion ladder. This roll is
             -- conditional on the actor first passing the promotion roll (or
             -- being force-promoted as a dungeon leader).
             local bossChance=math.max(0,math.min(100,(tonumber(data.worldBossChance) or 3)
                 +overspendBonus*25))
-            local worldBoss=data.worldBoss or (data.allowWorldBoss and random(100)<=bossChance)
+            local worldBoss=data.worldBoss or (data.allowWorldBoss and R.stream(key,'promotion-boss-v1')(100)<=bossChance)
             local uniqueChance=tonumber(C.uniquePercent) or 0
             local eliteChance=tonumber(C.eliteTierPercent) or 0
             if directorActor then
                 uniqueChance=math.min(80,uniqueChance+directorPressure*0.22+overspendBonus*40)
                 eliteChance=math.min(95,eliteChance+directorPressure*0.38+overspendBonus*60)
             end
-            elite.rank = worldBoss and 3 or (data.rank or (random(100)<=uniqueChance and 3
-                or (random(100)<=eliteChance and 2 or 1)))
+            elite.rank = worldBoss and 3 or (data.rank or (R.stream(key,'promotion-unique-v1')(100)<=uniqueChance and 3
+                or (R.stream(key,'promotion-elite-v1')(100)<=eliteChance and 2 or 1)))
             elite.tier = elite.rank >= 2 and 2 or 1
             elite.modifiers = {elite.modifiers[1]}
             -- Exclude fatigue-drain modifiers from new procedural encounters.
@@ -910,7 +910,7 @@ local function giveSpellTome(actor,force,dropIndex)
     local multiplier=magicProfile and 3 or 0.5
     local elite=state.elites[actor.id]
     if elite and elite.worldBoss then multiplier=math.max(multiplier,6) elseif elite then multiplier=multiplier*1.5 end
-    local rng=R.rng(actor.id..':spell-tome-v1')
+    local rng=R.stream(actor.id,'spell-tome-v1')
     if not force and rng(100)>math.min(80,C.spellTomePercent*multiplier) then return end
     ensureSpellTomes()
     local level=Progress.actorLevel(actor)
@@ -1005,7 +1005,7 @@ local function death(actor)
     Progress.supplies(actor)
     local worldBoss=elite and elite.worldBoss
     local rank=elite and (worldBoss and 4 or (elite.rank or 1)) or 0
-    local rng=R.rng(actor.id..':loot-budget-v1')
+    local rng=R.stream(actor.id,'loot-budget-v1')
     local directorSpend,rewardDirector=rewardDirectorBudget(actor,rank,rng)
     -- The configured ordinary drop rate is an intensity input rather than a
     -- literal equipment chance for every scrib. Crawler's 35% becomes roughly
@@ -1015,7 +1015,7 @@ local function death(actor)
     local enemyName=elite and elite.name or actor.type.record(actor).name
     local enemyKind=actor.type.record(actor).name
     local now=core.getSimulationTime()
-    if rank==0 and rng(100)>ordinaryChance then return end
+    if rank==0 and R.stream(actor.id,'equipment-gate-v1')(100)>ordinaryChance then return end
     local tiers=R.lootBudgetPlan(rng,rank,enemyLootBudget(actor,rank)+directorSpend,mythicChance())
     settleRewardHunger(rewardDirector,rank,tiers)
     local profile=lootProfile();local magicProfile=profile and

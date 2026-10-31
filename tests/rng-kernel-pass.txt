@@ -1,0 +1,1 @@
+[22:39:10.471 I] Global[scripts/ashenloot_test/balance_kernel.lua]:	[BALANCE KERNEL] ALL PASS 50 conditional cohorts, 500000 reward-plan trials

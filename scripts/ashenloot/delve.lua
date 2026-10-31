@@ -96,9 +96,7 @@ local function currentSlot(p)
 end
 local function spawn(slot,index,anchor,boss,healthFraction,reinforcement)
     local d=data();local l=layouts[index];slot.serial=(slot.serial or 0)+1
-    local rng=R.rng(d.serial..':'..slot.depth..':'..slot.serial)
-    -- Adjacent short seeds have correlated first draws; mix before choosing a species.
-    rng(997);rng(7919)
+    local rng=R.stream(d.serial..':'..slot.depth..':'..slot.serial,'delve-species-v1')
     local _,archetype=selectEnemy(l.theme,boss,rng,slot.depth)
     local id=Selection.recordId(archetype)
     local actor=world.createObject(id,1)
@@ -257,7 +255,7 @@ local function beginPlacement(slot,index,p,bossAdd)
     end
     slot.diagnostics.candidates=candidates
     if #options==0 then diagnostic(slot,'no eligible anchor','No free candidate within 1800-4000');return false end
-    local rng=R.rng(data().serial..':'..slot.depth..':placement');rng(997);rng(7919)
+    local rng=R.stream(data().serial..':'..slot.depth,'delve-placement-v1')
     local start=slot.anchorCursor or (rng(#options)-1)
     slot.placement={options=options,start=start,attempts=0,expires=core.getSimulationTime()+8,
         count=math.min(bossAdd and 1 or 2,available),bossAdd=bossAdd or false,bossId=bossAdd and slot.boss.id or nil}
@@ -417,7 +415,7 @@ end
 function M.rewardEligible(actor)
     local info=context(actor)
     if not info or not info.density or info.boss or state.elites[actor.id]then return true end
-    return R.rng(actor.id..':density-reward')()<4/Pacing.ambientTarget(info.depth)
+    return R.stream(actor.id,'density-reward-v1')()<4/Pacing.ambientTarget(info.depth)
 end
 function M.update(dt)
     if not core.contentFiles.has('Dreamforged-Delve.esp') then return end

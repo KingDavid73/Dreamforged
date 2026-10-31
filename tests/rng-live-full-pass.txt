@@ -1,0 +1,10 @@
+[22:34:57.355 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] PASS actual density eligibility near one sixth
+[22:34:57.356 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] PASS actual ordinary equipment no longer follows old coupled ~10% rate
+[22:34:57.356 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE RESULTS] {"eligible":79,"equipment":7,"mode":1,"n":500,"potions":47,"ranks":{},"tomes":0}
+[22:35:08.822 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] PASS 500 actual promotion outcomes checked against independent streams and caps
+[22:35:08.822 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE RESULTS] {"eligible":0,"equipment":0,"mode":2,"n":500,"potions":0,"ranks":{"0":417,"1":59,"2":20,"3":4},"tomes":0}
+[22:35:20.599 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] PASS 500 actual promotion outcomes checked against independent streams and caps
+[22:35:20.600 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE RESULTS] {"eligible":0,"equipment":0,"mode":3,"n":500,"potions":0,"ranks":{"0":274,"1":59,"2":109,"3":58},"tomes":0}
+[22:35:31.721 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] PASS 500 actual promotion outcomes checked against independent streams and caps
+[22:35:31.722 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE RESULTS] {"eligible":0,"equipment":0,"mode":4,"n":500,"potions":0,"ranks":{"0":472,"1":18,"2":7,"3":3},"tomes":0}
+[22:35:31.722 I] Global[scripts/ashenloot_test/rng_live.lua]:	[RNG LIVE] ALL PASS 500 actual ordinary deaths and 1500 live promotion outcomes

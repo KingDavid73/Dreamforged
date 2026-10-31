@@ -1,0 +1,1 @@
+[22:35:10.400 I] Global[scripts/ashenloot_test/rng_compat.lua]:	[RNG COMPAT] ALL PASS old-version item metadata, IDs/counts, inhabitants, rank/name/modifier outcomes and promotion budget unchanged

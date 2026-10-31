@@ -1,0 +1,13 @@
+[22:39:18.384 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS 705 exact independent integer hash vectors, including boundaries and UTF8
+[22:39:18.386 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS independent framed stream vectors and integer bounds
+[22:39:18.387 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS length framing separates ambiguous seed/namespace pairs
+[22:39:18.387 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG GOLDEN] {"delve-placement-v1":0.20233947513734,"delve-species-v1":0.043006511890798,"density-reward-v1":0.24730306921867,"elite-base-v1":0.43379248605752,"equipment-gate-v1":0.94341344150874,"loot-budget-v1":0.76724235656077,"promotion-boss-v1":0.55265832578421,"promotion-elite-v1":0.41757871881946,"promotion-gate-v1":0.4280209710952,"promotion-modifiers-v1":0.15907163739161,"promotion-unique-v1":0.14674338751787,"spell-tome-v1":0.2226825422713,"supplies-v1":0.96727771450173}
+[22:39:18.716 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS cross-stream and ID-neighbour correlations consecutive
+[22:39:18.716 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG DISTRIBUTION] {"boss":3010,"correlation":0.00016263687403747,"density":16628,"equipment":12025,"joint":1926,"lagCorrelation":-0.0018540319979506,"n":100000,"pattern":"consecutive","promotedBoss":231,"promotedUnique":387,"promotion":8045,"unique":5060}
+[22:39:19.058 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS cross-stream and ID-neighbour correlations strided
+[22:39:19.059 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG DISTRIBUTION] {"boss":3067,"correlation":0.0024168093003066,"density":16714,"equipment":11835,"joint":1993,"lagCorrelation":-0.0013066530013037,"n":100000,"pattern":"strided","promotedBoss":265,"promotedUnique":416,"promotion":7951,"unique":5120}
+[22:39:19.363 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS cross-stream and ID-neighbour correlations decimal
+[22:39:19.364 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG DISTRIBUTION] {"boss":2987,"correlation":-0.0053361241260951,"density":16673,"equipment":12051,"joint":1958,"lagCorrelation":0.0014408820310846,"n":100000,"pattern":"decimal","promotedBoss":236,"promotedUnique":382,"promotion":7922,"unique":5014}
+[22:39:19.952 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS all 13 opted-in gameplay namespaces pass consecutive-ID marginals
+[22:39:19.953 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] PASS legacy output unchanged, new streams deterministic and bounded
+[22:39:19.953 I] Global[scripts/ashenloot_test/rng.lua]:	[RNG FIX] ALL PASS deterministic vectors, marginal/joint distributions and neighbouring IDs

@@ -1,3 +1,7 @@
+# 0.11.7 RNG repair
+
+New dungeon reward, promotion, species and placement choices use separate mixed random streams. This corrects the coupled density/equipment and promotion/rank gates without changing their intended rates, depth scaling, budgets or caps. Existing inhabitants/items persist; future rolls change. See RNG-INDEPENDENCE.md.
+
 # 0.11.6 patron captions
 
 Dungeon captions now use original Fa-Nuit-Hen trial-themed lines for descent, peaks, lulls, guardians and rewards. The wilderness retains its established voices. Voice frequency zero remains mute; portal/load clears stale captions without replaying milestones. See PATRON-NARRATION.md. No run reset is needed.

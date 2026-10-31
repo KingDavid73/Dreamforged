@@ -1,3 +1,10 @@
+## 0.11.7 - Independent gameplay RNG streams
+
+- Added a versioned, length-framed MurmurHash3 seed mixer for explicitly opted-in gameplay decisions. Legacy RNG and item-generation specifications remain unchanged.
+- Separated density/equipment gates and promotion/World Boss/Unique/Elite gates. Supplies, tomes, reward budgets, new modifiers and dungeon species/placement also use named mixed streams.
+- Fixes equal-length seed-label coupling and consecutive-ID clustering without retuning probability tables, enemy stats, depth curves, reward budgets or population/promotion caps.
+- Existing items, inhabitants and committed promotion/reward decisions persist. New unresolved rolls use the repaired streams; no reset required.
+
 ## Development - Combat/reward measurement baseline
 
 - Completed task 05 as a report/test milestone; installed gameplay remains 0.11.6.

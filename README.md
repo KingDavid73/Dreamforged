@@ -1,12 +1,12 @@
-# 0.11.6 dungeon patron narration
+# 0.11.7 gameplay RNG independence
 
 See [DELVE.md](DELVE.md) for the Unending Dream, NPC entrance, portal, coin broker, and zero-gold equipment changes. The previous release documentation follows.
 
 # Morrowind: Dreamforged
 
-**Current release: 0.11.6 - Dungeon patron narration.** See [PATRON-NARRATION.md](PATRON-NARRATION.md) for contextual captions, mute/cooldown behavior and original-fiction scope. See [DUNGEON-PACING.md](DUNGEON-PACING.md) for researched design targets, ambient populations, pressure/recovery, limits, and density safeguards. See [ENCOUNTER-CONTEXTS.md](ENCOUNTER-CONTEXTS.md) for the separate wilderness/interior/generated-floor/refuge policies and location-specific diagnostics. See [REINFORCEMENTS.md](REINFORCEMENTS.md) for placement, pursuit, save compatibility, and test scope. See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
+**Current release: 0.11.7 - Gameplay RNG independence.** See [RNG-INDEPENDENCE.md](RNG-INDEPENDENCE.md) for the fix, measured distributions and save compatibility. See [PATRON-NARRATION.md](PATRON-NARRATION.md) for contextual captions, mute/cooldown behavior and original-fiction scope. See [DUNGEON-PACING.md](DUNGEON-PACING.md) for researched design targets, ambient populations, pressure/recovery, limits, and density safeguards. See [ENCOUNTER-CONTEXTS.md](ENCOUNTER-CONTEXTS.md) for the separate wilderness/interior/generated-floor/refuge policies and location-specific diagnostics. See [REINFORCEMENTS.md](REINFORCEMENTS.md) for placement, pursuit, save compatibility, and test scope. See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
 
-Task 05 measurement notes: [BALANCE-BASELINE.md](BALANCE-BASELINE.md). Gameplay remains 0.11.6. The baseline identifies RNG stream coupling, so task 05a precedes further rate tuning.
+Task 05 measurement notes: [BALANCE-BASELINE.md](BALANCE-BASELINE.md). The historical 0.11.6 baseline identifies the coupling repaired in 0.11.7; broader rate tuning is still pending.
 
 ## 0.10.29 World Boss tracker synchronization
 

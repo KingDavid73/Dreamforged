@@ -14,6 +14,9 @@ local rows={
  {name='personal-legacy',player=16,gear=34,target=40,depth=6},
  {name='personal-dense',player=16,gear=34,target=40,depth=6,density=true},
 }
+if core.contentFiles.has('rng-kernel.omwscripts')then
+ local selected={};for _,r in ipairs(rows)do if r.name=='world-early'or r.name=='delve-early'or r.name=='delve-late'or r.name=='personal-legacy'or r.name=='personal-dense'then selected[#selected+1]=r end end;rows=selected
+end
 local row,rank,bankIndex,n,stage,t,at=1,0,1,0,0,0,0;local stats;local gearItem
 local banks={0,125.9821688};local samples=10000
 local function setup(p,A)
@@ -56,7 +59,7 @@ return{engineHandlers={onUpdate=function(dt)
     print('[BALANCE KERNEL] '..json(stats));n=0;rank=rank+1
     if rank>4 then rank=0;bankIndex=bankIndex+1 end
     if bankIndex>#banks then bankIndex=1;row=row+1 end
-    if row>#rows then print('[BALANCE KERNEL] ALL PASS 110 conditional cohorts, 1100000 reward-plan trials');core.quit();stage=99;return end
+    if row>#rows then print('[BALANCE KERNEL] ALL PASS '..(#rows*10)..' conditional cohorts, '..(#rows*10*samples)..' reward-plan trials');core.quit();stage=99;return end
     setup(p,A);at=t+1
    end
   end

@@ -1,0 +1,53 @@
+[
+  {
+    "eligible": 87,
+    "equipment": 9,
+    "mode": 1,
+    "n": 500,
+    "potions": 49,
+    "ranks": {},
+    "tomes": 0
+  },
+  {
+    "eligible": 0,
+    "equipment": 0,
+    "mode": 2,
+    "n": 500,
+    "potions": 0,
+    "ranks": {
+      "0": 421,
+      "1": 57,
+      "2": 19,
+      "3": 3
+    },
+    "tomes": 0
+  },
+  {
+    "eligible": 0,
+    "equipment": 0,
+    "mode": 3,
+    "n": 500,
+    "potions": 0,
+    "ranks": {
+      "0": 258,
+      "1": 60,
+      "2": 132,
+      "3": 50
+    },
+    "tomes": 0
+  },
+  {
+    "eligible": 0,
+    "equipment": 0,
+    "mode": 4,
+    "n": 500,
+    "potions": 0,
+    "ranks": {
+      "0": 470,
+      "1": 20,
+      "2": 7,
+      "3": 3
+    },
+    "tomes": 0
+  }
+]

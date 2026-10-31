@@ -1555,7 +1555,7 @@ function M.looseLoot(cell,anchor,target)
         ..' selected, '..replaced..' replaced, '..ashen..' Ashen')
 end
 function M.supplies(actor)
-    local rng=R.rng(actor.id..':supplies4')
+    local rng=R.stream(actor.id,'supplies-v1')
     local target=M.actorLevel(actor)
     local function give(kind)
         local id=supplyRecord(target,kind,rng(100)<20,kind=='scroll' and rng(#scrollRecipes) or nil)

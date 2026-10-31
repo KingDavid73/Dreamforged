@@ -1,3 +1,7 @@
+# Current build: Dreamforged 0.11.7 - gameplay RNG independence
+
+Task 05a replaces coupled new gameplay decisions with versioned mixed streams; legacy RNG/item generation stays intact. See RNG-INDEPENDENCE.md for namespaces, old-save fixture and distribution/live checks. Probability tables and difficulty/reward budgets were not retuned. Existing items and committed outcomes persist; no run reset needed. Install target: Documents/MorrowindMods/Dreamforged-0.11.7. Next: task 06 Diablo reference research, then 07–08 quantity/promotion/loot tuning. The 0.11.6 baseline below is historical.
+
 # Current development milestone: task 05 measured, gameplay remains 0.11.6
 
 BALANCE-BASELINE.md and tests/balance-validation.txt capture live/projection baselines, the current save snapshot, scaling interactions and verified RNG stream coupling. No production or installed runtime changed. Next task is newly inserted 05a: fix reward/promotion stream independence before reference-driven rate tuning. Existing 0.11.6 release notes below remain the installed state. Original saves were loaded only through isolated copies; the archived level 351 build could not be loaded with its missing dependencies, so stress rows are explicitly synthetic.
