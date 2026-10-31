@@ -1,10 +1,10 @@
-# 0.11.5 dense dungeons and adaptive pacing
+# 0.11.6 dungeon patron narration
 
 See [DELVE.md](DELVE.md) for the Unending Dream, NPC entrance, portal, coin broker, and zero-gold equipment changes. The previous release documentation follows.
 
 # Morrowind: Dreamforged
 
-**Current release: 0.11.5 - Dense dungeons and adaptive pacing.** See [DUNGEON-PACING.md](DUNGEON-PACING.md) for researched design targets, ambient populations, pressure/recovery, limits, and density safeguards. See [ENCOUNTER-CONTEXTS.md](ENCOUNTER-CONTEXTS.md) for the separate wilderness/interior/generated-floor/refuge policies and location-specific diagnostics. See [REINFORCEMENTS.md](REINFORCEMENTS.md) for placement, pursuit, save compatibility, and test scope. See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
+**Current release: 0.11.6 - Dungeon patron narration.** See [PATRON-NARRATION.md](PATRON-NARRATION.md) for contextual captions, mute/cooldown behavior and original-fiction scope. See [DUNGEON-PACING.md](DUNGEON-PACING.md) for researched design targets, ambient populations, pressure/recovery, limits, and density safeguards. See [ENCOUNTER-CONTEXTS.md](ENCOUNTER-CONTEXTS.md) for the separate wilderness/interior/generated-floor/refuge policies and location-specific diagnostics. See [REINFORCEMENTS.md](REINFORCEMENTS.md) for placement, pursuit, save compatibility, and test scope. See [IMPLEMENTATION-BACKLOG.md](IMPLEMENTATION-BACKLOG.md) for the work queue. The 0.10.29 notes below describe earlier work.
 
 ## 0.10.29 World Boss tracker synchronization
 

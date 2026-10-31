@@ -1,3 +1,7 @@
+# 0.11.6 patron captions
+
+Dungeon captions now use original Fa-Nuit-Hen trial-themed lines for descent, peaks, lulls, guardians and rewards. The wilderness retains its established voices. Voice frequency zero remains mute; portal/load clears stale captions without replaying milestones. See PATRON-NARRATION.md. No run reset is needed.
+
 # 0.11.5 density and adaptive pacing
 
 New floors now receive 24–32 validated ambient enemies spread through broad spaces. Reinforcements use separate nearby/incoming limits and build/peak/fade/recovery scheduling; low health or recent damage stops new pressure. Guardians retain bounded adds. Local promotion and generated-reward safeguards offset the higher ordinary headcount. Existing saved floors persist and receive adaptive reinforcements; descend for the new ambient population. See DUNGEON-PACING.md for references, limits, save behavior and scope.

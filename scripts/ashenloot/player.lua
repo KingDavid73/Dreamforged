@@ -259,6 +259,7 @@ local function updateDirectorDebug()
     directorDebugSignature=signature
 end
 local function updateVoiceCard()
+    if voiceMessage and voiceMessage.cellId and (not self.cell or voiceMessage.cellId~=self.cell.id)then voiceMessage=nil;clearVoiceCard()end
     if not C.enabled or C.directorVoiceFrequency<=0 or I.UI.getMode()
         or not voiceMessage or core.getSimulationTime()>=(voiceUntil or 0) then
         clearVoiceCard()
@@ -331,7 +332,7 @@ local function updateBossCard()
     bossCardSignature=signature
 end
 local function frame(dt)
-    if directorDebugNeedsClear then directorDebugNeedsClear=false;clearDirectorDebug() end
+    if directorDebugNeedsClear then directorDebugNeedsClear=false;clearDirectorDebug();clearVoiceCard() end
     directorDebugElapsed=directorDebugElapsed+dt
     if directorDebugElapsed>=1 then directorDebugElapsed=0;updateDirectorDebug() end
     classSampleElapsed=classSampleElapsed+dt
@@ -518,10 +519,10 @@ end
 if I.InventoryExtender then I.InventoryExtender.registerTooltipModifier('AshenLoot', tooltip) end
 return {
     interfaceName = 'AshenLootUI',
-    interface = {version = 1, getMetadata = metadata, getDirectorDebug=function()return {state=directorDebugState,lines=directorDebugLines or {},visible=directorDebugCard~=nil}end, openInventory = function() page = 1; renderBook() end},
+    interface = {version = 1, getMetadata = metadata, getDirectorVoice=function()return {message=voiceMessage,visible=voiceCard~=nil}end, getDirectorDebug=function()return {state=directorDebugState,lines=directorDebugLines or {},visible=directorDebugCard~=nil}end, openInventory = function() page = 1; renderBook() end},
     engineHandlers = {
         onFrame = frame,
-        onTeleported=function()directorDebugState=nil;directorDebugNeedsClear=true;directorDebugElapsed=1 end,
+        onTeleported=function()voiceMessage=nil;voiceUntil=nil;directorDebugState=nil;directorDebugNeedsClear=true;directorDebugElapsed=1 end,
         onKeyPress = function(key)
             if not C.enabled then return end
             if I.UI.getMode() == 'Console' then return end
@@ -569,8 +570,8 @@ return {
     },
     eventHandlers = {
         AshenLoot_DirectorVoice = function(event)
-            if not event or not event.speaker or not event.text then return end
-            voiceMessage={speaker=tostring(event.speaker),text=tostring(event.text)}
+            if not event or not event.speaker or not event.text or (event.cellId and (not self.cell or event.cellId~=self.cell.id))then return end
+            voiceMessage={speaker=tostring(event.speaker),text=tostring(event.text),cellId=event.cellId}
             voiceUntil=core.getSimulationTime()+math.max(3,math.min(12,tonumber(event.duration) or 7))
             clearVoiceCard()
             updateVoiceCard()

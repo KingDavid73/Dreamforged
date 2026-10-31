@@ -12,6 +12,7 @@ local Selection=require('scripts.ashenloot.delve_selection')
 local Context=require('scripts.ashenloot.encounter_context')
 local Pacing=require('scripts.ashenloot.delve_pacing')
 local Population=require('scripts.ashenloot.delve_population')
+local Narration=require('scripts.ashenloot.narration')
 local selectionVersion=2
 local bindingGeneration=0
 local selectEnemy=Selection.choose
@@ -207,7 +208,7 @@ end
 local function cancelPlacement(slot,reason,includePopulation)
     if slot.pending or slot.placement then diagnostic(slot,'placement cancelled',reason) end
     slot.pending=nil;slot.placement=nil
-    if includePopulation then slot.populationPending=nil end
+    if includePopulation then slot.populationPending=nil;if slot.voice then slot.voice.pending=nil end end
 end
 local function finishFailure(slot,reason)
     local batch=slot.placement
@@ -352,7 +353,7 @@ local function activate(o,p)
 end
 function M.bind(s,a)
     state,api=s,a;Selection.bind(data);bindingGeneration=bindingGeneration+1;lastCell=nil;elapsed=0
-    for _,slot in pairs((s.delve or {}).slots or {}) do slot.pending=nil;slot.placement=nil;slot.populationPending=nil;slot.lastHealth=nil end
+    for _,slot in pairs((s.delve or {}).slots or {}) do slot.pending=nil;slot.placement=nil;slot.populationPending=nil;slot.lastHealth=nil;if slot.voice then slot.voice.pending=nil end end
 end
 function M.init()
     if registered or not core.contentFiles.has('Dreamforged-Delve.esp') then return end
@@ -459,6 +460,7 @@ function M.update(dt)
         slot.pendingInitial=nil
         slot.population={points=Population.points(layouts[index]),cursor=1,made=0,target=Pacing.ambientTarget(slot.depth)}
         slot.pacing=Pacing.new(now)
+        Narration.offerDungeon(slot,'entry','descent',{depth=slot.depth},now,3)
         if Rules.boss(slot.depth) then spawn(slot,index,layouts[index].exit,true) end
         print('[Dreamforged Delve] initial population depth '..slot.depth)
         diagnostic(slot,'initial population',#slot.objects..' actors placed')
@@ -476,13 +478,22 @@ function M.update(dt)
         slot.bossDefeated=true;d.bosses=d.bosses+1;slot.nextWave=now+35
         slot.pacing=slot.pacing or Pacing.new(now);slot.pacing.phase='relax';slot.pacing.phaseAt=now;slot.pacing.untilTime=now+35
         if slot.depth>=3 then journal(p,100) end
-        tell(p,'The guardian falls. Velyna has new stock. The Dream grants a moment of quiet.')
+        Narration.offerDungeon(slot,'victory','guardianVictory',{},now,4)
+        tell(p,'Velyna has new stock. Reinforcements pause while you recover.')
     end
-    if not C.extraEncounters then cancelPlacement(slot,'extra encounters disabled');diagnostic(slot,'encounters disabled','Extra encounters are disabled');return end
+    if nearBoss(slot,p)then Narration.offerDungeon(slot,'guardian','guardian',{},now,4)end
+    if not C.extraEncounters then Narration.tickDungeon(state,C,p,now,slot);cancelPlacement(slot,'extra encounters disabled');diagnostic(slot,'encounters disabled','Extra encounters are disabled');return end
     local o=observation(slot,p,true);slot.pacing=slot.pacing or Pacing.new(now)
+    local previousPhase=slot.voice and slot.voice.phase
     Pacing.step(slot.pacing,now,o)
+    slot.voice=slot.voice or {seen={}};slot.voice.phase=slot.pacing.phase
+    if previousPhase~=slot.pacing.phase and slot.voice.pending and slot.voice.pending.priority==1 then slot.voice.pending=nil end
+    if previousPhase and previousPhase~=slot.pacing.phase and slot.pacing.phase~='fade' then
+        Narration.offerDungeon(slot,nil,slot.pacing.phase,{},now,1)
+    end
     slot.pacing.reinforcements=o.reinforcements
     local bossEncounter=nearBoss(slot,p)
+    Narration.tickDungeon(state,C,p,now,slot)
     if bossEncounter and (o.health<.35 or slot.pacing.damage>=.18)then
         cancelPlacement(slot,'player recovery');diagnostic(slot,'recovery','Guardian adds withheld while depleted');return
     end
@@ -555,6 +566,7 @@ function M.anchor(e)
         slot.nextWave=now+((slot.pacing and slot.pacing.phase=='peak') and 7 or 11)
     end
     slot.waves=(slot.waves or 0)+1
+    if not request.bossAdd then Narration.offerDungeon(slot,nil,'group',{},now,1)end
     diagnostic(slot,'wave spawned',count..' actors; '..(request.bossAdd and 'boss add' or 'ordinary wave'))
     print('[Dreamforged Delve] reinforcement wave '..slot.waves..' at depth '..slot.depth..' ('..count..' actors)')
 end

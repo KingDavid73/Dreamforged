@@ -1,3 +1,7 @@
+# Current build: Dreamforged 0.11.6 - patron narration
+
+Task 04b adds original Fa-Nuit-Hen captions for generated-dungeon events, blocks indoor wilderness narration leaks, and preserves overworld speakers. See PATRON-NARRATION.md. Guardian approach/victory, phase changes, reward interpolation, prioritized cooldown, mute, stale-cell rejection and saved milestone deduplication are covered by focused runtime tests. Narration consumes scheduler events without changing encounter/reward mechanics. Install target: Documents/MorrowindMods/Dreamforged-0.11.6. Next: task 05, measure combat/reward output before broader tuning. Minimap and native isometric controls remain queued. Earlier handoffs are historical.
+
 # Current build: Dreamforged 0.11.5 - dense dungeon pacing
 
 Task 04c implements 24–32 ambient actors on new floors plus a separate adaptive reinforcement controller. See DUNGEON-PACING.md for references, numeric targets, health/combat/death signals, admission/floor/lifetime caps, guardian limits and local promotion/reward safeguards. Existing floors persist without surprise population top-ups. Tests use protected automated players; this is not manual visual QA or completion of broad loot tuning. Install target: Documents/MorrowindMods/Dreamforged-0.11.5. Next: 04b patron messaging, then combat/reward measurement and broader balancing. Minimap task 13 and native isometric camera/controls tasks 14–16 remain queued. Previous handoffs below are historical.

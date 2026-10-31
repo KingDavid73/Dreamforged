@@ -1,0 +1,54 @@
+Full suite + Isowind; automated in-engine captions and transition checks; test-only health protection.
+[20:48:48.740 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool relicPrize
+[20:48:48.747 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool promotedKill
+[20:48:48.766 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool commonKill
+[20:48:48.766 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool boss
+[20:48:48.767 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool barren
+[20:48:48.767 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool guardianVictory
+[20:48:48.767 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool peak
+[20:48:48.787 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool victory
+[20:48:48.788 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool prize
+[20:48:48.802 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool rising
+[20:48:48.802 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool group
+[20:48:48.802 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool den
+[20:48:48.811 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool sleep
+[20:48:48.824 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool descent
+[20:48:48.837 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool guardian
+[20:48:48.838 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool roam
+[20:48:48.838 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool relax
+[20:48:48.838 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool dungeon
+[20:48:48.846 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool promotion
+[20:48:48.860 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool build
+[20:48:48.868 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool imminent
+[20:48:48.868 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool mythicPrize
+[20:48:48.868 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool bossMythic
+[20:48:48.868 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron pool bossVictory
+[20:48:48.881 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS ordinary-world rendering remains Dagoth Ur
+[20:48:48.894 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS refuge blocks wilderness pressure captions
+[20:48:50.957 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Fa-Nuit-Hen: Depth 1. Show me a motion you have not yet mastered.
+[20:48:54.925 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS actual descent uses patron
+[20:48:54.945 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS outdoor pressure polling does not consume milestones indoors
+[20:48:55.938 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS actual caption card shows patron
+[20:48:55.948 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS dungeon reward event emits
+[20:48:55.964 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS patron cooldown prevents stacked captions
+[20:48:55.986 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS remote actor message rejected
+[20:48:56.020 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Fa-Nuit-Hen: An extraordinary prize, Test Relic. Power still needs a practiced hand.
+[20:48:57.940 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS reward interpolation reaches actual event
+[20:49:00.951 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS portal clears old floor caption
+[20:49:04.966 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS resume does not repeat descent announcement
+[20:49:06.049 I] Menu[scripts/ashenloot_test/menu.lua]:	[AshenLoot TEST] Reloading isolated test save in player
+[20:49:15.816 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS save/load does not replay floor announcement
+[20:49:18.013 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Fa-Nuit-Hen: Another borrowed shape, another field of contest. Begin.
+[20:49:25.467 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS remote guardian generation does not announce engagement
+[20:49:27.491 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Fa-Nuit-Hen: The guardian holds this passage. Show me why it should yield.
+[20:49:28.451 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS nearby guardian triggers patron cue
+[20:49:28.452 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS actual guardian introduction
+[20:49:32.454 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS guardian approach cue does not repeat each update
+[20:49:34.516 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Fa-Nuit-Hen: A passage earned. Even the keeper had something left to learn.
+[20:49:36.465 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS guardian victory queued once by actual death
+[20:49:36.466 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS guardian victory remains patron-themed
+[20:49:39.478 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS mute drops pending captions
+[20:50:15.072 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS world event resumes outside dungeon
+[20:50:15.143 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON EVENT] Dagoth Ur: I have named your adversary World Challenger. Let battle decide what the name is worth.
+[20:50:16.078 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] PASS actual world voice restored after leaving
+[20:50:16.079 I] Global[scripts/ashenloot_test/patron.lua]:	[PATRON] ALL PASS contextual pools, actual HUD/events, reward, guardian, mute, portal and save/load

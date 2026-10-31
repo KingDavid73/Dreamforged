@@ -1,0 +1,2 @@
+Actual configured 0.11.6 full suite + Isowind, no repository runtime override; final refuge-rest routing check.
+[20:54:03.142 I] Global[scripts/ashenloot_test/patron_refuge.lua]:	[PATRON REFUGE] ALL PASS configured release routes refuge rest to patron, blocks outdoor pressure and renders actual card

@@ -887,14 +887,15 @@ local function encounter(data)
             end
             local princeActor=state.director and state.director.specialActors
                 and state.director.specialActors[key]
-            if elite.worldBoss and not princeActor then
+            local delveGuardian=Delve.context(actor) and Delve.context(actor).boss
+            if elite.worldBoss and not princeActor and not delveGuardian then
                 Narration.emitChance(state,C,world.players[1],core.getSimulationTime(),'boss',
-                    {enemy=elite.name,kind=rec.name},100)
-            elseif not princeActor then
+                    {enemy=elite.name,kind=rec.name,sourceCell=actor.cell.id},100)
+            elseif not princeActor and not delveGuardian then
                 local tierNames={'Champion','Elite','Unique'}
                 local tierChance=({25,40,60})[elite.rank] or 25
                 Narration.emitChance(state,C,world.players[1],core.getSimulationTime(),'promotion',
-                    {enemy=elite.name,tier=tierNames[elite.rank] or 'Champion',kind=rec.name},tierChance)
+                    {enemy=elite.name,tier=tierNames[elite.rank] or 'Champion',kind=rec.name,sourceCell=actor.cell.id},tierChance)
             end
         else state.elites[key] = false end
     end
@@ -1038,20 +1039,21 @@ local function death(actor)
             end
         end
     end
-    local values={enemy=enemyName,kind=enemyKind,item=bestName}
+    local values={enemy=enemyName,kind=enemyKind,item=bestName,sourceCell=actor.cell.id}
+    local scheduledGuardian=Delve.context(actor) and Delve.context(actor).boss
     if worldBoss and bestTier==7 and bestName then
-        Narration.emitChance(state,C,player,now,'bossMythic',values,100)
-    elseif worldBoss then
+        Narration.emitChance(state,C,player,now,scheduledGuardian and 'mythicPrize' or 'bossMythic',values,100)
+    elseif worldBoss and not scheduledGuardian then
         Narration.emitChance(state,C,player,now,'bossVictory',values,100)
     elseif bestTier==7 and bestName then
         Narration.emitChance(state,C,player,now,'mythicPrize',values,100)
     elseif bestTier==6 and bestName then
         Narration.emitChance(state,C,player,now,'relicPrize',values,50)
-    elseif rank>0 then
+    elseif rank>0 and not scheduledGuardian then
         local tierNames={'Champion','Elite','Unique'}
         local tierChance=({25,40,60})[math.min(3,rank)] or 25
         Narration.emitChance(state,C,player,now,'promotedKill',
-            {enemy=enemyName,kind=enemyKind,tier=tierNames[math.min(3,rank)] or 'Champion'},tierChance)
+            {enemy=enemyName,kind=enemyKind,tier=tierNames[math.min(3,rank)] or 'Champion',sourceCell=actor.cell.id},tierChance)
     end
 end
 Progress.bind(state,giveLoot,encounter,eligible)
@@ -1273,7 +1275,7 @@ return {
             if voiceElapsed>=5 then
                 voiceElapsed=0
                 local player=world.players[1]
-                if player and player:isValid() and not types.Actor.isDead(player) then
+                if player and player:isValid() and not types.Actor.isDead(player) and Context.kind(player.cell)=='wilderness' then
                     local outdoor=state.director and state.director.outdoor
                     if outdoor then
                         local pressure=tonumber(outdoor.pressure) or 0

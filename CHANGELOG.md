@@ -1,3 +1,11 @@
+## 0.11.6 - Dungeon patron narration
+
+- Added original Fa-Nuit-Hen captions for descent, encounter buildup/peaks/recovery, reinforcement groups, guardian approach/victory, promotions and rewards. Existing world dialogue pools stay intact.
+- Wilderness pressure polling and special-encounter captions no longer leak indoors. Actor-specific events require the player to remain in the originating cell.
+- Guaranteed guardians announce their approach rather than remote generation. Their victory has one scheduler-owned caption; broker/recovery status remains a separate mechanical notice.
+- Persistent per-floor milestone flags, prioritized expiring cues and a shared eight-second patron cooldown prevent repeated announcements and stacked chatter. Travel/load clears pending cues and the old voice card; old-cell payloads are rejected.
+- Voice frequency zero mutes all patron captions and discards pending cues. Nonzero settings allow milestones; frequency also controls routine chatter. No audio assets, enemy stats, encounter budgets, rewards or camera behavior changed.
+
 ## 0.11.5 - Dense dungeon populations and adaptive pacing
 
 - New floors receive 24–32 ordinary ambient enemies in broad connected pockets, with reserved entry/guardian space. Bounded staged validation requires hidden rendered-view positions, level ground, clearance, free space and reachable navigation.

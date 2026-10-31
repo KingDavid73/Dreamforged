@@ -2,6 +2,14 @@
 -- interpretation of Morrowind's dream imagery, not a canonical speaking NPC.
 local R = require('scripts.ashenloot.rules')
 local M = {}
+local Context=require('scripts.ashenloot.encounter_context')
+local Patron=require('scripts.ashenloot.patron_lines')
+local function sameLocation(player,values)
+    return not(values and values.sourceCell) or (player.cell and player.cell.id==values.sourceCell)
+end
+local function payload(player,line,duration)
+    return {speaker=line.speaker,text=line.text,duration=duration,cellId=player.cell and player.cell.id}
+end
 
 local lines = {
     roam = {
@@ -162,6 +170,7 @@ end
 -- setting guarantees each crossed threshold is eventually reported; zero
 -- remains a complete mute switch.
 function M.emitPressure(state,config,player,now,pressure,stage)
+    if player and player.cell and not player.cell.isExterior then return false end
     local frequency=math.max(0,math.min(100,tonumber(config.directorVoiceFrequency) or 0))
     if not config.enabled or frequency<=0 or not player or not player:isValid() then return false end
     stage=math.max(0,math.min(#pressureThresholds,math.floor(tonumber(stage) or M.pressureStage(pressure))))
@@ -177,7 +186,7 @@ function M.emitPressure(state,config,player,now,pressure,stage)
     voice.lastPressureIndex=index
     voice.lastAt=now;voice.lastByKind.pressure=now
     player:sendEvent('AshenLoot_DirectorVoice',{
-        speaker='The Dream',text=pool[index],duration=8})
+        speaker='The Dream',text=pool[index],duration=8,cellId=player.cell and player.cell.id})
     return true
 end
 
@@ -187,22 +196,23 @@ local function clean(value, fallback)
     return s
 end
 
-function M.render(kind, seed, values, previous)
-    local pool=lines[kind]
+function M.render(kind, seed, values, previous, context)
+    local dungeon=context=='delve' or context=='refuge'
+    local pool=dungeon and (Patron[kind] or Patron.victory) or lines[kind]
     if not pool then return nil end
     local rng=R.rng(tostring(seed or '')..':voice:'..kind)
     local index=rng(#pool)
     if #pool>1 and index==previous then index=index%#pool+1 end
     local choice=pool[index]
-    local content=choice[2]:gsub('{(%w+)}',function(key)
+    local content=(dungeon and choice or choice[2]):gsub('{(%w+)}',function(key)
         return clean(values and values[key], key=='item' and 'the prize' or 'the foe')
     end)
-    return {speaker=choice[1],text=content,index=index,kind=kind}
+    return {speaker=dungeon and 'Fa-Nuit-Hen' or choice[1],text=content,index=index,kind=kind}
 end
 
 function M.emit(state, config, player, now, kind, values, important)
     local frequency=math.max(0,math.min(100,tonumber(config.directorVoiceFrequency) or 0))
-    if not config.enabled or frequency<=0 or not player or not player:isValid() then return false end
+    if not config.enabled or frequency<=0 or not player or not player:isValid() or not sameLocation(player,values) then return false end
     local voice=state.voice or {lastAt=-1000,lastByKind={},lastIndex={},serial=0}
     state.voice=voice
     voice.lastByKind=voice.lastByKind or {};voice.lastIndex=voice.lastIndex or {}
@@ -214,10 +224,10 @@ function M.emit(state, config, player, now, kind, values, important)
     local chance=important and 100 or (kind=='roam' or kind=='dungeon') and frequency*0.38
         or (kind=='commonKill' and frequency*0.25 or frequency*0.7)
     if rng(100)>chance then return false end
-    local line=M.render(kind,seed,values,voice.lastIndex[kind])
+    local line=M.render(kind,seed,values,voice.lastIndex[kind],Context.kind(player.cell))
     if not line then return false end
     voice.lastAt=now;voice.lastByKind[kind]=now;voice.lastIndex[kind]=line.index
-    player:sendEvent('AshenLoot_DirectorVoice',{speaker=line.speaker,text=line.text,duration=7})
+    player:sendEvent('AshenLoot_DirectorVoice',payload(player,line,7))
     return true
 end
 
@@ -226,7 +236,12 @@ end
 -- chance; the setting scales it up/down and zero remains a mute switch.
 function M.emitChance(state,config,player,now,kind,values,baseChance)
     local frequency=math.max(0,math.min(100,tonumber(config.directorVoiceFrequency) or 0))
-    if not config.enabled or frequency<=0 or not player or not player:isValid() then return false end
+    if not config.enabled or frequency<=0 or not player or not player:isValid() or not sameLocation(player,values) then return false end
+    if Context.kind(player.cell)=='delve' then
+        local chance=math.max(0,math.min(100,(tonumber(baseChance) or 0)*frequency/60))
+        if R.rng(tostring(now)..':'..kind..':patron-chance')(100)>chance then return false end
+        return M.emitPatron(state,config,player,now,kind,values)
+    end
     local chance=math.max(0,math.min(100,
         (tonumber(baseChance) or 0)*(frequency/60)))
     local voice=state.voice or {lastAt=-1000,lastByKind={},lastIndex={},serial=0}
@@ -235,11 +250,11 @@ function M.emitChance(state,config,player,now,kind,values,baseChance)
     voice.serial=(voice.serial or 0)+1
     local seed=tostring(math.floor(now))..':'..voice.serial..':'..clean(values and values.enemy,'')
     if R.rng(seed..':event-chance')(100)>chance then return false end
-    local line=M.render(kind,seed,values,voice.lastIndex[kind])
+    local line=M.render(kind,seed,values,voice.lastIndex[kind],Context.kind(player.cell))
     if not line then return false end
     voice.lastAt=now;voice.lastByKind[kind]=now;voice.lastIndex[kind]=line.index
     player:sendEvent('AshenLoot_DirectorVoice',{
-        speaker=line.speaker,text=line.text,duration=7})
+        speaker=line.speaker,text=line.text,duration=7,cellId=player.cell and player.cell.id})
     return true
 end
 
@@ -247,18 +262,53 @@ end
 -- second random gate or ordinary chatter cooldown between that event and its
 -- line. The existing frequency switch still cleanly silences all captions.
 function M.emitSpecial(state, config, player, now, encounter)
+    if player and player.cell and not player.cell.isExterior then return false end
     local frequency=math.max(0,math.min(100,tonumber(config.directorVoiceFrequency) or 0))
     if not config.enabled or frequency<=0 or not player or not player:isValid()
         or not encounter or not encounter.name or not encounter.line then return false end
     local voice=state.voice or {lastAt=-1000,lastByKind={},lastIndex={},serial=0}
     state.voice=voice
+    voice.lastByKind=voice.lastByKind or {};voice.lastIndex=voice.lastIndex or {}
     voice.lastAt=now
     voice.lastByKind.special=now
     player:sendEvent('AshenLoot_DirectorVoice',{
-        speaker=encounter.name,text=encounter.line,duration=8})
+        speaker=encounter.name,text=encounter.line,duration=8,cellId=player.cell and player.cell.id})
     return true
 end
 
+function M.emitPatron(state,config,player,now,kind,values,fromQueue)
+    if not config.enabled or config.directorVoiceFrequency<=0 or not player or not player:isValid()
+        or Context.kind(player.cell)~='delve' or not sameLocation(player,values)then return false end
+    state.voice=state.voice or {lastAt=-1000,lastByKind={},lastIndex={},serial=0};local voice=state.voice
+    if not fromQueue then
+        for _,slot in pairs(state.delve and state.delve.slots or {})do
+            if slot.cell==player.cell.name and slot.voice and slot.voice.pending then return false end
+        end
+    end
+    if now-(voice.patronAt or -1000)<8 then return false end
+    local line=M.render(kind,tostring(now)..':'..kind,values,voice.patronIndex,'delve')
+    voice.patronAt=now;voice.patronIndex=line.index
+    player:sendEvent('AshenLoot_DirectorVoice',payload(player,line,7));return true
+end
+function M.offerDungeon(slot,key,kind,values,now,priority)
+    slot.voice=slot.voice or {seen={}};local v=slot.voice;v.seen=v.seen or {}
+    if key and v.seen[key]then return end
+    if key then v.seen[key]=true end
+    local old=v.pending
+    if not old or (priority or 1)>=(old.priority or 1)then
+        v.pending={kind=kind,values=values,expires=now+30,offered=now,priority=priority or 1}
+    end
+end
+function M.tickDungeon(state,config,player,now,slot)
+    local v=slot.voice;if not v or not v.pending then return end
+    if not config.enabled or config.directorVoiceFrequency<=0 or now>v.pending.expires then v.pending=nil;return end
+    if v.pending.priority<=1 and not v.pending.considered then
+        v.pending.considered=true
+        if R.rng(tostring(v.pending.offered)..':'..v.pending.kind..':patron-cue')(100)>config.directorVoiceFrequency then v.pending=nil;return end
+    end
+    if M.emitPatron(state,config,player,now,v.pending.kind,v.pending.values,true)then v.pending=nil end
+end
+M.patronLines=Patron
 M.lines=lines
 M.pressureLines=pressureLines
 return M
